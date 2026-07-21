@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mihenk — Hadis Doğrulama</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d1512; --bg2:#0a100e; --yuzey:#15201c; --yuzey2:#1b2823;
+    --cizgi:#26362f; --metin:#e9e7df; --soluk:#9db0a6; --daha-soluk:#6d827792;
+    --zumrut:#57c4a3; --zumrut-koyu:#2f7c66; --pirinc:#d8b877;
+    --yesil:#57c4a3; --yesil-bg:#123028; --turuncu:#e0a35a; --turuncu-bg:#2e2415;
+    --kirmizi:#e07a72; --kirmizi-bg:#301a19; --gri:#8fa39a; --gri-bg:#1c2723;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Plus Jakarta Sans',system-ui,sans-serif;
+    color:var(--metin);background:var(--bg);
+    min-height:100vh;line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:radial-gradient(1200px 600px at 50% -10%, #16241f 0%, var(--bg) 55%, var(--bg2) 100%);}
+  .wrap{max-width:640px;margin:0 auto;padding:22px 18px 60px}
+
+  /* --- Başlık --- */
+  header{text-align:center;padding:20px 0 14px}
+  .amblem{width:46px;height:46px;margin:0 auto 12px;display:block}
+  h1{font-family:'Lora',serif;font-weight:600;font-size:30px;letter-spacing:.5px;
+    background:linear-gradient(180deg,#f3ecdc,var(--pirinc));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .alt{font-size:12.5px;color:var(--soluk);text-transform:uppercase;letter-spacing:2.5px;margin-top:5px}
+  .divider{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--zumrut-koyu);margin:16px 0 4px;font-size:12px}
+  .divider::before,.divider::after{content:"";height:1px;width:46px;background:linear-gradient(90deg,transparent,var(--cizgi))}
+  .divider::after{background:linear-gradient(90deg,var(--cizgi),transparent)}
+
+  /* --- Dil seçici --- */
+  .dil-sec{display:flex;justify-content:flex-end;gap:4px;margin:-6px 0 0}
+  .dil{padding:5px 12px;border:1px solid var(--cizgi);background:transparent;color:var(--daha-soluk);
+    font-family:inherit;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;letter-spacing:.5px}
+  .dil.aktif{background:var(--yuzey2);color:var(--pirinc);border-color:var(--zumrut-koyu)}
+
+  /* --- Üst navigasyon (Hadis / Kur'an) --- */
+  .ust-nav{display:flex;gap:8px;justify-content:center;margin:18px 0 6px}
+  .unav{padding:9px 22px;border:1px solid var(--cizgi);background:var(--yuzey);color:var(--soluk);
+    font-family:'Lora',serif;font-size:16px;font-weight:600;border-radius:22px;cursor:pointer;transition:.18s}
+  .unav.aktif{background:linear-gradient(180deg,#1c2a24,#12201b);color:var(--pirinc);border-color:var(--zumrut-koyu);
+    box-shadow:0 4px 12px #0006}
+
+  /* --- Sekmeler --- */
+  .sekmeler{display:flex;gap:6px;background:var(--yuzey);border:1px solid var(--cizgi);
+    border-radius:14px;padding:5px;margin:18px 0 20px}
+  .sekme{flex:1;padding:11px 8px;border:none;background:transparent;color:var(--soluk);
+    font-family:inherit;font-size:14.5px;font-weight:600;border-radius:10px;cursor:pointer;transition:.18s}
+  .sekme.aktif{background:linear-gradient(180deg,var(--yuzey2),#111a16);color:var(--metin);
+    box-shadow:0 1px 0 #2c3e37 inset, 0 6px 14px #0006}
+
+  /* --- Giriş alanı --- */
+  .kart{background:linear-gradient(180deg,var(--yuzey),#111a16);border:1px solid var(--cizgi);
+    border-radius:18px;padding:18px;box-shadow:0 10px 30px #0007}
+  label.ust{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:1.6px;
+    color:var(--zumrut);font-weight:700;margin-bottom:10px}
+  textarea,input.metin{width:100%;background:var(--bg2);border:1px solid var(--cizgi);border-radius:12px;
+    color:var(--metin);font-family:'Lora',serif;font-size:16px;padding:14px;resize:vertical;line-height:1.6}
+  textarea{min-height:120px}
+  textarea:focus,input.metin:focus{outline:none;border-color:var(--zumrut-koyu);box-shadow:0 0 0 3px #57c4a322}
+  .cipler{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .cip{background:var(--yuzey2);border:1px solid var(--cizgi);color:var(--soluk);font-family:inherit;
+    font-size:13px;padding:7px 13px;border-radius:20px;cursor:pointer;transition:.15s}
+  .cip:hover{border-color:var(--zumrut-koyu);color:var(--metin)}
+  .btn{width:100%;margin-top:14px;padding:14px;border:none;border-radius:12px;cursor:pointer;
+    font-family:inherit;font-size:15.5px;font-weight:700;color:#0c1512;
+    background:linear-gradient(180deg,#6ad3b2,var(--zumrut-koyu));
+    box-shadow:0 6px 16px #57c4a333, 0 1px 0 #ffffff33 inset;transition:.15s}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.55;cursor:default}
+
+  /* --- Sonuç --- */
+  .sonuc{margin-top:20px;display:none}
+  .sonuc.gorunur{display:block;animation:bel .4s ease}
+  @keyframes bel{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .rozet{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;
+    padding:7px 14px;border-radius:10px;letter-spacing:.3px}
+  .rozet .nokta{width:9px;height:9px;border-radius:50%}
+  .r-yesil{background:var(--yesil-bg);color:var(--yesil)} .r-yesil .nokta{background:var(--yesil)}
+  .r-turuncu{background:var(--turuncu-bg);color:var(--turuncu)} .r-turuncu .nokta{background:var(--turuncu)}
+  .r-kirmizi{background:var(--kirmizi-bg);color:var(--kirmizi)} .r-kirmizi .nokta{background:var(--kirmizi)}
+  .r-gri{background:var(--gri-bg);color:var(--gri)} .r-gri .nokta{background:var(--gri)}
+
+  .hadis-metin{font-family:'Lora',serif;font-size:17px;line-height:1.75;color:#f1efe6;margin:14px 0}
+  .arapca{font-family:'Amiri',serif;font-size:22px;line-height:2;direction:rtl;text-align:right;
+    color:#e7e2d3;padding:14px 2px;border-top:1px solid var(--cizgi);margin-top:12px}
+  .okunus{font-family:'Lora',serif;font-style:italic;font-size:14px;color:var(--soluk);
+    line-height:1.6;margin:2px 0 4px}
+  .kaynak-satir{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px;
+    padding-top:14px;border-top:1px solid var(--cizgi)}
+  .kaynak{font-size:13.5px;color:var(--pirinc);font-weight:600}
+  .anlam{font-size:13.5px;color:var(--soluk);margin-top:10px;line-height:1.55}
+  .alimler{font-size:12.5px;color:var(--daha-soluk);margin-top:8px}
+  .alimler b{color:var(--soluk);font-weight:600}
+  .ac-btn{background:none;border:none;color:var(--zumrut);font-family:inherit;font-size:13px;
+    cursor:pointer;padding:0;margin-top:6px;font-weight:600}
+
+  .uyari-kart{border-color:#4a3a1f;background:linear-gradient(180deg,#1f1a10,#161109)}
+  .uyari-baslik{color:var(--turuncu);font-weight:700;font-size:15px;display:flex;gap:9px;align-items:center}
+  .benzer-baslik{font-size:11.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--daha-soluk);margin:18px 0 10px}
+
+  /* liste kartları (konu) */
+  .mini{background:var(--yuzey);border:1px solid var(--cizgi);border-radius:14px;padding:15px;margin-bottom:12px}
+  .mini .ust-satir{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px}
+  .mini .hadis-metin{font-size:15.5px;margin:0}
+
+  /* --- Ezan / namaz vakitleri --- */
+  .ezan-sonraki{text-align:center;padding:8px 0 16px}
+  .ezan-sonraki .etk{font-size:11.5px;text-transform:uppercase;letter-spacing:1.8px;color:var(--zumrut)}
+  .ezan-sonraki .ad{font-family:'Lora',serif;font-size:26px;color:var(--pirinc);margin:4px 0}
+  .ezan-sonraki .geri{font-size:14px;color:var(--soluk)}
+  .vakit{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-top:1px solid var(--cizgi)}
+  .vakit .isim{font-size:15px;color:var(--metin)}
+  .vakit .saat{font-family:'Lora',serif;font-size:16px;color:var(--soluk);font-variant-numeric:tabular-nums}
+  .vakit.simdi{background:linear-gradient(90deg,transparent,var(--yesil-bg),transparent);margin:0 -12px;padding:12px 16px;border-radius:8px}
+  .vakit.simdi .isim{color:var(--yesil);font-weight:700} .vakit.simdi .saat{color:var(--yesil);font-weight:700}
+  .kible{display:flex;align-items:center;gap:16px;margin-top:18px;padding-top:16px;border-top:1px solid var(--cizgi)}
+  .pusula{width:78px;height:78px;flex-shrink:0;position:relative}
+  .kible-bilgi .etk{font-size:11.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--daha-soluk)}
+  .kible-bilgi .der{font-family:'Lora',serif;font-size:22px;color:var(--pirinc);margin-top:2px}
+
+  .disc{font-size:11.5px;color:var(--daha-soluk);text-align:center;line-height:1.6;margin-top:26px;padding:0 8px}
+  .yukleniyor{text-align:center;color:var(--soluk);padding:26px;font-size:14px}
+  .spin{display:inline-block;width:18px;height:18px;border:2px solid var(--cizgi);border-top-color:var(--zumrut);
+    border-radius:50%;animation:d .7s linear infinite;vertical-align:-4px;margin-right:9px}
+  @keyframes d{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg class="amblem" viewBox="0 0 48 48" fill="none">
+      <path d="M24 4 L40 12 V26 C40 36 33 42 24 45 C15 42 8 36 8 26 V12 Z" stroke="#d8b877" stroke-width="1.6" fill="#15201c"/>
+      <path d="M24 15 a7 7 0 1 0 4 12.6 a5.6 5.6 0 1 1 0-10.5 A7 7 0 0 0 24 15Z" fill="#57c4a3"/>
+      <circle cx="30" cy="20.5" r="1.5" fill="#d8b877"/>
+    </svg>
+    <h1>Mihenk</h1>
+    <div class="alt" data-i18n="alt">Kaynağıyla din rehberi</div>
+    <div class="divider">✦</div>
+  </header>
+
+  <div class="dil-sec">
+    <button class="dil aktif" data-dil="tr">TR</button>
+    <button class="dil" data-dil="en">EN</button>
+  </div>
+
+  <div class="ust-nav">
+    <button class="unav aktif" data-bol="hadis" data-i18n="nav_hadis">Hadis</button>
+    <button class="unav" data-bol="kuran" data-i18n="nav_kuran">Kur'an</button>
+    <button class="unav" data-bol="ezan" data-i18n="nav_ezan">Ezan</button>
+  </div>
+
+  <div id="bolum-hadis">
+  <div class="sekmeler">
+    <button class="sekme aktif" data-mod="dogrula" data-i18n="tab_dogrula">Hadis Doğrula</button>
+    <button class="sekme" data-mod="konu" data-i18n="tab_konu">Konuya Göre</button>
+  </div>
+
+  <!-- DOĞRULA -->
+  <div id="mod-dogrula">
+    <div class="kart">
+      <label class="ust" data-i18n="lbl_dogrula">Bir hadis yapıştır — kaynağını ve derecesini göster</label>
+      <textarea id="metin" data-i18n-ph="ph_dogrula" placeholder="Duyduğun ya da paylaşılan bir hadis metnini buraya yapıştır…"></textarea>
+      <div class="cipler" id="ornekler">
+        <button class="cip" data-t="Ameller ancak niyetlere göredir" data-t-en="Actions are judged by intentions" data-i18n="ex_niyet">Örnek: niyet hadisi</button>
+        <button class="cip" data-t="Cennet annelerin ayakları altındadır" data-t-en="Paradise lies at the feet of mothers" data-i18n="ex_cennet">Örnek: cennet-anne</button>
+        <button class="cip" data-t="Temizlik imandan bir parçadır" data-t-en="Cleanliness is part of faith" data-i18n="ex_temizlik">Örnek: temizlik</button>
+      </div>
+      <button class="btn" id="btnDogrula" data-i18n="btn_dogrula">Doğrula</button>
+    </div>
+    <div class="sonuc" id="sonucDogrula"></div>
+  </div>
+
+  <!-- KONU -->
+  <div id="mod-konu" style="display:none">
+    <div class="kart">
+      <label class="ust" data-i18n="lbl_konu">Bir konu yaz — sahih hadisleri getir</label>
+      <input class="metin" id="konu" data-i18n-ph="ph_konu" placeholder="yalancılık, evlilik, ticaret, komşuluk…">
+      <div class="cipler" id="konuCipler"></div>
+      <button class="btn" id="btnKonu" data-i18n="btn_konu">Getir</button>
+    </div>
+    <div class="sonuc" id="sonucKonu"></div>
+  </div>
+  </div><!-- /bolum-hadis -->
+
+  <!-- KUR'AN -->
+  <div id="bolum-kuran" style="display:none">
+    <div class="kart">
+      <label class="ust" data-i18n="lbl_kuran">Bir konu yaz — Kur'an ne diyor?</label>
+      <input class="metin" id="kkonu" data-i18n-ph="ph_kuran" placeholder="sabır, anne-baba, faiz, tevekkül, adalet…">
+      <div class="cipler" id="kkonuCipler"></div>
+      <button class="btn" id="btnKuran" data-i18n="btn_kuran">Ayetleri getir</button>
+    </div>
+    <div class="sonuc" id="sonucKuran"></div>
+  </div>
+
+  <!-- EZAN -->
+  <div id="bolum-ezan" style="display:none">
+    <div class="kart" id="ezanKart">
+      <div id="ezanBaslangic" style="text-align:center;padding:10px 4px">
+        <div class="anlam" data-i18n="ezan_intro" style="margin-bottom:14px">Namaz vakitleri ve kıble için konumuna ihtiyacım var.</div>
+        <button class="btn" id="btnEzan" data-i18n="ezan_btn" style="margin-top:0">Konumumu kullan</button>
+      </div>
+      <div id="ezanIcerik" style="display:none"></div>
+    </div>
+  </div>
+
+  <p class="disc" data-i18n="disc">
+    Mihenk, kanonik kaynaklardaki hadis metnini ve âlimlerin derecelendirmesini,
+    Kur'an ayetlerini ve <b>Diyanet meâlini</b> <b>getirir</b> — hadis, meal ya da fıkhî hüküm <b>üretmez</b>.
+    Meâl bir çeviridir; ihtilaflı konularda bir âlime / müftülüğe danışınız.
+  </p>
+</div>
+
+<script>
+const API = location.hostname === 'localhost' || location.protocol === 'file:'
+  ? 'http://localhost:8788' : 'http://localhost:8788';
+const APP_KEY = 'hadis-dev';
+let dil = localStorage.getItem('dil') || 'tr';
+
+const KONULAR = {
+  tr: ['yalancılık','evlilik','ticaret','komşuluk','sabır','namaz','anne-baba','öfke','tevazu','sadaka'],
+  en: ['lying','marriage','trade','neighbors','patience','prayer','parents','anger','humility','charity'],
+};
+const KKONULAR = {
+  tr: ['sabır','anne-baba','faiz','tevekkül','adalet','şükür','namaz','infak','tövbe','ölüm'],
+  en: ['patience','parents','interest','trust in God','justice','gratitude','prayer','giving','repentance','death'],
+};
+const L = {
+  tr: {
+    alt:'Kaynağıyla din rehberi', nav_hadis:'Hadis', nav_kuran:'Kur\'an',
+    tab_dogrula:'Hadis Doğrula', tab_konu:'Konuya Göre',
+    lbl_dogrula:'Bir hadis yapıştır — kaynağını ve derecesini göster',
+    ph_dogrula:'Duyduğun ya da paylaşılan bir hadis metnini buraya yapıştır…', btn_dogrula:'Doğrula',
+    lbl_konu:'Bir konu yaz — sahih hadisleri getir', ph_konu:'yalancılık, evlilik, ticaret, komşuluk…', btn_konu:'Getir',
+    lbl_kuran:'Bir konu ya da anlamını yaz — Kur\'an ne diyor?', ph_kuran:'sabır, anne-baba, faiz, "işini Allah\'a bırakmak"…', btn_kuran:'Ayetleri getir',
+    ex_niyet:'Örnek: niyet hadisi', ex_cennet:'Örnek: cennet-anne', ex_temizlik:'Örnek: temizlik',
+    disc:'Mihenk, kanonik kaynaklardaki hadis metnini ve âlimlerin derecelendirmesini, Kur\'an ayetlerini ve <b>Diyanet meâlini</b> <b>getirir</b> — hadis, meal ya da fıkhî hüküm <b>üretmez</b>. Meâl bir çeviridir; ihtilaflı konularda bir âlime / müftülüğe danışınız.',
+    yukleniyor:'Kanonik kaynaklarda aranıyor…', err_title:'Bağlanamadım', err_body:'Sunucuya ulaşılamadı. Backend çalışıyor mu? (localhost:8788)',
+    nf_title:'Bu söz kanonik kaynaklarda geçmiyor',
+    nf_body:'Girdiğin metin <b>Kütüb-i Sitte\'de</b> (Buhârî, Müslim, Tirmizî, Ebû Dâvûd, Nesâî, İbn Mâce) bu haliyle yer almıyor — bu kaynaklarda sağlam bir dayanağı görünmüyor. <span style="opacity:.75">(Başka bir muteber kaynakta farklı lafızla geçme ihtimali ayrıca araştırılmalı; bu yüzden "kesinlikle uydurma" değil, "sağlam kaynağı gösterilemedi" diyoruz.)</span>',
+    similar:'Benzer / ilgili hadisler', meal:'Meâl: Diyanet İşleri',
+    konu_bos:'Bu konuda sahih hadis bulunamadı. Farklı bir kelime dene.', kuran_bos:'Bu konuda ayet bulunamadı. Farklı bir kelime dene.',
+    konu_bul:(n)=>`${n} sahih/hasen hadis`, kuran_bul:(n)=>`${n} ayet`,
+    nav_ezan:'Ezan', ezan_intro:'Namaz vakitleri ve kıble için konumuna ihtiyacım var.', ezan_btn:'Konumumu kullan',
+    ezan_sonraki:'Sonraki vakit', ezan_kaldi:'kaldı', ezan_konum_hata:'Konum alınamadı. Tarayıcı izni gerekli.',
+    vakit:{imsak:'İmsak',gunes:'Güneş',ogle:'Öğle',ikindi:'İkindi',aksam:'Akşam',yatsi:'Yatsı'},
+    kible_etk:'Kıble yönü', yon:['Kuzey','Kuzeydoğu','Doğu','Güneydoğu','Güney','Güneybatı','Batı','Kuzeybatı'],
+  },
+  en: {
+    alt:'Your sourced faith guide', nav_hadis:'Hadith', nav_kuran:'Quran',
+    tab_dogrula:'Verify Hadith', tab_konu:'By Topic',
+    lbl_dogrula:'Paste a hadith — see its source and grade',
+    ph_dogrula:'Paste a hadith you heard or that was forwarded to you…', btn_dogrula:'Verify',
+    lbl_konu:'Type a topic — get authentic hadiths', ph_konu:'lying, marriage, trade, neighbors…', btn_konu:'Get',
+    lbl_kuran:'Type a topic or its meaning — what does the Quran say?', ph_kuran:'patience, parents, interest, "putting trust in God"…', btn_kuran:'Get verses',
+    ex_niyet:'Ex: intentions', ex_cennet:'Ex: paradise-mothers', ex_temizlik:'Ex: cleanliness',
+    disc:'Mihenk <b>brings</b> the hadith text from canonical sources with scholars\' gradings, Quran verses and their <b>translation</b> — it does <b>not generate</b> hadith, translation or rulings. A translation is interpretive; consult a scholar on disputed matters.',
+    yukleniyor:'Searching canonical sources…', err_title:'Connection failed', err_body:'Could not reach the server. Is the backend running? (localhost:8788)',
+    nf_title:'This saying is not found in the canonical sources',
+    nf_body:'Your text does not appear in this form in the <b>Six Books</b> (Bukhari, Muslim, Tirmidhi, Abu Dawud, Nasa\'i, Ibn Majah) — it has no sound basis in these sources. <span style="opacity:.75">(It may exist with different wording in another reputable source, which should be checked separately; hence "no sound source shown" rather than "certainly fabricated".)</span>',
+    similar:'Similar / related hadiths', meal:'Translation: Abdel Haleem',
+    konu_bos:'No authentic hadith found for this topic. Try another word.', kuran_bos:'No verse found for this topic. Try another word.',
+    konu_bul:(n)=>`${n} authentic hadiths`, kuran_bul:(n)=>`${n} verses`,
+    nav_ezan:'Prayer', ezan_intro:'I need your location for prayer times and qibla.', ezan_btn:'Use my location',
+    ezan_sonraki:'Next prayer', ezan_kaldi:'left', ezan_konum_hata:'Could not get location. Browser permission needed.',
+    vakit:{imsak:'Fajr',gunes:'Sunrise',ogle:'Dhuhr',ikindi:'Asr',aksam:'Maghrib',yatsi:'Isha'},
+    kible_etk:'Qibla direction', yon:['North','Northeast','East','Southeast','South','Southwest','West','Northwest'],
+  },
+};
+let T = L[dil];
+
+function renkSinif(r){return {yesil:'r-yesil',turuncu:'r-turuncu',kirmizi:'r-kirmizi',gri:'r-gri'}[r]||'r-gri';}
+function rozet(h){return `<span class="rozet ${renkSinif(h.dereceRenk)}"><span class="nokta"></span>${h.dereceEtiket}</span>`;}
+function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
+
+function hadisKarti(h, tam){
+  const alim = (h.alimler||[]).map(a=>`${esc(a.alim)}: ${esc(a.derece)}`).join(' · ');
+  const arapca = tam && h.ar ? `<div class="arapca">${esc(h.ar)}</div>` : '';
+  const ref = h.mevzuat && h.referans ? `<div class="alimler"><b>Kaynak / inceleme:</b> ${esc(h.referans)}</div>` : '';
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      ${rozet(h)}<span class="kaynak">${esc(h.kaynak)}</span>
+    </div>
+    <div class="hadis-metin">${esc(h.tr)}</div>
+    ${arapca}
+    <div class="anlam">${esc(h.dereceAnlam)}</div>
+    ${alim?`<div class="alimler"><b>Derecelendirme:</b> ${alim}</div>`:''}${ref}`;
+}
+
+function ayetKarti(a){
+  const sf = dil==='en'?'Page':'Sayfa', cz = dil==='en'?'Juz':'Cüz';
+  const ref = `${esc(a.kaynak)}${a.sayfa?` · ${sf} ${a.sayfa}`:''}${a.cuz?` · ${cz} ${a.cuz}`:''}`;
+  const okunus = dil==='en' ? '' : (a.okunus?`<div class="okunus">${esc(a.okunus)}</div>`:''); // okunuş sadece TR
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <span class="rozet r-yesil"><span class="nokta"></span>${T.nav_kuran}</span><span class="kaynak">${ref}</span>
+    </div>
+    ${a.ar?`<div class="arapca">${esc(a.ar)}</div>`:''}
+    ${okunus}
+    <div class="hadis-metin">${esc(a.tr)}</div>
+    <div class="alimler">${T.meal}</div>`;
+}
+
+async function istek(yol, govde){
+  const r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil})});
+  if(!r.ok) throw new Error('sunucu '+r.status);
+  return r.json();
+}
+function yukleniyor(el){el.className='sonuc gorunur';el.innerHTML=`<div class="yukleniyor"><span class="spin"></span>${T.yukleniyor}</div>`;}
+function hata(el){el.className='sonuc gorunur';el.innerHTML=`<div class="kart uyari-kart"><div class="uyari-baslik">${T.err_title}</div><div class="anlam">${T.err_body}</div></div>`;}
+
+// --- Doğrula ---
+async function calistirDogrula(){
+  const metin=document.getElementById('metin').value.trim();
+  if(metin.length<8) return;
+  const el=document.getElementById('sonucDogrula'); yukleniyor(el);
+  document.getElementById('btnDogrula').disabled=true;
+  try{
+    const j=await istek('/api/dogrula',{metin});
+    if(j.bulundu){
+      el.innerHTML=`<div class="kart">${hadisKarti(j.hadis,true)}</div>`+benzerBlok(j.benzerler);
+    }else{
+      el.innerHTML=`<div class="kart uyari-kart">
+        <div class="uyari-baslik">${T.nf_title}</div>
+        <div class="anlam">${T.nf_body}</div>
+      </div>`;
+    }
+    el.className='sonuc gorunur';
+  }catch(e){hata(el);}
+  document.getElementById('btnDogrula').disabled=false;
+}
+function benzerBlok(list){
+  if(!list||!list.length) return '';
+  return `<div class="benzer-baslik">${T.similar}</div>`+
+    list.map(h=>`<div class="mini">${hadisKarti(h,false)}</div>`).join('');
+}
+
+// --- Konu ---
+async function calistirKonu(){
+  const konu=document.getElementById('konu').value.trim();
+  if(konu.length<2) return;
+  const el=document.getElementById('sonucKonu'); yukleniyor(el);
+  document.getElementById('btnKonu').disabled=true;
+  try{
+    const j=await istek('/api/konu',{konu});
+    if(!j.sonuclar.length){
+      el.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.konu_bos}</div></div>`;
+    }else{
+      el.innerHTML=`<div class="benzer-baslik">“${esc(konu)}” — ${T.konu_bul(j.sonuclar.length)}</div>`+
+        j.sonuclar.map(h=>`<div class="mini">${hadisKarti(h,false)}</div>`).join('');
+    }
+    el.className='sonuc gorunur';
+  }catch(e){hata(el);}
+  document.getElementById('btnKonu').disabled=false;
+}
+
+// --- Kur'an ---
+async function calistirKuran(){
+  const konu=document.getElementById('kkonu').value.trim();
+  if(konu.length<2) return;
+  const el=document.getElementById('sonucKuran'); yukleniyor(el);
+  document.getElementById('btnKuran').disabled=true;
+  try{
+    const j=await istek('/api/kuran-konu',{konu});
+    if(!j.sonuclar.length){
+      el.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.kuran_bos}</div></div>`;
+    }else{
+      el.innerHTML=`<div class="benzer-baslik">“${esc(konu)}” — ${T.kuran_bul(j.sonuclar.length)}</div>`+
+        j.sonuclar.map(a=>`<div class="mini">${ayetKarti(a)}</div>`).join('');
+    }
+    el.className='sonuc gorunur';
+  }catch(e){hata(el);}
+  document.getElementById('btnKuran').disabled=false;
+}
+
+// --- Ezan / namaz vakitleri ---
+let ezanVeri=null, ezanTimer=null;
+function fmtSaat(ts){return new Date(ts).toLocaleTimeString(dil==='en'?'en-GB':'tr-TR', {hour:'2-digit',minute:'2-digit',hour12:false,timeZone:(ezanVeri&&ezanVeri.tz)||undefined});}
+function ezanBaslat(){
+  const btn=document.getElementById('btnEzan'), intro=document.querySelector('#ezanBaslangic .anlam');
+  if(!navigator.geolocation){intro.textContent=T.ezan_konum_hata;return;}
+  btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    try{ ezanVeri=await istek('/api/namaz',{lat:pos.coords.latitude,lng:pos.coords.longitude}); ezanCiz(); }
+    catch(e){ intro.textContent=T.ezan_konum_hata; }
+    btn.disabled=false;
+  }, ()=>{ intro.textContent=T.ezan_konum_hata; btn.disabled=false; }, {timeout:10000});
+}
+function ezanCiz(){
+  if(!ezanVeri) return;
+  clearInterval(ezanTimer);
+  const v=ezanVeri.vakitler, now=Date.now();
+  const sira=[['imsak',v.imsak],['gunes',v.gunes],['ogle',v.ogle],['ikindi',v.ikindi],['aksam',v.aksam],['yatsi',v.yatsi]];
+  let nextKey=null,nextTs=null;
+  for(const [k,ts] of sira){ if(ts>now){ nextKey=k; nextTs=ts; break; } }
+  if(!nextTs && ezanVeri.yarinImsak){ nextKey='imsak'; nextTs=ezanVeri.yarinImsak; } // bugün bitti → yarın imsak
+  const deg=ezanVeri.kible, yon=T.yon[Math.round(deg/45)%8];
+  document.getElementById('ezanIcerik').innerHTML=`
+    <div class="ezan-sonraki">
+      <div class="etk">${T.ezan_sonraki}</div>
+      <div class="ad">${T.vakit[nextKey||'imsak']}</div>
+      <div class="geri" id="ezanGeri"></div>
+    </div>
+    ${sira.map(([k,ts])=>`<div class="vakit ${k===nextKey?'simdi':''}"><span class="isim">${T.vakit[k]}</span><span class="saat">${fmtSaat(ts)}</span></div>`).join('')}
+    <div class="kible">
+      <svg class="pusula" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="var(--cizgi)" stroke-width="2"/>
+        <text x="50" y="15" text-anchor="middle" fill="var(--daha-soluk)" font-size="11" font-family="sans-serif">N</text>
+        <g transform="rotate(${deg} 50 50)">
+          <path d="M50 11 L57 53 L50 47 L43 53 Z" fill="var(--zumrut)"/>
+          <circle cx="50" cy="50" r="3" fill="var(--pirinc)"/>
+        </g>
+      </svg>
+      <div class="kible-bilgi"><div class="etk">${T.kible_etk}</div><div class="der">${deg}° · ${yon}</div></div>
+    </div>`;
+  document.getElementById('ezanIcerik').style.display='';
+  document.getElementById('ezanBaslangic').style.display='none';
+  if(nextTs){
+    const tik=()=>{ const d=nextTs-Date.now(); if(d<=0){ ezanCiz(); return; }
+      const h=Math.floor(d/3.6e6),m=Math.floor(d%3.6e6/6e4),s=Math.floor(d%6e4/1000);
+      const el=document.getElementById('ezanGeri'); if(el) el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${T.ezan_kaldi}`;
+    };
+    tik(); ezanTimer=setInterval(tik,1000);
+  }
+}
+
+// --- Kurulum ---
+const BOLUMLER=['hadis','kuran','ezan'];
+document.querySelectorAll('.unav').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.unav').forEach(x=>x.classList.remove('aktif'));
+  b.classList.add('aktif');
+  BOLUMLER.forEach(x=>document.getElementById('bolum-'+x).style.display = x===b.dataset.bol?'':'none');
+});
+document.getElementById('btnEzan').onclick=ezanBaslat;
+document.querySelectorAll('.sekme').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.sekme').forEach(x=>x.classList.remove('aktif'));
+  b.classList.add('aktif');
+  const m=b.dataset.mod;
+  document.getElementById('mod-dogrula').style.display=m==='dogrula'?'':'none';
+  document.getElementById('mod-konu').style.display=m==='konu'?'':'none';
+});
+document.getElementById('ornekler').onclick=e=>{const t=dil==='en'?e.target.dataset.tEn:e.target.dataset.t;if(t){document.getElementById('metin').value=t;}};
+document.getElementById('btnDogrula').onclick=calistirDogrula;
+document.getElementById('btnKonu').onclick=calistirKonu;
+document.getElementById('btnKuran').onclick=calistirKuran;
+
+// Konu çiplerini dile göre kur
+function cipleriKur(){
+  const yap=(kapId,list,inputId,calistir)=>{
+    const kap=document.getElementById(kapId); kap.innerHTML='';
+    list.forEach(k=>{const b=document.createElement('button');b.className='cip';b.textContent=k;
+      b.onclick=()=>{document.getElementById(inputId).value=k;calistir();};kap.appendChild(b);});
+  };
+  yap('konuCipler',KONULAR[dil],'konu',calistirKonu);
+  yap('kkonuCipler',KKONULAR[dil],'kkonu',calistirKuran);
+}
+
+// Dil uygula: statik metinler + çipler + T
+function dilUygula(yeni){
+  dil=yeni; T=L[dil]; localStorage.setItem('dil',dil);
+  document.documentElement.lang=dil;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n; if(L[dil][k]!==undefined) el.innerHTML=L[dil][k];});
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{const k=el.dataset.i18nPh; if(L[dil][k]!==undefined) el.placeholder=L[dil][k];});
+  document.querySelectorAll('.dil').forEach(b=>b.classList.toggle('aktif',b.dataset.dil===dil));
+  cipleriKur();
+  // açık sonuçları temizle (dil karışmasın)
+  ['sonucDogrula','sonucKonu','sonucKuran'].forEach(id=>{const e=document.getElementById(id);e.innerHTML='';e.className='sonuc';});
+  if(ezanVeri) ezanCiz(); // namaz açıksa yeni dilde yeniden çiz
+}
+document.querySelectorAll('.dil').forEach(b=>b.onclick=()=>dilUygula(b.dataset.dil));
+
+dilUygula(dil); // başlangıç
+</script>
+</body>
+</html>

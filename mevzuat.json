@@ -1,0 +1,26 @@
+[
+  {
+    "metin": "Cennet annelerin ayakları altındadır",
+    "derece": "zayif",
+    "referans": "İsak Emin Aktepe, \"Sahih Zannettiğimiz Zayıf Hadisler I\", Erzincan Ü. SBE Dergisi, 2016 (isnad tahlili)",
+    "aciklama": "Bu meşhur lafzın senedinde meçhul (kimliği belirsiz) râviler bulunduğu için hadis olarak zayıf sayılmıştır. ANCAK anneye saygı ve hizmetin fazileti hem Kur'an'da (İsrâ 23) hem de sahih rivayetlerde (ör. Buhârî; cihad için izin isteyene 'anneye hizmet et' buyrulması) sağlam biçimde yer alır. Yani mesaj doğru; zayıf olan bu spesifik lafzın senedidir."
+  },
+  {
+    "metin": "Patlıcan her derde devadır",
+    "derece": "mevzu",
+    "referans": "TDV İslâm Ansiklopedisi, \"Mevzû\" maddesi",
+    "aciklama": "Akla ve müşahedeye aykırı içeriği sebebiyle âlimlerce Peygamber'e ait kabul edilmeyen sözlerden. Sahih hadis kaynaklarında yeri yoktur."
+  },
+  {
+    "metin": "Yeşile ve güzel kadına bakmak gözü kuvvetlendirir",
+    "derece": "mevzu",
+    "referans": "TDV İslâm Ansiklopedisi, \"Mevzû\" maddesi",
+    "aciklama": "Peygamber sözüne yakışmayan, tutarsız içerik taşıdığı için âlimlerce aslı olmayan söz kabul edilen örneklerden."
+  },
+  {
+    "metin": "Zaman sana uymazsa sen zamana uy",
+    "derece": "mevzu",
+    "referans": "Diyanet / TDV kaynaklarında halk arasında hadis sanılan sözler arasında; hadisle ilgisi yoktur",
+    "aciklama": "Halk arasında hadis diye dolaşsa da hadisle ilgisi olmayan, mana bakımından da İslam'ın ruhuyla bağdaşmayan bir sözdür."
+  }
+]
