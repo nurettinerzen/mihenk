@@ -1,0 +1,17 @@
+# Render blueprint — Mihenk backend (Docker). Paralı tier: model + vektörler RAM ister.
+services:
+  - type: web
+    name: mihenk-api
+    runtime: docker
+    plan: standard          # embedding modeli + vektörler için (starter'ın RAM'i yetmeyebilir)
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false          # Render panelinden gir
+      - key: APP_KEY
+        sync: false          # hadis.html'deki APP_KEY ile aynı olmalı
+      - key: MODEL
+        value: claude-haiku-4-5
+      - key: RATE_LIMIT
+        value: "120"

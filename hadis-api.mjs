@@ -207,7 +207,18 @@ function namaz(lat, lng) {
   };
 }
 
-// --- Basit HTTP sunucu (CORS + app-key + gövde sınırı) ---
+// Basit IP başına rate limit (saatte LIMIT istek) — LLM/embedding maliyetini korur.
+const istekSayac = new Map();
+const LIMIT = Number(process.env.RATE_LIMIT || 120);
+function limitAsildi(ip) {
+  const now = Date.now(), pencere = 3600_000;
+  let r = istekSayac.get(ip);
+  if (!r || now > r.reset) { r = { count: 0, reset: now + pencere }; istekSayac.set(ip, r); }
+  r.count++;
+  return r.count > LIMIT;
+}
+
+// --- Basit HTTP sunucu (CORS + app-key + rate limit + gövde sınırı) ---
 function govde(req) {
   return new Promise((res, rej) => {
     let d = ''; let n = 0;
@@ -225,13 +236,29 @@ http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   if (url.pathname === '/health') {
     res.writeHead(200, { 'content-type': 'application/json' });
-    return res.end(JSON.stringify({ ok: true, surum: SURUM, hadis: motor.N, model: MODEL, llm: !!anthropic }));
+    return res.end(JSON.stringify({ ok: true, surum: SURUM, hadis: corpus.length, ayet: ayat.length, model: MODEL, llm: !!anthropic }));
+  }
+
+  // Statik sunum: uygulama HTML'i + fontlar (tek servis olsun diye).
+  if (req.method === 'GET') {
+    const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
+    let p = url.pathname === '/' ? '/hadis.html' : url.pathname;
+    if (/^\/(hadis\.html|fonts\.css|fonts\/[\w.-]+\.woff2)$/.test(p)) {
+      try {
+        const dosya = readFileSync(yol(p.replace(/^\//, '')));
+        const ext = p.slice(p.lastIndexOf('.'));
+        res.writeHead(200, { 'content-type': MIME[ext] || 'application/octet-stream', 'cache-control': 'public, max-age=86400' });
+        return res.end(dosya);
+      } catch { /* aşağıda 404 */ }
+    }
   }
 
   try {
     const POST_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu', '/api/namaz'];
     if (req.method === 'POST' && POST_YOLLAR.includes(url.pathname)) {
       if (req.headers['x-app-key'] !== APP_KEY) { res.writeHead(401); return res.end(JSON.stringify({ hata: 'yetkisiz' })); }
+      const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || 'x';
+      if (limitAsildi(ip)) { res.writeHead(429); return res.end(JSON.stringify({ hata: 'çok fazla istek, biraz bekleyin' })); }
       const body = JSON.parse(await govde(req) || '{}');
       const dil = body.dil === 'en' ? 'en' : 'tr';
       let out;

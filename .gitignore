@@ -1,7 +1,3 @@
 node_modules/
 .env
 .DS_Store
-# Üretilen büyük dosyalar — `npm run build` ile yeniden üretilir
-corpus.json
-ayat.json
-*.f32

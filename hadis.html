@@ -4,9 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mihenk — Hadis Doğrulama</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="fonts.css"><!-- yerel woff2 (offline, CDN yok) -->
 <style>
   :root{
     --bg:#0d1512; --bg2:#0a100e; --yuzey:#15201c; --yuzey2:#1b2823;
@@ -222,8 +220,8 @@
 </div>
 
 <script>
-const API = location.hostname === 'localhost' || location.protocol === 'file:'
-  ? 'http://localhost:8788' : 'http://localhost:8788';
+const API = (location.protocol === 'file:' || location.hostname === 'localhost')
+  ? 'http://localhost:8788' : location.origin; // production: backend ile aynı origin
 const APP_KEY = 'hadis-dev';
 let dil = localStorage.getItem('dil') || 'tr';
 
