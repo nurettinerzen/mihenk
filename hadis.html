@@ -59,6 +59,16 @@
   .paywall-liste{list-style:none;margin:0 0 20px;padding:0;display:grid;gap:11px}
   .paywall-liste li{display:flex;align-items:flex-start;gap:10px;font-size:14.5px;color:var(--metin)}
   .paywall-liste li::before{content:"✓";color:var(--zumrut);font-weight:800;flex-shrink:0}
+  .planlar{display:grid;gap:10px;margin-bottom:4px}
+  .plan-btn{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;cursor:pointer;
+    background:var(--yuzey2);border:1.5px solid var(--cizgi);border-radius:14px;transition:.15s;text-align:left}
+  .plan-btn.secili{border-color:var(--zumrut);background:linear-gradient(180deg,#173028,#122019);box-shadow:0 0 0 3px #57c4a31f}
+  .plan-sol{display:flex;flex-direction:column;gap:3px}
+  .plan-ad{font-family:'Sora',sans-serif;font-weight:600;font-size:15.5px;color:var(--metin)}
+  .plan-rozet{font-size:11px;color:var(--zumrut);font-weight:600}
+  .plan-fiyat{font-family:'Sora',sans-serif;font-weight:700;font-size:17px;color:var(--pirinc)}
+  .restore-link{background:none;border:none;color:var(--daha-soluk);font-family:inherit;font-size:12.5px;
+    cursor:pointer;display:block;margin:14px auto 0;text-decoration:underline}
   .paywall-lisans{margin-top:16px;padding-top:16px;border-top:1px solid var(--cizgi);text-align:center}
   .paywall-lisans>span{font-size:12.5px;color:var(--daha-soluk)}
   .paywall-lisans-giris{display:flex;gap:8px;margin-top:9px}
@@ -289,15 +299,19 @@
         <li data-i18n="pw_m2">Sınırsız Kur'an ve konu araması</li>
         <li data-i18n="pw_m3">Reklamsız, öncelikli erişim</li>
       </ul>
-      <button class="btn" id="paywallSatinAl" data-i18n="pw_satinal" style="margin-top:0">Mihenk Plus'a geç</button>
-      <div class="paywall-lisans">
-        <span data-i18n="pw_lisans_soru">Lisans anahtarın var mı?</span>
-        <div class="paywall-lisans-giris">
-          <input class="metin" id="lisansInput" placeholder="MIHENK-XXXX-XXXX">
-          <button class="btn-ince" id="lisansBtn" data-i18n="pw_etkinlestir">Etkinleştir</button>
-        </div>
-        <div class="paywall-mesaj" id="lisansMesaj"></div>
+      <div class="planlar">
+        <button class="plan-btn secili" id="planYillik" data-urun="mihenk_plus_yillik">
+          <span class="plan-sol"><span class="plan-ad" data-i18n="pw_yillik">Yıllık</span><span class="plan-rozet" data-i18n="pw_avantaj">%58 avantajlı</span></span>
+          <span class="plan-fiyat" id="fiyatYillik">₺249,99</span>
+        </button>
+        <button class="plan-btn" id="planAylik" data-urun="mihenk_plus_aylik">
+          <span class="plan-sol"><span class="plan-ad" data-i18n="pw_aylik">Aylık</span></span>
+          <span class="plan-fiyat" id="fiyatAylik">₺49,99</span>
+        </button>
       </div>
+      <button class="btn" id="paywallSatinAl" data-i18n="pw_devam" style="margin-top:14px">Devam et</button>
+      <div class="paywall-mesaj" id="lisansMesaj" style="text-align:center"></div>
+      <button class="restore-link" id="restoreBtn" data-i18n="pw_restore">Satın almaları geri yükle</button>
     </div>
   </div>
 
@@ -383,6 +397,8 @@ const L = {
     nav_bugun:'Bugün', ayar_baslik:'Ayarlar', ayar_dil:'Dil', ayar_gizlilik:'Gizlilik Politikası', ayar_kullanim:'Kullanım Koşulları',
     ayar_hakkinda:'Mihenk; hadis metnini, âlim derecesini ve Kur\'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.',
     selam:'Selâmün aleyküm', gun_ayet:'Günün Ayeti', gun_hadis:'Günün Hadisi',
+    pw_yillik:'Yıllık', pw_aylik:'Aylık', pw_avantaj:'%58 avantajlı', pw_devam:'Devam et', pw_restore:'Satın almaları geri yükle',
+    pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
   },
   en: {
     alt:'Your sourced faith guide', nav_hadis:'Hadith', nav_kuran:'Quran',
@@ -409,6 +425,8 @@ const L = {
     nav_bugun:'Today', ayar_baslik:'Settings', ayar_dil:'Language', ayar_gizlilik:'Privacy Policy', ayar_kullanim:'Terms of Use',
     ayar_hakkinda:'Mihenk brings the hadith text, scholars\' grading and Quran translation from verified sources — it does not generate them. Consult a scholar on disputed matters.',
     selam:'As-salamu alaykum', gun_ayet:'Verse of the Day', gun_hadis:'Hadith of the Day',
+    pw_yillik:'Yearly', pw_aylik:'Monthly', pw_avantaj:'Save 58%', pw_devam:'Continue', pw_restore:'Restore purchases',
+    pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
   },
 };
 let T = L[dil];
@@ -611,21 +629,59 @@ function hakGoster(){
 }
 function paywallGoster(){ document.getElementById('paywall').classList.add('acik'); }
 function paywallGizle(){ document.getElementById('paywall').classList.remove('acik'); }
-function satinAl(){
-  // iOS'ta Apple IAP (RevenueCat) native köprüsü tetiklenir; web'de placeholder.
-  if(window.MihenkIAP&&window.MihenkIAP.satinAl){ window.MihenkIAP.satinAl(); return; }
-  if(checkoutUrl){ window.open(checkoutUrl,'_blank'); return; }
-  const m=document.getElementById('lisansMesaj'); m.textContent=T.pw_yakinda; m.className='paywall-mesaj';
-}
-async function lisansEtkinlestir(){
-  const a=document.getElementById('lisansInput').value.trim(); if(!a) return;
-  const m=document.getElementById('lisansMesaj');
+// --- Mihenk Plus / Apple IAP (RevenueCat) ---
+const RC_KEY = ''; // RevenueCat > Mihenk > API Keys > Apple (appl_...) — kurulunca buraya yapıştırılacak
+const URUNLER = { yillik:'mihenk_plus_yillik', aylik:'mihenk_plus_aylik' };
+let seciliUrun = URUNLER.yillik, rcUrunler = null;
+const CapEklenti = () => (window.Capacitor && window.Capacitor.Plugins) || {};
+async function iapBaslat(){
+  if(!YERLI || !RC_KEY) return;
   try{
-    const r=await fetch(API+'/api/lisans',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({anahtar:a,cihaz})});
-    const j=await r.json();
-    if(j.premium){ premium=true; lisans=a; localStorage.setItem('lisans',a); hakGoster(); m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
-    else { m.textContent=T.pw_gecersiz; m.className='paywall-mesaj hata'; }
-  }catch(e){ m.textContent=T.err_body; m.className='paywall-mesaj hata'; }
+    const { Purchases } = CapEklenti();
+    await Purchases.configure({ apiKey: RC_KEY, appUserID: cihaz });
+    const { products } = await Purchases.getProducts({ productIdentifiers: Object.values(URUNLER) });
+    rcUrunler = {}; (products||[]).forEach(p=>{ rcUrunler[p.identifier]=p; });
+    if(rcUrunler[URUNLER.yillik]) document.getElementById('fiyatYillik').textContent = rcUrunler[URUNLER.yillik].priceString;
+    if(rcUrunler[URUNLER.aylik]) document.getElementById('fiyatAylik').textContent = rcUrunler[URUNLER.aylik].priceString;
+    await iapPremiumKontrol();
+  }catch(e){ console.warn('IAP başlatılamadı', e); }
+}
+async function iapPremiumKontrol(){
+  try{
+    const { Purchases } = CapEklenti();
+    const { customerInfo } = await Purchases.getCustomerInfo();
+    const aktif = customerInfo && (Object.keys((customerInfo.entitlements&&customerInfo.entitlements.active)||{}).length>0 || (customerInfo.activeSubscriptions||[]).length>0);
+    if(aktif){ await premiumYap(); return true; }
+  }catch(e){}
+  return false;
+}
+async function premiumYap(){
+  premium=true; localStorage.setItem('premium','1'); hakGoster();
+  try{ await fetch(API+'/api/iap-onay',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz})}); }catch(e){}
+}
+function planSec(urun){
+  seciliUrun=urun;
+  document.getElementById('planYillik').classList.toggle('secili', urun===URUNLER.yillik);
+  document.getElementById('planAylik').classList.toggle('secili', urun===URUNLER.aylik);
+}
+async function satinAl(){
+  const m=document.getElementById('lisansMesaj');
+  if(!YERLI || !rcUrunler || !rcUrunler[seciliUrun]){ m.textContent=T.pw_yakinda; m.className='paywall-mesaj'; return; }
+  try{
+    const { Purchases } = CapEklenti(); m.textContent='';
+    await Purchases.purchaseStoreProduct({ product: rcUrunler[seciliUrun] });
+    if(await iapPremiumKontrol()){ m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
+  }catch(e){ if(!(e && (e.userCancelled || e.code==='1' || /cancel/i.test(e.message||'')))){ m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; } }
+}
+async function restore(){
+  const m=document.getElementById('lisansMesaj');
+  if(!YERLI){ m.textContent=T.pw_yakinda; m.className='paywall-mesaj'; return; }
+  try{
+    const { Purchases } = CapEklenti();
+    await Purchases.restorePurchases();
+    if(await iapPremiumKontrol()){ m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
+    else { m.textContent=T.pw_restore_yok; m.className='paywall-mesaj'; }
+  }catch(e){ m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; }
 }
 async function durumYukle(){
   try{
@@ -719,11 +775,15 @@ document.getElementById('plusBtn').onclick=paywallGoster;
 document.getElementById('paywallKapat').onclick=paywallGizle;
 document.getElementById('paywall').onclick=e=>{ if(e.target.id==='paywall') paywallGizle(); };
 document.getElementById('paywallSatinAl').onclick=satinAl;
-document.getElementById('lisansBtn').onclick=lisansEtkinlestir;
+document.getElementById('planYillik').onclick=()=>planSec(URUNLER.yillik);
+document.getElementById('planAylik').onclick=()=>planSec(URUNLER.aylik);
+document.getElementById('restoreBtn').onclick=restore;
+if(localStorage.getItem('premium')==='1') premium=true;
 
 dilUygula(dil); // başlangıç
 durumYukle();   // premium/kalan durumunu çek
 gununYukle();   // Bugün: günün ayeti + hadisi
+iapBaslat();    // RevenueCat (native + RC_KEY varsa): fiyatları çek + premium kontrol
 </script>
 </body>
 </html>

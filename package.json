@@ -16,6 +16,7 @@
     "@capacitor/geolocation": "^7.1.8",
     "@capacitor/ios": "^7.6.8",
     "@huggingface/transformers": "^4.2.0",
+    "@revenuecat/purchases-capacitor": "^10.4.0",
     "adhan": "^4.4.4",
     "tz-lookup": "^6.1.25"
   },

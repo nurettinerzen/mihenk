@@ -301,7 +301,7 @@ http.createServer(async (req, res) => {
   }
 
   try {
-    const POST_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu', '/api/namaz', '/api/lisans', '/api/durum', '/api/gunun'];
+    const POST_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu', '/api/namaz', '/api/lisans', '/api/durum', '/api/gunun', '/api/iap-onay'];
     if (req.method === 'POST' && POST_YOLLAR.includes(url.pathname)) {
       if (req.headers['x-app-key'] !== APP_KEY) { res.writeHead(401); return res.end(JSON.stringify({ hata: 'yetkisiz' })); }
       const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || 'x';
@@ -319,6 +319,13 @@ http.createServer(async (req, res) => {
         if (ok) premiumCihaz.set(cihaz, { anahtar: body.anahtar });
         res.writeHead(ok ? 200 : 400, { 'content-type': 'application/json' });
         return res.end(JSON.stringify({ premium: ok }));
+      }
+      // IAP onayı — RevenueCat satın almayı doğruladıktan sonra app bildirir; cihazı premium işaretle.
+      // ⚠️ MVP: güven-tabanlı (spoof edilebilir). İleride RevenueCat webhook ile sunucu-taraflı doğrulama.
+      if (url.pathname === '/api/iap-onay') {
+        premiumCihaz.set(cihaz, { kaynak: 'iap' });
+        res.writeHead(200, { 'content-type': 'application/json' });
+        return res.end(JSON.stringify({ premium: true }));
       }
       // Günün ayeti + hadisi (limitsiz)
       if (url.pathname === '/api/gunun') {
