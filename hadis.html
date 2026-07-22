@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Mihenk — Hadis Doğrulama</title>
 <link rel="stylesheet" href="fonts.css?v=3"><!-- yerel woff2 (offline, CDN yok); woff2 adları içerik-hash'li, v= eski cache'i kırar -->
 <style>
@@ -14,11 +14,13 @@
     --kirmizi:#e07a72; --kirmizi-bg:#301a19; --gri:#8fa39a; --gri-bg:#1c2723;
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  html{overflow-x:hidden;-webkit-text-size-adjust:100%}
   body{
     font-family:'Plus Jakarta Sans',system-ui,sans-serif;
     color:var(--metin);background:var(--bg);
-    min-height:100vh;line-height:1.5;
+    min-height:100vh;line-height:1.5;overflow-x:hidden;
     -webkit-font-smoothing:antialiased;
+    touch-action:pan-y;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;
     padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
   body::before{content:"";position:fixed;inset:0;z-index:-1;
@@ -88,8 +90,8 @@
     box-shadow:0 1px 0 #2c3e37 inset, 0 6px 14px #0006}
 
   /* --- Giriş alanı --- */
-  .kart{background:linear-gradient(180deg,var(--yuzey),#111a16);border:1px solid var(--cizgi);
-    border-radius:18px;padding:18px;box-shadow:0 10px 30px #0007}
+  .kart{background:linear-gradient(180deg,#17221d,#101914);border:1px solid #263630;
+    border-radius:20px;padding:20px;box-shadow:0 18px 44px -20px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.035)}
   label.ust{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:1.6px;
     color:var(--zumrut);font-weight:700;margin-bottom:10px}
   textarea,input.metin{width:100%;background:var(--bg2);border:1px solid var(--cizgi);border-radius:14px;
@@ -104,12 +106,13 @@
   .cip:hover{background:linear-gradient(180deg,#26382f,#1a2721);border-color:var(--zumrut-koyu);
     color:var(--metin);transform:translateY(-1px);box-shadow:0 4px 10px #0005}
   .cip:active{transform:translateY(0)}
-  .btn{width:100%;margin-top:14px;padding:14px;border:none;border-radius:12px;cursor:pointer;
-    font-family:inherit;font-size:15.5px;font-weight:700;color:#0c1512;
-    background:linear-gradient(180deg,#6ad3b2,var(--zumrut-koyu));
-    box-shadow:0 6px 16px #57c4a333, 0 1px 0 #ffffff33 inset;transition:.15s}
-  .btn:active{transform:translateY(1px)}
-  .btn:disabled{opacity:.55;cursor:default}
+  .btn{width:100%;margin-top:16px;padding:15px;border:none;border-radius:14px;cursor:pointer;
+    font-family:'Sora',sans-serif;font-size:15px;font-weight:600;letter-spacing:.2px;color:#07120d;
+    background:linear-gradient(180deg,#63cba9,#2d7259);
+    box-shadow:0 12px 26px -10px rgba(47,124,102,.65), inset 0 1px 0 rgba(255,255,255,.22);transition:.16s ease}
+  .btn:hover{filter:brightness(1.05)}
+  .btn:active{transform:translateY(1px);filter:brightness(.97)}
+  .btn:disabled{opacity:.5;cursor:default;filter:none}
 
   /* --- Sonuç --- */
   .sonuc{margin-top:20px;display:none}
@@ -142,7 +145,8 @@
   .benzer-baslik{font-size:11.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--daha-soluk);margin:18px 0 10px}
 
   /* liste kartları (konu) */
-  .mini{background:var(--yuzey);border:1px solid var(--cizgi);border-radius:14px;padding:15px;margin-bottom:12px}
+  .mini{background:linear-gradient(180deg,#16211c,#111a15);border:1px solid #22322c;border-radius:16px;
+    padding:16px 17px;margin-bottom:12px;box-shadow:0 10px 26px -18px rgba(0,0,0,.6)}
   .mini .ust-satir{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:9px}
   .mini .hadis-metin{font-size:15.5px;margin:0}
 
@@ -414,7 +418,7 @@ async function calistirDogrula(){
       </div>`;
     }
     el.className='sonuc gorunur';
-  }catch(e){ if(!e||!e.paywall) hata(el); }
+  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el); }
   document.getElementById('btnDogrula').disabled=false;
 }
 function benzerBlok(list){
@@ -438,7 +442,7 @@ async function calistirKonu(){
         j.sonuclar.map(h=>`<div class="mini">${hadisKarti(h,false)}</div>`).join('');
     }
     el.className='sonuc gorunur';
-  }catch(e){ if(!e||!e.paywall) hata(el); }
+  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el); }
   document.getElementById('btnKonu').disabled=false;
 }
 
@@ -457,7 +461,7 @@ async function calistirKuran(){
         j.sonuclar.map(a=>`<div class="mini">${ayetKarti(a)}</div>`).join('');
     }
     el.className='sonuc gorunur';
-  }catch(e){ if(!e||!e.paywall) hata(el); }
+  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el); }
   document.getElementById('btnKuran').disabled=false;
 }
 
@@ -478,9 +482,30 @@ async function konumAl(){
 async function ezanBaslat(){
   const btn=document.getElementById('btnEzan'), intro=document.querySelector('#ezanBaslangic .anlam');
   btn.disabled=true;
-  try{ const k=await konumAl(); ezanVeri=await istek('/api/namaz',k); ezanCiz(); }
+  try{ const k=await konumAl(); ezanVeri=await istek('/api/namaz',k); ezanCiz(); pusulaBaslat(); }
   catch(e){ if(!e||!e.paywall) intro.textContent=T.ezan_konum_hata; }
   btn.disabled=false;
+}
+// Canlı kıble pusulası: cihaz yönüne göre bütün pusulayı döndür (N gerçek kuzeyi, ok gerçek kıbleyi gösterir).
+let pusulaAktif=false;
+function pusulaHandler(e){
+  let h = (typeof e.webkitCompassHeading==='number') ? e.webkitCompassHeading
+        : (e.alpha!=null ? (360 - e.alpha) : null);
+  if(h==null) return;
+  const g=document.getElementById('pusulaDon');
+  if(g) g.setAttribute('transform',`rotate(${(-h).toFixed(1)} 50 50)`);
+}
+async function pusulaBaslat(){
+  if(pusulaAktif) return;
+  try{
+    if(typeof DeviceOrientationEvent!=='undefined' && typeof DeviceOrientationEvent.requestPermission==='function'){
+      const p=await DeviceOrientationEvent.requestPermission(); // iOS izin (dokunma jesti içinde)
+      if(p!=='granted') return;
+    }
+  }catch(e){ return; }
+  window.addEventListener('deviceorientationabsolute', pusulaHandler, true);
+  window.addEventListener('deviceorientation', pusulaHandler, true);
+  pusulaAktif=true;
 }
 function ezanCiz(){
   if(!ezanVeri) return;
@@ -501,10 +526,12 @@ function ezanCiz(){
     <div class="kible">
       <svg class="pusula" viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="46" fill="none" stroke="var(--cizgi)" stroke-width="2"/>
-        <text x="50" y="15" text-anchor="middle" fill="var(--daha-soluk)" font-size="11" font-family="sans-serif">N</text>
-        <g transform="rotate(${deg} 50 50)">
-          <path d="M50 11 L57 53 L50 47 L43 53 Z" fill="var(--zumrut)"/>
-          <circle cx="50" cy="50" r="3" fill="var(--pirinc)"/>
+        <g id="pusulaDon" transform="rotate(0 50 50)" style="transition:transform .12s linear">
+          <text x="50" y="15" text-anchor="middle" fill="var(--daha-soluk)" font-size="11" font-family="sans-serif">N</text>
+          <g transform="rotate(${deg} 50 50)">
+            <path d="M50 11 L57 53 L50 47 L43 53 Z" fill="var(--zumrut)"/>
+            <circle cx="50" cy="50" r="3" fill="var(--pirinc)"/>
+          </g>
         </g>
       </svg>
       <div class="kible-bilgi"><div class="etk">${T.kible_etk}</div><div class="der">${deg}° · ${yon}</div></div>
@@ -574,13 +601,14 @@ document.getElementById('btnKuran').onclick=calistirKuran;
 
 // Konu çiplerini dile göre kur
 function cipleriKur(){
-  const yap=(kapId,list,inputId,calistir)=>{
+  const yap=(kapId,list,inputId)=>{
     const kap=document.getElementById(kapId); kap.innerHTML='';
     list.forEach(k=>{const b=document.createElement('button');b.className='cip';b.textContent=k;
-      b.onclick=()=>{document.getElementById(inputId).value=k;calistir();};kap.appendChild(b);});
+      // Çip SADECE kutuyu doldurur; kullanıcı butona basınca çalışır (çift-çalışma yok).
+      b.onclick=()=>{const inp=document.getElementById(inputId);inp.value=k;inp.focus();};kap.appendChild(b);});
   };
-  yap('konuCipler',KONULAR[dil],'konu',calistirKonu);
-  yap('kkonuCipler',KKONULAR[dil],'kkonu',calistirKuran);
+  yap('konuCipler',KONULAR[dil],'konu');
+  yap('kkonuCipler',KKONULAR[dil],'kkonu');
 }
 
 // Dil uygula: statik metinler + çipler + T
