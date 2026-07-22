@@ -247,7 +247,9 @@ http.createServer(async (req, res) => {
       try {
         const dosya = readFileSync(yol(p.replace(/^\//, '')));
         const ext = p.slice(p.lastIndexOf('.'));
-        res.writeHead(200, { 'content-type': MIME[ext] || 'application/octet-stream', 'cache-control': 'public, max-age=86400' });
+        // HTML/CSS taze kalsın (redeploy'da anında güncellensin); fontlar uzun cache.
+        const cache = ext === '.woff2' ? 'public, max-age=604800' : 'no-cache';
+        res.writeHead(200, { 'content-type': MIME[ext] || 'application/octet-stream', 'cache-control': cache });
         return res.end(dosya);
       } catch { /* aşağıda 404 */ }
     }

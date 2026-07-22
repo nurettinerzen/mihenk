@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mihenk — Hadis Doğrulama</title>
-<link rel="stylesheet" href="fonts.css"><!-- yerel woff2 (offline, CDN yok) -->
+<link rel="stylesheet" href="fonts.css?v=3"><!-- yerel woff2 (offline, CDN yok); woff2 adları içerik-hash'li, v= eski cache'i kırar -->
 <style>
   :root{
     --bg:#0d1512; --bg2:#0a100e; --yuzey:#15201c; --yuzey2:#1b2823;
@@ -28,7 +28,7 @@
   /* --- Başlık --- */
   header{text-align:center;padding:20px 0 14px}
   .amblem{width:46px;height:46px;margin:0 auto 12px;display:block}
-  h1{font-family:'Lora',serif;font-weight:600;font-size:30px;letter-spacing:.5px;
+  h1{font-family:'Sora',sans-serif;font-weight:700;font-size:31px;letter-spacing:-1px;
     background:linear-gradient(180deg,#f3ecdc,var(--pirinc));-webkit-background-clip:text;background-clip:text;color:transparent}
   .alt{font-size:12.5px;color:var(--soluk);text-transform:uppercase;letter-spacing:2.5px;margin-top:5px}
   .divider{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--zumrut-koyu);margin:16px 0 4px;font-size:12px}
@@ -44,7 +44,7 @@
   /* --- Üst navigasyon (Hadis / Kur'an) --- */
   .ust-nav{display:flex;gap:8px;justify-content:center;margin:18px 0 6px}
   .unav{padding:9px 22px;border:1px solid var(--cizgi);background:var(--yuzey);color:var(--soluk);
-    font-family:'Lora',serif;font-size:16px;font-weight:600;border-radius:22px;cursor:pointer;transition:.18s}
+    font-family:'Sora',sans-serif;font-size:14.5px;font-weight:600;letter-spacing:-.2px;border-radius:22px;cursor:pointer;transition:.18s}
   .unav.aktif{background:linear-gradient(180deg,#1c2a24,#12201b);color:var(--pirinc);border-color:var(--zumrut-koyu);
     box-shadow:0 4px 12px #0006}
 
@@ -61,14 +61,18 @@
     border-radius:18px;padding:18px;box-shadow:0 10px 30px #0007}
   label.ust{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:1.6px;
     color:var(--zumrut);font-weight:700;margin-bottom:10px}
-  textarea,input.metin{width:100%;background:var(--bg2);border:1px solid var(--cizgi);border-radius:12px;
-    color:var(--metin);font-family:'Lora',serif;font-size:16px;padding:14px;resize:vertical;line-height:1.6}
+  textarea,input.metin{width:100%;background:var(--bg2);border:1px solid var(--cizgi);border-radius:14px;
+    color:var(--metin);font-family:'Plus Jakarta Sans',sans-serif;font-size:15.5px;padding:15px;resize:vertical;line-height:1.6}
+  textarea::placeholder,input.metin::placeholder{color:var(--daha-soluk);font-family:'Plus Jakarta Sans',sans-serif}
   textarea{min-height:120px}
   textarea:focus,input.metin:focus{outline:none;border-color:var(--zumrut-koyu);box-shadow:0 0 0 3px #57c4a322}
-  .cipler{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-  .cip{background:var(--yuzey2);border:1px solid var(--cizgi);color:var(--soluk);font-family:inherit;
-    font-size:13px;padding:7px 13px;border-radius:20px;cursor:pointer;transition:.15s}
-  .cip:hover{border-color:var(--zumrut-koyu);color:var(--metin)}
+  .cipler{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+  .cip{background:linear-gradient(180deg,#1e2b25,#16211c);border:1px solid #2b3b34;color:var(--soluk);
+    font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:500;padding:9px 15px;border-radius:12px;
+    cursor:pointer;transition:.18s;box-shadow:0 1px 2px #0004}
+  .cip:hover{background:linear-gradient(180deg,#26382f,#1a2721);border-color:var(--zumrut-koyu);
+    color:var(--metin);transform:translateY(-1px);box-shadow:0 4px 10px #0005}
+  .cip:active{transform:translateY(0)}
   .btn{width:100%;margin-top:14px;padding:14px;border:none;border-radius:12px;cursor:pointer;
     font-family:inherit;font-size:15.5px;font-weight:700;color:#0c1512;
     background:linear-gradient(180deg,#6ad3b2,var(--zumrut-koyu));
@@ -114,17 +118,17 @@
   /* --- Ezan / namaz vakitleri --- */
   .ezan-sonraki{text-align:center;padding:8px 0 16px}
   .ezan-sonraki .etk{font-size:11.5px;text-transform:uppercase;letter-spacing:1.8px;color:var(--zumrut)}
-  .ezan-sonraki .ad{font-family:'Lora',serif;font-size:26px;color:var(--pirinc);margin:4px 0}
+  .ezan-sonraki .ad{font-family:'Sora',sans-serif;font-weight:700;font-size:27px;letter-spacing:-.5px;color:var(--pirinc);margin:4px 0}
   .ezan-sonraki .geri{font-size:14px;color:var(--soluk)}
   .vakit{display:flex;justify-content:space-between;align-items:center;padding:12px 4px;border-top:1px solid var(--cizgi)}
   .vakit .isim{font-size:15px;color:var(--metin)}
-  .vakit .saat{font-family:'Lora',serif;font-size:16px;color:var(--soluk);font-variant-numeric:tabular-nums}
+  .vakit .saat{font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:16px;color:var(--soluk);font-variant-numeric:tabular-nums}
   .vakit.simdi{background:linear-gradient(90deg,transparent,var(--yesil-bg),transparent);margin:0 -12px;padding:12px 16px;border-radius:8px}
   .vakit.simdi .isim{color:var(--yesil);font-weight:700} .vakit.simdi .saat{color:var(--yesil);font-weight:700}
   .kible{display:flex;align-items:center;gap:16px;margin-top:18px;padding-top:16px;border-top:1px solid var(--cizgi)}
   .pusula{width:78px;height:78px;flex-shrink:0;position:relative}
   .kible-bilgi .etk{font-size:11.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--daha-soluk)}
-  .kible-bilgi .der{font-family:'Lora',serif;font-size:22px;color:var(--pirinc);margin-top:2px}
+  .kible-bilgi .der{font-family:'Sora',sans-serif;font-weight:600;font-size:21px;color:var(--pirinc);margin-top:2px}
 
   .disc{font-size:11.5px;color:var(--daha-soluk);text-align:center;line-height:1.6;margin-top:26px;padding:0 8px}
   .yukleniyor{text-align:center;color:var(--soluk);padding:26px;font-size:14px}
