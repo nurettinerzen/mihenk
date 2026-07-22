@@ -191,6 +191,22 @@ async function kuranKonu(sorgu, dil = 'tr') {
   };
 }
 
+// Günün ayeti + hadisi — tarihe göre deterministik (herkes aynısını görür, her gün değişir).
+// Ayet seçimi bilinen/manevî ayetlerden; metin yine yerleşik veriden gelir.
+const GUNUN_AYETLER = [[2,286],[94,5],[13,28],[2,152],[65,3],[39,53],[2,153],[16,128],[14,7],[29,69],[3,139],[10,57],[2,45],[3,159],[93,4],[2,255],[8,46],[64,11],[3,173],[57,4]];
+const gununHadisHavuz = corpus.filter(h => h.derece === 'sahih' && h.tr && h.tr.length > 40 && h.tr.length < 340);
+function gunSeed() { const d = new Date(); return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5); }
+function gunun(dil = 'tr') {
+  const gi = gunSeed();
+  const [s, a] = GUNUN_AYETLER[gi % GUNUN_AYETLER.length];
+  const ay = ayat.find(x => x.sure === s && x.ayet === a);
+  const hd = gununHadisHavuz.length ? gununHadisHavuz[(gi * 7) % gununHadisHavuz.length] : null;
+  return {
+    ayet: ay ? { kaynak: dil === 'en' ? ay.kaynakEn : ay.kaynak, ar: ay.ar, okunus: ay.okunus, tr: dil === 'en' ? (ay.en || ay.tr) : ay.tr } : null,
+    hadis: hd ? { kaynak: hd.kaynak, tr: dil === 'en' ? (hd.en || hd.tr) : hd.tr, ar: hd.ar, dereceEtiket: dil === 'en' ? 'Sahih (Authentic)' : 'Sahih' } : null,
+  };
+}
+
 // Namaz vakitleri + kıble — konuma göre (Diyanet/Türkiye yöntemi).
 // Sunucu epoch-ms döndürür; istemci kendi saat diliminde biçimler (kullanıcı konumdadır).
 function namaz(lat, lng) {
@@ -283,7 +299,7 @@ http.createServer(async (req, res) => {
   }
 
   try {
-    const POST_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu', '/api/namaz', '/api/lisans', '/api/durum'];
+    const POST_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu', '/api/namaz', '/api/lisans', '/api/durum', '/api/gunun'];
     if (req.method === 'POST' && POST_YOLLAR.includes(url.pathname)) {
       if (req.headers['x-app-key'] !== APP_KEY) { res.writeHead(401); return res.end(JSON.stringify({ hata: 'yetkisiz' })); }
       const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || 'x';
@@ -301,6 +317,11 @@ http.createServer(async (req, res) => {
         if (ok) premiumCihaz.set(cihaz, { anahtar: body.anahtar });
         res.writeHead(ok ? 200 : 400, { 'content-type': 'application/json' });
         return res.end(JSON.stringify({ premium: ok }));
+      }
+      // Günün ayeti + hadisi (limitsiz)
+      if (url.pathname === '/api/gunun') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        return res.end(JSON.stringify(gunun(dil)));
       }
       // Durum: premium mi + kalan hak
       if (url.pathname === '/api/durum') {

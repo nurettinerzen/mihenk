@@ -74,10 +74,26 @@
     font-family:inherit;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;letter-spacing:.5px}
   .dil.aktif{background:var(--yuzey2);color:var(--pirinc);border-color:var(--zumrut-koyu)}
 
-  /* --- Üst navigasyon (Hadis / Kur'an) --- */
-  .ust-nav{display:flex;gap:8px;justify-content:center;margin:18px 0 6px}
-  .unav{padding:9px 22px;border:1px solid var(--cizgi);background:var(--yuzey);color:var(--soluk);
-    font-family:'Sora',sans-serif;font-size:14.5px;font-weight:600;letter-spacing:-.2px;border-radius:22px;cursor:pointer;transition:.18s}
+  /* --- Ayarlar butonu --- */
+  .ayar-btn{background:var(--yuzey);border:1px solid var(--cizgi);color:var(--soluk);width:34px;height:34px;
+    border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s}
+  .ayar-btn:hover{color:var(--pirinc);border-color:var(--zumrut-koyu)}
+  .ayar-satir{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 2px;
+    border-top:1px solid var(--cizgi);font-size:15px;color:var(--metin);text-decoration:none}
+  .ayar-satir:first-of-type{border-top:none}
+  .ayar-satir .sol{display:flex;align-items:center;gap:11px;color:var(--metin)}
+  .ayar-satir .ok{color:var(--daha-soluk)}
+  .ayar-not{font-size:12.5px;color:var(--daha-soluk);line-height:1.6;margin-top:14px;padding-top:14px;border-top:1px solid var(--cizgi)}
+  .ayar-surum{font-size:11.5px;color:var(--daha-soluk);text-align:center;margin-top:12px}
+
+  /* --- Günün ayeti/hadisi (Bugün) --- */
+  .bugun-etk{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--zumrut);font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:8px}
+  .bugun-selam{font-family:'Sora',sans-serif;font-weight:600;font-size:20px;color:var(--metin);margin:2px 0 20px;letter-spacing:-.4px}
+
+  /* --- Üst navigasyon --- */
+  .ust-nav{display:flex;gap:7px;justify-content:center;margin:18px 0 6px}
+  .unav{padding:8px 15px;border:1px solid var(--cizgi);background:var(--yuzey);color:var(--soluk);
+    font-family:'Sora',sans-serif;font-size:13.5px;font-weight:600;letter-spacing:-.2px;border-radius:20px;cursor:pointer;transition:.18s}
   .unav.aktif{background:linear-gradient(180deg,#1c2a24,#12201b);color:var(--pirinc);border-color:var(--zumrut-koyu);
     box-shadow:0 4px 12px #0006}
 
@@ -187,19 +203,26 @@
 
   <div class="ust-bar">
     <button class="plus-rozet" id="plusBtn">✦ Plus</button>
-    <div class="dil-sec">
-      <button class="dil aktif" data-dil="tr">TR</button>
-      <button class="dil" data-dil="en">EN</button>
-    </div>
+    <button class="ayar-btn" id="ayarBtn" aria-label="Ayarlar">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
   </div>
 
   <div class="ust-nav">
-    <button class="unav aktif" data-bol="hadis" data-i18n="nav_hadis">Hadis</button>
+    <button class="unav aktif" data-bol="bugun" data-i18n="nav_bugun">Bugün</button>
+    <button class="unav" data-bol="hadis" data-i18n="nav_hadis">Hadis</button>
     <button class="unav" data-bol="kuran" data-i18n="nav_kuran">Kur'an</button>
     <button class="unav" data-bol="ezan" data-i18n="nav_ezan">Ezan</button>
   </div>
 
-  <div id="bolum-hadis">
+  <!-- BUGÜN -->
+  <div id="bolum-bugun">
+    <div id="gununIcerik" class="sonuc gorunur"></div>
+  </div>
+
+  <div id="bolum-hadis" style="display:none">
   <div class="sekmeler">
     <button class="sekme aktif" data-mod="dogrula" data-i18n="tab_dogrula">Hadis Doğrula</button>
     <button class="sekme" data-mod="konu" data-i18n="tab_konu">Konuya Göre</button>
@@ -278,6 +301,29 @@
     </div>
   </div>
 
+  <!-- AYARLAR -->
+  <div class="paywall-arka" id="ayarlar">
+    <div class="paywall-kart">
+      <button class="paywall-kapat" id="ayarKapat">×</button>
+      <div class="paywall-baslik" style="margin-bottom:16px" data-i18n="ayar_baslik">Ayarlar</div>
+      <div class="ayar-satir">
+        <span class="sol">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="var(--zumrut)" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>
+          <span data-i18n="ayar_dil">Dil</span>
+        </span>
+        <div class="dil-sec">
+          <button class="dil aktif" data-dil="tr">TR</button>
+          <button class="dil" data-dil="en">EN</button>
+        </div>
+      </div>
+      <a class="ayar-satir" id="gizlilikLink" href="https://mihenk-api.onrender.com/gizlilik" target="_blank" rel="noopener">
+        <span class="sol" data-i18n="ayar_gizlilik">Gizlilik Politikası</span><span class="ok">›</span>
+      </a>
+      <div class="ayar-not" data-i18n="ayar_hakkinda">Mihenk; hadis metnini, âlim derecesini ve Kur'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.</div>
+      <div class="ayar-surum">Mihenk 1.0</div>
+    </div>
+  </div>
+
   <p class="disc" data-i18n="disc">
     Mihenk, kanonik kaynaklardaki hadis metnini ve âlimlerin derecelendirmesini,
     Kur'an ayetlerini ve <b>Diyanet meâlini</b> <b>getirir</b> — hadis, meal ya da fıkhî hüküm <b>üretmez</b>.
@@ -331,6 +377,9 @@ const L = {
     pw_alt:'Sınırsız hadis doğrulama ve Kur\'an araması', pw_m1:'Sınırsız hadis doğrulama', pw_m2:'Sınırsız Kur\'an ve konu araması', pw_m3:'Reklamsız, öncelikli erişim',
     pw_satinal:'Mihenk Plus\'a geç', pw_lisans_soru:'Lisans anahtarın var mı?', pw_etkinlestir:'Etkinleştir',
     pw_kalan:(n)=>`${n} ücretsiz sorgu kaldı`, pw_aktif:'Plus aktif', pw_basarili:'Etkinleştirildi! Sınırsız erişim açık.', pw_gecersiz:'Anahtar geçersiz.', pw_yakinda:'Satın alma yakında (App Store).',
+    nav_bugun:'Bugün', ayar_baslik:'Ayarlar', ayar_dil:'Dil', ayar_gizlilik:'Gizlilik Politikası',
+    ayar_hakkinda:'Mihenk; hadis metnini, âlim derecesini ve Kur\'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.',
+    selam:'Selâmün aleyküm', gun_ayet:'Günün Ayeti', gun_hadis:'Günün Hadisi',
   },
   en: {
     alt:'Your sourced faith guide', nav_hadis:'Hadith', nav_kuran:'Quran',
@@ -354,6 +403,9 @@ const L = {
     pw_alt:'Unlimited hadith verification and Quran search', pw_m1:'Unlimited hadith verification', pw_m2:'Unlimited Quran & topic search', pw_m3:'Ad-free, priority access',
     pw_satinal:'Get Mihenk Plus', pw_lisans_soru:'Have a license key?', pw_etkinlestir:'Activate',
     pw_kalan:(n)=>`${n} free left`, pw_aktif:'Plus active', pw_basarili:'Activated! Unlimited access unlocked.', pw_gecersiz:'Invalid key.', pw_yakinda:'Purchase coming soon (App Store).',
+    nav_bugun:'Today', ayar_baslik:'Settings', ayar_dil:'Language', ayar_gizlilik:'Privacy Policy',
+    ayar_hakkinda:'Mihenk brings the hadith text, scholars\' grading and Quran translation from verified sources — it does not generate them. Consult a scholar on disputed matters.',
+    selam:'As-salamu alaykum', gun_ayet:'Verse of the Day', gun_hadis:'Hadith of the Day',
   },
 };
 let T = L[dil];
@@ -579,13 +631,45 @@ async function durumYukle(){
   }catch(e){}
 }
 
+// --- Bugün (günün ayeti + hadisi) ---
+let gununVeri=null;
+async function gununYukle(){
+  try{
+    const r=await fetch(API+'/api/gunun',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({dil})});
+    gununVeri=await r.json(); gununCiz();
+  }catch(e){ document.getElementById('gununIcerik').innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.err_body}</div></div>`; }
+}
+function gununCiz(){
+  if(!gununVeri) return;
+  const a=gununVeri.ayet, h=gununVeri.hadis;
+  const ayetKart = a?`<div class="kart" style="margin-bottom:14px">
+    <div class="bugun-etk">✦ ${T.gun_ayet}</div>
+    ${a.ar?`<div class="arapca">${esc(a.ar)}</div>`:''}
+    <div class="hadis-metin">${esc(a.tr)}</div>
+    <div class="kaynak" style="margin-top:10px">${esc(a.kaynak)}</div>
+  </div>`:'';
+  const hadisKart = h?`<div class="kart">
+    <div class="bugun-etk">✦ ${T.gun_hadis}</div>
+    <div class="hadis-metin">${esc(h.tr)}</div>
+    <div style="display:flex;gap:10px;align-items:center;margin-top:10px">
+      <span class="rozet r-yesil"><span class="nokta"></span>${esc(h.dereceEtiket)}</span><span class="kaynak">${esc(h.kaynak)}</span>
+    </div>
+  </div>`:'';
+  document.getElementById('gununIcerik').innerHTML=`<div class="bugun-selam">${T.selam} 🤲</div>`+ayetKart+hadisKart;
+}
+
 // --- Kurulum ---
-const BOLUMLER=['hadis','kuran','ezan'];
+const BOLUMLER=['bugun','hadis','kuran','ezan'];
 document.querySelectorAll('.unav').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.unav').forEach(x=>x.classList.remove('aktif'));
   b.classList.add('aktif');
   BOLUMLER.forEach(x=>document.getElementById('bolum-'+x).style.display = x===b.dataset.bol?'':'none');
+  if(b.dataset.bol==='bugun' && !gununVeri) gununYukle();
 });
+// Ayarlar
+document.getElementById('ayarBtn').onclick=()=>document.getElementById('ayarlar').classList.add('acik');
+document.getElementById('ayarKapat').onclick=()=>document.getElementById('ayarlar').classList.remove('acik');
+document.getElementById('ayarlar').onclick=e=>{ if(e.target.id==='ayarlar') e.currentTarget.classList.remove('acik'); };
 document.getElementById('btnEzan').onclick=ezanBaslat;
 document.querySelectorAll('.sekme').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.sekme').forEach(x=>x.classList.remove('aktif'));
@@ -622,6 +706,7 @@ function dilUygula(yeni){
   // açık sonuçları temizle (dil karışmasın)
   ['sonucDogrula','sonucKonu','sonucKuran'].forEach(id=>{const e=document.getElementById(id);e.innerHTML='';e.className='sonuc';});
   if(ezanVeri) ezanCiz(); // namaz açıksa yeni dilde yeniden çiz
+  if(gununVeri) gununYukle(); // günün içeriğini yeni dilde çek
   hakGoster();
 }
 document.querySelectorAll('.dil').forEach(b=>b.onclick=()=>dilUygula(b.dataset.dil));
@@ -635,6 +720,7 @@ document.getElementById('lisansBtn').onclick=lisansEtkinlestir;
 
 dilUygula(dil); // başlangıç
 durumYukle();   // premium/kalan durumunu çek
+gununYukle();   // Bugün: günün ayeti + hadisi
 </script>
 </body>
 </html>
