@@ -8,3 +8,5 @@ ios/App/build/
 ios/DerivedData/
 **/xcuserdata/
 **/*.xcuserstate
+build/
+ExportOptions.plist

@@ -464,15 +464,23 @@ async function calistirKuran(){
 // --- Ezan / namaz vakitleri ---
 let ezanVeri=null, ezanTimer=null;
 function fmtSaat(ts){return new Date(ts).toLocaleTimeString(dil==='en'?'en-GB':'tr-TR', {hour:'2-digit',minute:'2-digit',hour12:false,timeZone:(ezanVeri&&ezanVeri.tz)||undefined});}
-function ezanBaslat(){
+async function konumAl(){
+  const cap=window.Capacitor;
+  if(cap&&cap.isNativePlatform&&cap.isNativePlatform()&&cap.Plugins&&cap.Plugins.Geolocation){
+    const p=await cap.Plugins.Geolocation.getCurrentPosition({enableHighAccuracy:false,timeout:12000});
+    return {lat:p.coords.latitude,lng:p.coords.longitude};
+  }
+  return new Promise((res,rej)=>{
+    if(!navigator.geolocation) return rej(new Error('yok'));
+    navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),rej,{timeout:12000});
+  });
+}
+async function ezanBaslat(){
   const btn=document.getElementById('btnEzan'), intro=document.querySelector('#ezanBaslangic .anlam');
-  if(!navigator.geolocation){intro.textContent=T.ezan_konum_hata;return;}
   btn.disabled=true;
-  navigator.geolocation.getCurrentPosition(async pos=>{
-    try{ ezanVeri=await istek('/api/namaz',{lat:pos.coords.latitude,lng:pos.coords.longitude}); ezanCiz(); }
-    catch(e){ intro.textContent=T.ezan_konum_hata; }
-    btn.disabled=false;
-  }, ()=>{ intro.textContent=T.ezan_konum_hata; btn.disabled=false; }, {timeout:10000});
+  try{ const k=await konumAl(); ezanVeri=await istek('/api/namaz',k); ezanCiz(); }
+  catch(e){ if(!e||!e.paywall) intro.textContent=T.ezan_konum_hata; }
+  btn.disabled=false;
 }
 function ezanCiz(){
   if(!ezanVeri) return;
