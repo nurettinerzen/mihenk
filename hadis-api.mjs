@@ -286,7 +286,9 @@ http.createServer(async (req, res) => {
   if (req.method === 'GET') {
     const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
     let p = url.pathname === '/' ? '/hadis.html' : url.pathname;
-    if (/^\/(hadis\.html|fonts\.css|fonts\/[\w.-]+\.woff2)$/.test(p)) {
+    if (p === '/gizlilik') p = '/gizlilik.html';
+    if (p === '/kullanim') p = '/kullanim.html';
+    if (/^\/(hadis\.html|gizlilik\.html|kullanim\.html|fonts\.css|fonts\/[\w.-]+\.woff2)$/.test(p)) {
       try {
         const dosya = readFileSync(yol(p.replace(/^\//, '')));
         const ext = p.slice(p.lastIndexOf('.'));
