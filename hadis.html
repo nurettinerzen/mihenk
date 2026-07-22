@@ -438,7 +438,7 @@ function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':
 function hadisKarti(h, tam){
   const alim = (h.alimler||[]).map(a=>`${esc(a.alim)}: ${esc(a.derece)}`).join(' · ');
   const arapca = tam && h.ar ? `<div class="arapca">${esc(h.ar)}</div>` : '';
-  const ref = h.mevzuat && h.referans ? `<div class="alimler"><b>Kaynak / inceleme:</b> ${esc(h.referans)}</div>` : '';
+  const ref = h.mevzuat && h.referans ? `<div class="alimler"><b>${dil==='en'?'Source / review':'Kaynak / inceleme'}:</b> ${esc(h.referans)}</div>` : '';
   return `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
       ${rozet(h)}<span class="kaynak">${esc(h.kaynak)}</span>
@@ -446,7 +446,7 @@ function hadisKarti(h, tam){
     <div class="hadis-metin">${esc(h.tr)}</div>
     ${arapca}
     <div class="anlam">${esc(h.dereceAnlam)}</div>
-    ${alim?`<div class="alimler"><b>Derecelendirme:</b> ${alim}</div>`:''}${ref}`;
+    ${alim?`<div class="alimler"><b>${dil==='en'?'Grading':'Derecelendirme'}:</b> ${alim}</div>`:''}${ref}`;
 }
 
 function ayetKarti(a){
