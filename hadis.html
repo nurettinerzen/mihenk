@@ -35,8 +35,39 @@
   .divider::before,.divider::after{content:"";height:1px;width:46px;background:linear-gradient(90deg,transparent,var(--cizgi))}
   .divider::after{background:linear-gradient(90deg,var(--cizgi),transparent)}
 
+  /* --- Üst bar: Plus rozeti + dil --- */
+  .ust-bar{display:flex;justify-content:space-between;align-items:center;margin:-6px 0 0}
+  .plus-rozet{background:linear-gradient(180deg,#241f10,#1a160b);border:1px solid #4a3c1f;color:var(--pirinc);
+    font-family:'Sora',sans-serif;font-size:12px;font-weight:600;padding:6px 13px;border-radius:20px;cursor:pointer;
+    letter-spacing:.2px;transition:.15s;white-space:nowrap}
+  .plus-rozet:hover{border-color:var(--pirinc);background:linear-gradient(180deg,#2c260f,#201a0c)}
+  .plus-rozet.premium{background:linear-gradient(180deg,#12281f,#0e1f18);border-color:var(--zumrut-koyu);color:var(--zumrut)}
+
+  /* --- Paywall (Mihenk Plus) --- */
+  .paywall-arka{position:fixed;inset:0;z-index:50;background:#060a08d8;backdrop-filter:blur(5px);
+    display:none;align-items:center;justify-content:center;padding:20px}
+  .paywall-arka.acik{display:flex;animation:bel .25s ease}
+  .paywall-kart{background:linear-gradient(180deg,var(--yuzey),#0f1814);border:1px solid var(--cizgi);
+    border-radius:22px;padding:26px 22px;max-width:400px;width:100%;position:relative;box-shadow:0 20px 60px #000a}
+  .paywall-kapat{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--daha-soluk);
+    font-size:26px;line-height:1;cursor:pointer}
+  .paywall-amblem{font-size:26px;color:var(--pirinc);text-align:center}
+  .paywall-baslik{font-family:'Sora',sans-serif;font-weight:700;font-size:23px;text-align:center;color:var(--metin);margin:8px 0 4px}
+  .paywall-alt{text-align:center;color:var(--soluk);font-size:14px;line-height:1.5;margin-bottom:18px}
+  .paywall-liste{list-style:none;margin:0 0 20px;padding:0;display:grid;gap:11px}
+  .paywall-liste li{display:flex;align-items:flex-start;gap:10px;font-size:14.5px;color:var(--metin)}
+  .paywall-liste li::before{content:"✓";color:var(--zumrut);font-weight:800;flex-shrink:0}
+  .paywall-lisans{margin-top:16px;padding-top:16px;border-top:1px solid var(--cizgi);text-align:center}
+  .paywall-lisans>span{font-size:12.5px;color:var(--daha-soluk)}
+  .paywall-lisans-giris{display:flex;gap:8px;margin-top:9px}
+  .paywall-lisans-giris input{font-size:14px;padding:11px}
+  .btn-ince{background:var(--yuzey2);border:1px solid var(--zumrut-koyu);color:var(--metin);font-family:inherit;
+    font-size:13px;font-weight:600;padding:0 15px;border-radius:12px;cursor:pointer;white-space:nowrap}
+  .paywall-mesaj{font-size:12.5px;margin-top:8px;min-height:16px}
+  .paywall-mesaj.ok{color:var(--zumrut)} .paywall-mesaj.hata{color:var(--kirmizi)}
+
   /* --- Dil seçici --- */
-  .dil-sec{display:flex;justify-content:flex-end;gap:4px;margin:-6px 0 0}
+  .dil-sec{display:flex;justify-content:flex-end;gap:4px;margin:0}
   .dil{padding:5px 12px;border:1px solid var(--cizgi);background:transparent;color:var(--daha-soluk);
     font-family:inherit;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;letter-spacing:.5px}
   .dil.aktif{background:var(--yuzey2);color:var(--pirinc);border-color:var(--zumrut-koyu)}
@@ -150,9 +181,12 @@
     <div class="divider">✦</div>
   </header>
 
-  <div class="dil-sec">
-    <button class="dil aktif" data-dil="tr">TR</button>
-    <button class="dil" data-dil="en">EN</button>
+  <div class="ust-bar">
+    <button class="plus-rozet" id="plusBtn">✦ Plus</button>
+    <div class="dil-sec">
+      <button class="dil aktif" data-dil="tr">TR</button>
+      <button class="dil" data-dil="en">EN</button>
+    </div>
   </div>
 
   <div class="ust-nav">
@@ -216,6 +250,30 @@
     </div>
   </div>
 
+  <!-- PAYWALL -->
+  <div class="paywall-arka" id="paywall">
+    <div class="paywall-kart">
+      <button class="paywall-kapat" id="paywallKapat">×</button>
+      <div class="paywall-amblem">✦</div>
+      <div class="paywall-baslik">Mihenk Plus</div>
+      <div class="paywall-alt" data-i18n="pw_alt">Sınırsız hadis doğrulama ve Kur'an araması</div>
+      <ul class="paywall-liste">
+        <li data-i18n="pw_m1">Sınırsız hadis doğrulama</li>
+        <li data-i18n="pw_m2">Sınırsız Kur'an ve konu araması</li>
+        <li data-i18n="pw_m3">Reklamsız, öncelikli erişim</li>
+      </ul>
+      <button class="btn" id="paywallSatinAl" data-i18n="pw_satinal" style="margin-top:0">Mihenk Plus'a geç</button>
+      <div class="paywall-lisans">
+        <span data-i18n="pw_lisans_soru">Lisans anahtarın var mı?</span>
+        <div class="paywall-lisans-giris">
+          <input class="metin" id="lisansInput" placeholder="MIHENK-XXXX-XXXX">
+          <button class="btn-ince" id="lisansBtn" data-i18n="pw_etkinlestir">Etkinleştir</button>
+        </div>
+        <div class="paywall-mesaj" id="lisansMesaj"></div>
+      </div>
+    </div>
+  </div>
+
   <p class="disc" data-i18n="disc">
     Mihenk, kanonik kaynaklardaki hadis metnini ve âlimlerin derecelendirmesini,
     Kur'an ayetlerini ve <b>Diyanet meâlini</b> <b>getirir</b> — hadis, meal ya da fıkhî hüküm <b>üretmez</b>.
@@ -224,10 +282,19 @@
 </div>
 
 <script>
-const API = (location.protocol === 'file:' || location.hostname === 'localhost')
-  ? 'http://localhost:8788' : location.origin; // production: backend ile aynı origin
+const BACKEND = 'https://mihenk-api.onrender.com'; // canlı backend
+const API = location.hostname === 'localhost' ? 'http://localhost:8788'
+          : location.protocol.startsWith('http') ? location.origin   // web: aynı origin
+          : BACKEND;                                                  // iOS/Capacitor (file/capacitor) → uzak backend
 const APP_KEY = "mihenk_dd4e1cc82891921d3fa559e8";
 let dil = localStorage.getItem('dil') || 'tr';
+// Freemium: cihaz kimliği + premium durumu
+let cihaz = localStorage.getItem('cihaz');
+if(!cihaz){ cihaz = (self.crypto&&crypto.randomUUID)?crypto.randomUUID():('c'+Date.now()+Math.random().toString(16).slice(2)); localStorage.setItem('cihaz',cihaz); }
+let lisans = localStorage.getItem('lisans') || '';
+let premium = false, kalan = null, checkoutUrl = '';
+// Native (iOS/Capacitor) mı? Limit sadece native'de uygulanır; web ücretsiz demo.
+const YERLI = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 
 const KONULAR = {
   tr: ['yalancılık','evlilik','ticaret','komşuluk','sabır','namaz','anne-baba','öfke','tevazu','sadaka'],
@@ -257,6 +324,9 @@ const L = {
     ezan_sonraki:'Sonraki vakit', ezan_kaldi:'kaldı', ezan_konum_hata:'Konum alınamadı. Tarayıcı izni gerekli.',
     vakit:{imsak:'İmsak',gunes:'Güneş',ogle:'Öğle',ikindi:'İkindi',aksam:'Akşam',yatsi:'Yatsı'},
     kible_etk:'Kıble yönü', yon:['Kuzey','Kuzeydoğu','Doğu','Güneydoğu','Güney','Güneybatı','Batı','Kuzeybatı'],
+    pw_alt:'Sınırsız hadis doğrulama ve Kur\'an araması', pw_m1:'Sınırsız hadis doğrulama', pw_m2:'Sınırsız Kur\'an ve konu araması', pw_m3:'Reklamsız, öncelikli erişim',
+    pw_satinal:'Mihenk Plus\'a geç', pw_lisans_soru:'Lisans anahtarın var mı?', pw_etkinlestir:'Etkinleştir',
+    pw_kalan:(n)=>`${n} ücretsiz sorgu kaldı`, pw_aktif:'Plus aktif', pw_basarili:'Etkinleştirildi! Sınırsız erişim açık.', pw_gecersiz:'Anahtar geçersiz.', pw_yakinda:'Satın alma yakında (App Store).',
   },
   en: {
     alt:'Your sourced faith guide', nav_hadis:'Hadith', nav_kuran:'Quran',
@@ -277,6 +347,9 @@ const L = {
     ezan_sonraki:'Next prayer', ezan_kaldi:'left', ezan_konum_hata:'Could not get location. Browser permission needed.',
     vakit:{imsak:'Fajr',gunes:'Sunrise',ogle:'Dhuhr',ikindi:'Asr',aksam:'Maghrib',yatsi:'Isha'},
     kible_etk:'Qibla direction', yon:['North','Northeast','East','Southeast','South','Southwest','West','Northwest'],
+    pw_alt:'Unlimited hadith verification and Quran search', pw_m1:'Unlimited hadith verification', pw_m2:'Unlimited Quran & topic search', pw_m3:'Ad-free, priority access',
+    pw_satinal:'Get Mihenk Plus', pw_lisans_soru:'Have a license key?', pw_etkinlestir:'Activate',
+    pw_kalan:(n)=>`${n} free left`, pw_aktif:'Plus active', pw_basarili:'Activated! Unlimited access unlocked.', pw_gecersiz:'Invalid key.', pw_yakinda:'Purchase coming soon (App Store).',
   },
 };
 let T = L[dil];
@@ -314,9 +387,12 @@ function ayetKarti(a){
 }
 
 async function istek(yol, govde){
-  const r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil})});
+  const r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil, cihaz, lisans, yerli:YERLI})});
+  if(r.status===402){ const j=await r.json(); if(j.checkout) checkoutUrl=j.checkout; paywallGoster(); throw {paywall:true}; }
   if(!r.ok) throw new Error('sunucu '+r.status);
-  return r.json();
+  const j = await r.json();
+  if(j.kalan!==undefined){ kalan=j.kalan; premium=!!j.premium; if(j.checkout) checkoutUrl=j.checkout; hakGoster(); }
+  return j;
 }
 function yukleniyor(el){el.className='sonuc gorunur';el.innerHTML=`<div class="yukleniyor"><span class="spin"></span>${T.yukleniyor}</div>`;}
 function hata(el){el.className='sonuc gorunur';el.innerHTML=`<div class="kart uyari-kart"><div class="uyari-baslik">${T.err_title}</div><div class="anlam">${T.err_body}</div></div>`;}
@@ -338,7 +414,7 @@ async function calistirDogrula(){
       </div>`;
     }
     el.className='sonuc gorunur';
-  }catch(e){hata(el);}
+  }catch(e){ if(!e||!e.paywall) hata(el); }
   document.getElementById('btnDogrula').disabled=false;
 }
 function benzerBlok(list){
@@ -362,7 +438,7 @@ async function calistirKonu(){
         j.sonuclar.map(h=>`<div class="mini">${hadisKarti(h,false)}</div>`).join('');
     }
     el.className='sonuc gorunur';
-  }catch(e){hata(el);}
+  }catch(e){ if(!e||!e.paywall) hata(el); }
   document.getElementById('btnKonu').disabled=false;
 }
 
@@ -381,7 +457,7 @@ async function calistirKuran(){
         j.sonuclar.map(a=>`<div class="mini">${ayetKarti(a)}</div>`).join('');
     }
     el.className='sonuc gorunur';
-  }catch(e){hata(el);}
+  }catch(e){ if(!e||!e.paywall) hata(el); }
   document.getElementById('btnKuran').disabled=false;
 }
 
@@ -436,6 +512,38 @@ function ezanCiz(){
   }
 }
 
+// --- Freemium / Mihenk Plus ---
+function hakGoster(){
+  const b=document.getElementById('plusBtn'); if(!b) return;
+  if(premium){ b.textContent='✦ '+T.pw_aktif; b.classList.add('premium'); }
+  else if(kalan!==null && kalan>=0){ b.textContent='✦ '+T.pw_kalan(kalan); b.classList.remove('premium'); }
+  else { b.textContent='✦ Plus'; b.classList.remove('premium'); }
+}
+function paywallGoster(){ document.getElementById('paywall').classList.add('acik'); }
+function paywallGizle(){ document.getElementById('paywall').classList.remove('acik'); }
+function satinAl(){
+  // iOS'ta Apple IAP (RevenueCat) native köprüsü tetiklenir; web'de placeholder.
+  if(window.MihenkIAP&&window.MihenkIAP.satinAl){ window.MihenkIAP.satinAl(); return; }
+  if(checkoutUrl){ window.open(checkoutUrl,'_blank'); return; }
+  const m=document.getElementById('lisansMesaj'); m.textContent=T.pw_yakinda; m.className='paywall-mesaj';
+}
+async function lisansEtkinlestir(){
+  const a=document.getElementById('lisansInput').value.trim(); if(!a) return;
+  const m=document.getElementById('lisansMesaj');
+  try{
+    const r=await fetch(API+'/api/lisans',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({anahtar:a,cihaz})});
+    const j=await r.json();
+    if(j.premium){ premium=true; lisans=a; localStorage.setItem('lisans',a); hakGoster(); m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
+    else { m.textContent=T.pw_gecersiz; m.className='paywall-mesaj hata'; }
+  }catch(e){ m.textContent=T.err_body; m.className='paywall-mesaj hata'; }
+}
+async function durumYukle(){
+  try{
+    const r=await fetch(API+'/api/durum',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz,lisans,yerli:YERLI})});
+    const j=await r.json(); premium=!!j.premium; kalan=j.premium?null:j.kalan; checkoutUrl=j.checkout||''; hakGoster();
+  }catch(e){}
+}
+
 // --- Kurulum ---
 const BOLUMLER=['hadis','kuran','ezan'];
 document.querySelectorAll('.unav').forEach(b=>b.onclick=()=>{
@@ -478,10 +586,19 @@ function dilUygula(yeni){
   // açık sonuçları temizle (dil karışmasın)
   ['sonucDogrula','sonucKonu','sonucKuran'].forEach(id=>{const e=document.getElementById(id);e.innerHTML='';e.className='sonuc';});
   if(ezanVeri) ezanCiz(); // namaz açıksa yeni dilde yeniden çiz
+  hakGoster();
 }
 document.querySelectorAll('.dil').forEach(b=>b.onclick=()=>dilUygula(b.dataset.dil));
 
+// Paywall bağlama
+document.getElementById('plusBtn').onclick=paywallGoster;
+document.getElementById('paywallKapat').onclick=paywallGizle;
+document.getElementById('paywall').onclick=e=>{ if(e.target.id==='paywall') paywallGizle(); };
+document.getElementById('paywallSatinAl').onclick=satinAl;
+document.getElementById('lisansBtn').onclick=lisansEtkinlestir;
+
 dilUygula(dil); // başlangıç
+durumYukle();   // premium/kalan durumunu çek
 </script>
 </body>
 </html>

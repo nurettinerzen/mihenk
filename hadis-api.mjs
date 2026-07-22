@@ -218,6 +218,33 @@ function limitAsildi(ip) {
   return r.count > LIMIT;
 }
 
+// --- Freemium: cihaz başına GÜNLÜK ücretsiz AI-sorgu; premium (lisanslı) = sınırsız ---
+const FREE_LIMIT = Number(process.env.FREE_LIMIT || 5);
+const CHECKOUT_URL = process.env.CHECKOUT_URL || ''; // LemonSqueezy/Stripe ödeme linki (kurulunca)
+const AI_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu']; // limite tabi (namaz serbest)
+const kullanim = new Map();      // cihaz -> {gun, sayi}
+const premiumCihaz = new Map();  // cihaz -> {anahtar}
+const bugun = () => new Date().toISOString().slice(0, 10);
+const premiumMi = (c) => premiumCihaz.has(c);
+function kalanHak(c) {
+  if (premiumMi(c)) return Infinity;
+  const r = kullanim.get(c);
+  if (!r || r.gun !== bugun()) return FREE_LIMIT;
+  return Math.max(0, FREE_LIMIT - r.sayi);
+}
+function hakKullan(c) {
+  let r = kullanim.get(c);
+  if (!r || r.gun !== bugun()) { r = { gun: bugun(), sayi: 0 }; kullanim.set(c, r); }
+  r.sayi++;
+}
+// Lisans doğrulama — ŞİMDİLİK stub (test anahtarı). LemonSqueezy bağlanınca gerçek API ile değişecek.
+async function lisansGecerli(anahtar) {
+  if (!anahtar) return false;
+  if (anahtar.trim() === (process.env.TEST_LISANS || 'MIHENK-TEST-2026')) return true;
+  // TODO(LemonSqueezy): POST https://api.lemonsqueezy.com/v1/licenses/validate {license_key} → .valid
+  return false;
+}
+
 // --- Basit HTTP sunucu (CORS + app-key + rate limit + gövde sınırı) ---
 function govde(req) {
   return new Promise((res, rej) => {
@@ -256,13 +283,36 @@ http.createServer(async (req, res) => {
   }
 
   try {
-    const POST_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu', '/api/namaz'];
+    const POST_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu', '/api/namaz', '/api/lisans', '/api/durum'];
     if (req.method === 'POST' && POST_YOLLAR.includes(url.pathname)) {
       if (req.headers['x-app-key'] !== APP_KEY) { res.writeHead(401); return res.end(JSON.stringify({ hata: 'yetkisiz' })); }
       const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || 'x';
       if (limitAsildi(ip)) { res.writeHead(429); return res.end(JSON.stringify({ hata: 'çok fazla istek, biraz bekleyin' })); }
       const body = JSON.parse(await govde(req) || '{}');
       const dil = body.dil === 'en' ? 'en' : 'tr';
+      const cihaz = (body.cihaz || '').toString().slice(0, 64) || 'anon';
+      const yerli = !!body.yerli; // limit sadece native (iOS) isteklerde; web ücretsiz demo
+      // Lisans body'de geldiyse premium'u aktive et
+      if (body.lisans && await lisansGecerli(body.lisans)) premiumCihaz.set(cihaz, { anahtar: body.lisans });
+
+      // Lisans etkinleştirme
+      if (url.pathname === '/api/lisans') {
+        const ok = await lisansGecerli(body.anahtar);
+        if (ok) premiumCihaz.set(cihaz, { anahtar: body.anahtar });
+        res.writeHead(ok ? 200 : 400, { 'content-type': 'application/json' });
+        return res.end(JSON.stringify({ premium: ok }));
+      }
+      // Durum: premium mi + kalan hak
+      if (url.pathname === '/api/durum') {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        return res.end(JSON.stringify({ premium: premiumMi(cihaz), kalan: (premiumMi(cihaz) || !yerli) ? -1 : kalanHak(cihaz), limit: FREE_LIMIT, checkout: CHECKOUT_URL }));
+      }
+      // AI-sorgu limiti (namaz hariç, sadece native)
+      if (AI_YOLLAR.includes(url.pathname) && yerli && !premiumMi(cihaz) && kalanHak(cihaz) <= 0) {
+        res.writeHead(402, { 'content-type': 'application/json' });
+        return res.end(JSON.stringify({ hata: 'limit', premium: false, limit: FREE_LIMIT, checkout: CHECKOUT_URL }));
+      }
+
       let out;
       if (url.pathname === '/api/namaz') {
         const lat = Number(body.lat), lng = Number(body.lng);
@@ -283,6 +333,13 @@ http.createServer(async (req, res) => {
         const k = (body.konu || '').trim();
         if (k.length < 2) { res.writeHead(400); return res.end(JSON.stringify({ hata: 'konu boş' })); }
         out = await konu(k, dil);
+      }
+      // AI sorgusu başarılı → hak düş + kalan bilgisini ekle
+      if (AI_YOLLAR.includes(url.pathname)) {
+        if (yerli && !premiumMi(cihaz)) hakKullan(cihaz);
+        out.kalan = (premiumMi(cihaz) || !yerli) ? -1 : kalanHak(cihaz);
+        out.premium = premiumMi(cihaz);
+        out.limit = FREE_LIMIT;
       }
       res.writeHead(200, { 'content-type': 'application/json' });
       return res.end(JSON.stringify(out));
