@@ -7,12 +7,18 @@
     "start": "node --env-file=.env hadis-api.mjs",
     "build-data": "node ingest.mjs && node ingest-kuran.mjs",
     "build-vectors": "node embed-kuran.mjs && node embed-hadis.mjs",
-    "build": "npm run build-data && npm run build-vectors"
+    "build": "npm run build-data && npm run build-vectors",
+    "sync-ios": "node yap-www.mjs && npx cap sync ios"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
+    "@capacitor/core": "^7.6.8",
+    "@capacitor/ios": "^7.6.8",
     "@huggingface/transformers": "^4.2.0",
     "adhan": "^4.4.4",
     "tz-lookup": "^6.1.25"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.6.8"
   }
 }

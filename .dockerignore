@@ -3,3 +3,8 @@ node_modules
 .env
 *.log
 fontlari-indir.mjs
+yap-www.mjs
+ios
+www
+assets
+capacitor.config.json

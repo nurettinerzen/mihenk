@@ -283,9 +283,9 @@
 
 <script>
 const BACKEND = 'https://mihenk-api.onrender.com'; // canlı backend
-const API = location.hostname === 'localhost' ? 'http://localhost:8788'
+const API = (location.hostname === 'localhost' && location.protocol.startsWith('http')) ? 'http://localhost:8788' // yerel geliştirme
           : location.protocol.startsWith('http') ? location.origin   // web: aynı origin
-          : BACKEND;                                                  // iOS/Capacitor (file/capacitor) → uzak backend
+          : BACKEND;                                                  // iOS/Capacitor (capacitor:// / file:) → uzak backend
 const APP_KEY = "mihenk_dd4e1cc82891921d3fa559e8";
 let dil = localStorage.getItem('dil') || 'tr';
 // Freemium: cihaz kimliği + premium durumu

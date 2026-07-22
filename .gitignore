@@ -1,3 +1,10 @@
 node_modules/
 .env
 .DS_Store
+www/
+ios/App/Pods/
+ios/App/App/public/
+ios/App/build/
+ios/DerivedData/
+**/xcuserdata/
+**/*.xcuserstate
