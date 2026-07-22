@@ -630,7 +630,7 @@ function hakGoster(){
 function paywallGoster(){ document.getElementById('paywall').classList.add('acik'); }
 function paywallGizle(){ document.getElementById('paywall').classList.remove('acik'); }
 // --- Mihenk Plus / Apple IAP (RevenueCat) ---
-const RC_KEY = ''; // RevenueCat > Mihenk > API Keys > Apple (appl_...) — kurulunca buraya yapıştırılacak
+const RC_KEY = 'appl_VJAIwVAqpNCfirEgFSXFZSAIvKt'; // RevenueCat > Mihenk > public Apple SDK key
 const URUNLER = { yillik:'mihenk_plus_yillik', aylik:'mihenk_plus_aylik' };
 let seciliUrun = URUNLER.yillik, rcUrunler = null;
 const CapEklenti = () => (window.Capacitor && window.Capacitor.Plugins) || {};
