@@ -10,6 +10,11 @@ await mkdir(new URL('./fonts/', www), { recursive: true });
 
 await copyFile(new URL('./hadis.html', kok), new URL('./index.html', www));
 await copyFile(new URL('./fonts.css', kok), new URL('./fonts.css', www));
+// Kur'an metni uygulamaya GÖMÜLÜ olmalı: "Oku & Dinle" internet olmadan çalışsın.
+// (Ses opsiyonel — CDN'den akar; metin/okunuş/meâl tamamen çevrimdışı.)
+for (const f of ['ayat.json', 'sure.json']) {
+  await copyFile(new URL(`./${f}`, kok), new URL(`./${f}`, www));
+}
 for (const f of await readdir(new URL('./fonts/', kok))) {
   await copyFile(new URL(`./fonts/${f}`, kok), new URL(`./fonts/${f}`, www));
 }

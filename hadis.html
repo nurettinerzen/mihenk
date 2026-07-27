@@ -79,7 +79,7 @@
   .paywall-mesaj.ok{color:var(--zumrut)} .paywall-mesaj.hata{color:var(--kirmizi)}
 
   /* --- Dil seçici --- */
-  .dil-sec{display:flex;justify-content:flex-end;gap:4px;margin:0}
+  .dil-sec{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;margin:0;max-width:230px}
   .dil{padding:5px 12px;border:1px solid var(--cizgi);background:transparent;color:var(--daha-soluk);
     font-family:inherit;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;letter-spacing:.5px}
   .dil.aktif{background:var(--yuzey2);color:var(--pirinc);border-color:var(--zumrut-koyu)}
@@ -110,9 +110,50 @@
   /* --- Sekmeler --- */
   .sekmeler{display:flex;gap:6px;background:var(--yuzey);border:1px solid var(--cizgi);
     border-radius:14px;padding:5px;margin:18px 0 20px}
-  .sekme{flex:1;padding:11px 8px;border:none;background:transparent;color:var(--soluk);
+  .sekme,.ksekme{flex:1;padding:11px 8px;border:none;background:transparent;color:var(--soluk);
     font-family:inherit;font-size:14.5px;font-weight:600;border-radius:10px;cursor:pointer;transition:.18s}
-  .sekme.aktif{background:linear-gradient(180deg,var(--yuzey2),#111a16);color:var(--metin);
+  /* --- Kur'an: Oku & Dinle --- */
+  .sure-liste{display:flex;flex-direction:column;gap:8px}
+  .sure-sat{display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:14px;cursor:pointer;
+    background:var(--yuzey);border:1px solid var(--cizgi);transition:.15s}
+  .sure-sat:active{background:var(--yuzey2)}
+  .sure-no{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    background:linear-gradient(180deg,#16241e,#101a16);border:1px solid var(--zumrut-koyu);
+    color:var(--zumrut);font-weight:700;font-size:13px}
+  .sure-ad{flex:1;min-width:0}
+  .sure-ad b{display:block;font-size:15.5px;color:var(--metin);font-weight:600}
+  .sure-ad span{font-size:12.5px;color:var(--soluk)}
+  .sure-ar{font-family:'Amiri',serif;font-size:19px;color:var(--pirinc);white-space:nowrap}
+  .oku-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .geri-btn{flex:none;width:40px;height:40px;border-radius:12px;background:var(--yuzey);
+    border:1px solid var(--cizgi);color:var(--zumrut);font-size:25px;line-height:1;cursor:pointer}
+  .oku-baslik{flex:1;min-width:0}
+  .oku-baslik>div:first-child{font-family:'Sora',sans-serif;font-weight:700;font-size:19px;color:var(--metin)}
+  .ar-iz{unicode-bidi:isolate;font-family:'Amiri',serif;font-size:14px;color:var(--pirinc)}
+  .oku-alt{font-size:12.5px;color:var(--soluk);margin-top:2px}
+  .kari-sec{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;
+    background:var(--yuzey);border:1px solid var(--cizgi);border-radius:13px}
+  .kari-etk{font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--zumrut);flex:none}
+  #kariSec{flex:1;min-width:0;background:transparent;border:none;color:var(--metin);font-size:14.5px;
+    font-family:inherit;outline:none;cursor:pointer}
+  #kariSec option{background:#0f1a16;color:var(--metin)}
+  .ayet{background:var(--yuzey);border:1px solid var(--cizgi);border-radius:16px;padding:16px 17px;margin-bottom:11px}
+  .ayet.calan{border-color:var(--zumrut-koyu);background:linear-gradient(180deg,#132520,#0f1b17)}
+  .ayet-ust{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+  .ayet-no{font-size:12px;font-weight:700;color:var(--zumrut);background:#12241d;border:1px solid var(--zumrut-koyu);
+    border-radius:20px;padding:3px 11px}
+  .ses-btn{width:36px;height:36px;border-radius:50%;flex:none;background:linear-gradient(180deg,#1b2c25,#12201b);
+    border:1px solid var(--zumrut-koyu);color:var(--zumrut);cursor:pointer;display:grid;place-items:center;font-size:13px}
+  .ses-btn:disabled{opacity:.45}
+  .ayet .arapca{margin:0 0 12px}
+  .ayet-okunus{font-family:'Lora',serif;font-style:italic;font-size:14px;color:var(--soluk);margin-bottom:8px;line-height:1.65}
+  .ayet-meal{font-family:'Lora',serif;font-size:15.5px;color:var(--metin);line-height:1.75}
+  .kaldim{display:flex;align-items:center;justify-content:space-between;gap:10px;background:linear-gradient(180deg,#16241e,#101a16);
+    border:1px solid var(--zumrut-koyu);border-radius:14px;padding:12px 15px;margin-bottom:12px;cursor:pointer}
+  .kaldim .etk{font-size:11.5px;color:var(--zumrut);letter-spacing:.4px;text-transform:uppercase}
+  .kaldim .yer{font-size:15px;color:var(--metin);font-weight:600;margin-top:2px}
+  .kuran-yukleniyor{text-align:center;padding:30px 10px;color:var(--soluk);font-size:14px}
+  .sekme.aktif,.ksekme.aktif{background:linear-gradient(180deg,var(--yuzey2),#111a16);color:var(--metin);
     box-shadow:0 1px 0 #2c3e37 inset, 0 6px 14px #0006}
 
   /* --- Giriş alanı --- */
@@ -267,13 +308,40 @@
 
   <!-- KUR'AN -->
   <div id="bolum-kuran" style="display:none">
-    <div class="kart">
-      <label class="ust" data-i18n="lbl_kuran">Bir konu yaz — Kur'an ne diyor?</label>
-      <input class="metin" id="kkonu" data-i18n-ph="ph_kuran" placeholder="sabır, anne-baba, faiz, tevekkül, adalet…">
-      <div class="cipler" id="kkonuCipler"></div>
-      <button class="btn" id="btnKuran" data-i18n="btn_kuran">Ayetleri getir</button>
+    <div class="sekmeler">
+      <button class="ksekme aktif" data-kmod="ara" data-i18n="ktab_ara">Konuya Göre</button>
+      <button class="ksekme" data-kmod="oku" data-i18n="ktab_oku">Oku &amp; Dinle</button>
     </div>
-    <div class="sonuc" id="sonucKuran"></div>
+
+    <div id="kmod-ara">
+      <div class="kart">
+        <label class="ust" data-i18n="lbl_kuran">Bir konu yaz — Kur'an ne diyor?</label>
+        <input class="metin" id="kkonu" data-i18n-ph="ph_kuran" placeholder="sabır, anne-baba, faiz, tevekkül, adalet…">
+        <div class="cipler" id="kkonuCipler"></div>
+        <button class="btn" id="btnKuran" data-i18n="btn_kuran">Ayetleri getir</button>
+      </div>
+      <div class="sonuc" id="sonucKuran"></div>
+    </div>
+
+    <!-- OKU & DİNLE — veri uygulamada gömülü, internet gerekmez (ses hariç) -->
+    <div id="kmod-oku" style="display:none">
+      <div id="sureListeSar">
+        <div id="kaldigimYer"></div>
+        <input class="metin" id="sureAra" data-i18n-ph="ph_sure" placeholder="Sûre ara…" style="margin-bottom:12px">
+        <div id="sureListe" class="sure-liste"></div>
+      </div>
+      <div id="sureOku" style="display:none">
+        <div class="oku-bar">
+          <button class="geri-btn" id="sureGeri" aria-label="Geri">‹</button>
+          <div class="oku-baslik"><div id="okuAd"></div><div id="okuAlt" class="oku-alt"></div></div>
+        </div>
+        <div class="kari-sec">
+          <span class="kari-etk" data-i18n="kari">Kâri</span>
+          <select id="kariSec"></select>
+        </div>
+        <div id="ayetler"></div>
+      </div>
+    </div>
   </div>
 
   <!-- EZAN -->
@@ -341,7 +409,7 @@
         <span class="sol" data-i18n="ayar_kullanim">Kullanım Koşulları</span><span class="ok">›</span>
       </a>
       <div class="ayar-not" data-i18n="ayar_hakkinda">Mihenk; hadis metnini, âlim derecesini ve Kur'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.</div>
-      <div class="ayar-surum">Mihenk 1.0</div>
+      <div class="ayar-surum">Mihenk 1.1</div>
     </div>
   </div>
 
@@ -385,6 +453,9 @@ const KKONULAR = {
 };
 const L = {
   tr: {
+    kari:'Kâri',
+    inis:{Mekke:'Mekke',Medine:'Medine'},
+    ktab_ara:'Konuya Göre', ktab_oku:'Oku & Dinle', ph_sure:'Sûre ara…', ayet_sayisi:'ayet', ayet_tek:'ayet', kaldim:'Kaldığın yer', kuran_yukleniyor:'Kur\'an yükleniyor…',
     alt:'Kaynağıyla din rehberi', nav_hadis:'Hadis', nav_kuran:'Kur\'an',
     tab_dogrula:'Hadis Doğrula', tab_konu:'Konuya Göre',
     lbl_dogrula:'Bir hadis yapıştır — kaynağını ve derecesini göster',
@@ -413,6 +484,9 @@ const L = {
     pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
   },
   en: {
+    kari:'Reciter',
+    inis:{Mekke:'Meccan',Medine:'Medinan'},
+    ktab_ara:'By Topic', ktab_oku:'Read & Listen', ph_sure:'Search surah…', ayet_sayisi:'verses', ayet_tek:'verse', kaldim:'Continue where you left off', kuran_yukleniyor:'Loading the Quran…',
     alt:'Your sourced faith guide', nav_hadis:'Hadith', nav_kuran:'Quran',
     tab_dogrula:'Verify Hadith', tab_konu:'By Topic',
     lbl_dogrula:'Paste a hadith — see its source and grade',
@@ -441,6 +515,9 @@ const L = {
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
   },
   fr: {
+    kari:'Récitateur',
+    inis:{Mekke:'Mecquoise',Medine:'Médinoise'},
+    ktab_ara:'Par thème', ktab_oku:'Lire & Écouter', ph_sure:'Chercher une sourate…', ayet_sayisi:'versets', ayet_tek:'verset', kaldim:'Reprendre la lecture', kuran_yukleniyor:'Chargement du Coran…',
     alt:'Votre guide de foi, avec ses sources', nav_hadis:'Hadith', nav_kuran:'Coran',
     tab_dogrula:'Vérifier un hadith', tab_konu:'Par thème',
     lbl_dogrula:'Collez un hadith — voyez sa source et son degré',
@@ -469,6 +546,9 @@ const L = {
     pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
   },
   id: {
+    kari:'Qari',
+    inis:{Mekke:'Makkiyah',Medine:'Madaniyah'},
+    ktab_ara:'Menurut Topik', ktab_oku:'Baca & Dengar', ph_sure:'Cari surah…', ayet_sayisi:'ayat', ayet_tek:'ayat', kaldim:'Lanjutkan bacaan', kuran_yukleniyor:'Memuat Al-Qur\'an…',
     alt:'Panduan iman dengan sumbernya', nav_hadis:'Hadis', nav_kuran:'Al-Qur\'an',
     tab_dogrula:'Verifikasi Hadis', tab_konu:'Berdasarkan Topik',
     lbl_dogrula:'Tempel sebuah hadis — lihat sumber dan derajatnya',
@@ -497,6 +577,9 @@ const L = {
     pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
   },
   ar: {
+    kari:'القارئ',
+    inis:{Mekke:'مكية',Medine:'مدنية'},
+    ktab_ara:'حسب الموضوع', ktab_oku:'اقرأ واستمع', ph_sure:'ابحث عن سورة…', ayet_sayisi:'آية', ayet_tek:'آية', kaldim:'تابع من حيث توقفت', kuran_yukleniyor:'جارٍ تحميل القرآن…',
     alt:'دليلك الديني بمصادره', nav_hadis:'الحديث', nav_kuran:'القرآن',
     tab_dogrula:'تحقّق من حديث', tab_konu:'حسب الموضوع',
     lbl_dogrula:'الصق حديثًا — انظر مصدره ودرجته',
@@ -525,6 +608,9 @@ const L = {
     pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
   },
   ur: {
+    kari:'قاری',
+    inis:{Mekke:'مکی',Medine:'مدنی'},
+    ktab_ara:'موضوع کے مطابق', ktab_oku:'پڑھیں اور سنیں', ph_sure:'سورہ تلاش کریں…', ayet_sayisi:'آیات', ayet_tek:'آیت', kaldim:'جہاں چھوڑا تھا وہاں سے', kuran_yukleniyor:'قرآن لوڈ ہو رہا ہے…',
     alt:'باحوالہ دینی رہنما', nav_hadis:'حدیث', nav_kuran:'قرآن',
     tab_dogrula:'حدیث کی تصدیق', tab_konu:'موضوع کے مطابق',
     lbl_dogrula:'ایک حدیث چسپاں کریں — اس کا ماخذ اور درجہ دیکھیں',
@@ -852,6 +938,147 @@ function gununCiz(){
   document.getElementById('gununIcerik').innerHTML=`<div class="bugun-selam">${T.selam} 🤲</div>`+ayetKart+hadisKart;
 }
 
+// --- Kur'an: Oku & Dinle ---------------------------------------------------
+// Metin uygulamada GÖMÜLÜ (ayat.json + sure.json) → internet gerekmez.
+// Ses opsiyonel: cdn.islamic.network'ten ayet ayet akış (id 1..6236 ile birebir).
+let KURAN=null, SURELER=null, kuranYukleniyor=false;
+// Kâriler — cdn.islamic.network (anahtarsız, ayet ayet). İsimler evrensel okunuşuyla.
+const KARILER=[
+  {id:'ar.alafasy',            ad:'Mishary Alafasy',      adAr:'مشاري راشد العفاسي'},
+  {id:'ar.abdulsamad',         ad:'Abdülbâsit Abdüssamed',adAr:'عبد الباسط عبد الصمد'},
+  {id:'ar.abdurrahmaansudais', ad:'Abdurrahman Sudeys',   adAr:'عبد الرحمن السديس'},
+  {id:'ar.saoodshuraym',       ad:'Suûd eş-Şüreym',       adAr:'سعود الشريم'},
+  {id:'ar.mahermuaiqly',       ad:'Mâhir el-Muaykılî',    adAr:'ماهر المعيقلي'},
+  {id:'ar.husary',             ad:'Mahmûd el-Husarî',     adAr:'محمود خليل الحصري'},
+  {id:'ar.hudhaify',           ad:'Ali el-Huzeyfî',       adAr:'علي الحذيفي'},
+];
+let kari=localStorage.getItem('kari')||'ar.alafasy';
+if(!KARILER.some(k=>k.id===kari)) kari='ar.alafasy';
+const sesUrl=(id)=>`https://cdn.islamic.network/quran/audio/64/${kari}/${id}.mp3`;
+const kariAdi=(k)=> dil==='ar' ? k.adAr : k.ad;
+let calanSes=null, calanId=null;
+
+async function kuranVeriYukle(){
+  if(KURAN || kuranYukleniyor) return !!KURAN;
+  kuranYukleniyor=true;
+  const el=document.getElementById('sureListe');
+  el.innerHTML=`<div class="kuran-yukleniyor">${T.kuran_yukleniyor||'Yükleniyor…'}</div>`;
+  try{
+    const [a,s]=await Promise.all([
+      fetch('ayat.json').then(r=>r.json()),
+      fetch('sure.json').then(r=>r.json()),
+    ]);
+    KURAN=a; SURELER=s;
+    return true;
+  }catch(e){
+    el.innerHTML=`<div class="kuran-yukleniyor">${T.err_body}</div>`;
+    return false;
+  }finally{ kuranYukleniyor=false; }
+}
+
+// Sûre adı dile göre: Arapça'da Arapça ad, Türkçe'de Türkçe, diğerlerinde transliterasyon
+const sureAdi=(s)=> dil==='ar' ? (s.adAr||s.ad) : dil==='tr' ? s.ad : (s.adEn||s.ad);
+// "yasin" yazınca "Yâsîn"i bulsun: şapka/aksan ve ı-i farkını yok say
+const sadeAd=(s)=>(s||'').toLocaleLowerCase('tr').normalize('NFD')
+  .replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9]/g,'');
+
+function sureListesiCiz(filtre=''){
+  const el=document.getElementById('sureListe'); if(!SURELER) return;
+  const f=sadeAd(filtre);
+  const liste=SURELER.filter(s=>!f || String(s.no)===f || sadeAd(s.ad).includes(f) || sadeAd(s.adEn).includes(f));
+  el.innerHTML=liste.map(s=>`
+    <div class="sure-sat" data-sure="${s.no}">
+      <div class="sure-no">${s.no}</div>
+      <div class="sure-ad"><b>${esc(sureAdi(s))}</b><span>${s.ayetSayisi} ${T.ayet_sayisi||'ayet'} · ${esc((T.inis&&T.inis[s.inis])||s.inis||'')}</span></div>
+      <div class="sure-ar">${dil==='ar'?'':esc(s.adAr||'')}</div>
+    </div>`).join('');
+  el.querySelectorAll('.sure-sat').forEach(d=>d.onclick=()=>sureAc(+d.dataset.sure));
+  kaldigimYeriCiz();
+}
+
+function kaldigimYeriCiz(){
+  const k=document.getElementById('kaldigimYer');
+  let y=null; try{ y=JSON.parse(localStorage.getItem('kuranYer')||'null'); }catch(e){}
+  if(!y || !SURELER){ k.innerHTML=''; return; }
+  const s=SURELER.find(x=>x.no===y.sure); if(!s){ k.innerHTML=''; return; }
+  k.innerHTML=`<div class="kaldim"><div><div class="etk">${T.kaldim||'Kaldığın yer'}</div>
+    <div class="yer">${esc(sureAdi(s))} · ${y.ayet}. ${T.ayet_tek||'ayet'}</div></div>
+    <div style="color:var(--zumrut);font-size:22px">›</div></div>`;
+  k.querySelector('.kaldim').onclick=()=>sureAc(y.sure, y.ayet);
+}
+
+function sureAc(no, gitAyet){
+  const s=SURELER.find(x=>x.no===no); if(!s) return;
+  document.getElementById('sureListeSar').style.display='none';
+  const kap=document.getElementById('sureOku'); kap.style.display='';
+  kariSeciciKur();
+  document.getElementById('okuAd').textContent=sureAdi(s);
+  document.getElementById('okuAlt').innerHTML=`${dil==='ar'?'':(s.adAr?`<span class="ar-iz">${esc(s.adAr)}</span> · `:'')}${s.ayetSayisi} ${T.ayet_sayisi||'ayet'} · ${esc((T.inis&&T.inis[s.inis])||s.inis||'')}`;
+  const ayetler=KURAN.filter(a=>a.sure===no);
+  document.getElementById('ayetler').innerHTML=ayetler.map(a=>`
+    <div class="ayet" id="ay-${a.id}">
+      <div class="ayet-ust">
+        <span class="ayet-no">${a.ayet}</span>
+        <button class="ses-btn" data-ses="${a.id}" aria-label="Dinle">▶</button>
+      </div>
+      <div class="arapca">${esc(a.ar||'')}</div>
+      ${(a.okunus && dil!=='ar')?`<div class="ayet-okunus">${esc(a.okunus)}</div>`:''}
+      ${dil==='ar'?'':`<div class="ayet-meal">${esc(metinDil(a))}</div>`}
+    </div>`).join('');
+  document.getElementById('ayetler').querySelectorAll('.ses-btn')
+    .forEach(b=>b.onclick=()=>sesCal(+b.dataset.ses));
+  localStorage.setItem('kuranYer', JSON.stringify({sure:no, ayet:gitAyet||1}));
+  if(gitAyet){
+    const t=ayetler.find(a=>a.ayet===gitAyet);
+    if(t) setTimeout(()=>document.getElementById('ay-'+t.id)?.scrollIntoView({block:'center'}),60);
+  }else window.scrollTo(0,0);
+}
+
+// dile göre meal alanı (backend'deki metinAl ile aynı fallback zinciri)
+function metinDil(a){ return a[dil] || a.en || a.tr || ''; }
+
+function sesDurdur(){
+  if(calanSes){ calanSes.pause(); calanSes=null; }
+  if(calanId!=null){
+    document.getElementById('ay-'+calanId)?.classList.remove('calan');
+    const b=document.querySelector(`.ses-btn[data-ses="${calanId}"]`); if(b) b.textContent='▶';
+    calanId=null;
+  }
+}
+function sesCal(id){
+  if(calanId===id){ sesDurdur(); return; }
+  sesDurdur();
+  const b=document.querySelector(`.ses-btn[data-ses="${id}"]`);
+  const kart=document.getElementById('ay-'+id);
+  calanId=id; kart?.classList.add('calan'); if(b) b.textContent='‖';
+  calanSes=new Audio(sesUrl(id));
+  calanSes.play().catch(()=>{ if(b) b.textContent='▶'; kart?.classList.remove('calan'); calanId=null; calanSes=null; });
+  calanSes.onended=()=>{
+    const sonraki=KURAN.find(a=>a.id===id+1);
+    sesDurdur();
+    if(sonraki && kart && sonraki.sure===KURAN.find(a=>a.id===id).sure){
+      const el=document.getElementById('ay-'+sonraki.id);
+      if(el){ el.scrollIntoView({block:'center',behavior:'smooth'}); sesCal(sonraki.id); }
+    }
+  };
+  const a=KURAN.find(x=>x.id===id);
+  if(a) localStorage.setItem('kuranYer', JSON.stringify({sure:a.sure, ayet:a.ayet}));
+}
+
+function kariSeciciKur(){
+  const el=document.getElementById('kariSec'); if(!el) return;
+  el.innerHTML=KARILER.map(k=>`<option value="${k.id}"${k.id===kari?' selected':''}>${kariAdi(k)}</option>`).join('');
+  el.onchange=()=>{
+    kari=el.value; localStorage.setItem('kari',kari);
+    if(calanId!=null){ const id=calanId; sesDurdur(); sesCal(id); }   // yeni kâriyle devam
+  };
+}
+
+async function okuModuAc(){
+  const ok=await kuranVeriYukle();
+  if(ok) sureListesiCiz(document.getElementById('sureAra').value);
+}
+
 // --- Kurulum ---
 const BOLUMLER=['bugun','hadis','kuran','ezan'];
 document.querySelectorAll('.unav').forEach(b=>b.onclick=()=>{
@@ -872,6 +1099,22 @@ document.querySelectorAll('.sekme').forEach(b=>b.onclick=()=>{
   document.getElementById('mod-dogrula').style.display=m==='dogrula'?'':'none';
   document.getElementById('mod-konu').style.display=m==='konu'?'':'none';
 });
+// Kur'an sekmeleri: Konuya Göre / Oku & Dinle
+document.querySelectorAll('.ksekme').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.ksekme').forEach(x=>x.classList.remove('aktif'));
+  b.classList.add('aktif');
+  const m=b.dataset.kmod;
+  document.getElementById('kmod-ara').style.display=m==='ara'?'':'none';
+  document.getElementById('kmod-oku').style.display=m==='oku'?'':'none';
+  if(m==='oku') okuModuAc(); else sesDurdur();
+});
+document.getElementById('sureGeri').onclick=()=>{
+  sesDurdur();
+  document.getElementById('sureOku').style.display='none';
+  document.getElementById('sureListeSar').style.display='';
+  kaldigimYeriCiz();
+};
+document.getElementById('sureAra').oninput=e=>sureListesiCiz(e.target.value);
 document.getElementById('ornekler').onclick=e=>{const t=(dil==='tr'?e.target.dataset.t:e.target.dataset.tEn)||e.target.dataset.t;if(t){document.getElementById('metin').value=t;}};
 document.getElementById('btnDogrula').onclick=calistirDogrula;
 document.getElementById('btnKonu').onclick=calistirKonu;
@@ -883,7 +1126,7 @@ function cipleriKur(){
     const kap=document.getElementById(kapId); kap.innerHTML='';
     list.forEach(k=>{const b=document.createElement('button');b.className='cip';b.textContent=k;
       // Çip SADECE kutuyu doldurur; kullanıcı butona basınca çalışır (çift-çalışma yok).
-      b.onclick=()=>{const inp=document.getElementById(inputId);inp.value=k;inp.focus();};kap.appendChild(b);});
+      b.onclick=()=>{const inp=document.getElementById(inputId);inp.value=k;};kap.appendChild(b);});
   };
   yap('konuCipler',KONULAR[dil]||KONULAR.en,'konu');
   yap('kkonuCipler',KKONULAR[dil]||KKONULAR.en,'kkonu');

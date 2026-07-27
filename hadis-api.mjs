@@ -50,6 +50,36 @@ const ayat = JSON.parse(readFileSync(yol('ayat.json'), 'utf8'));
 // Kur'an semantik indeksi — dile göre ayrı vektör (yerel embedding).
 const vekYukle = (f) => { const b = readFileSync(yol(f)); return new Float32Array(b.buffer, b.byteOffset, b.length / 4); };
 const kuranVek = { tr: vekYukle('vektor-kuran-tr.f32'), en: vekYukle('vektor-kuran-en.f32') };
+// Kur'an konu aramasının ANA motoru: ÖNEK eşleşmeli, idf ağırlıklı lexical.
+// BM25 tam kelime arıyordu ve Türkçe eklerde patlıyordu ("adalet" ↛ "adaleti").
+// Önek eşleşmesi bu sorunu çözer; embedding ise anlam desteği verir.
+const kuranTok = new Map();                      // dil → [Set(kelime)] (ayet başına)
+const kuranDF = new Map();                       // dil → Map(kelime → doküman sayısı)
+function kuranIndeks(dil) {
+  if (kuranTok.has(dil)) return;
+  const toks = ayat.map(a => new Set(trNorm(metinAl(a, dil)).split(' ').filter(w => w.length > 2)));
+  const df = new Map();
+  for (const t of toks) for (const w of t) df.set(w, (df.get(w) || 0) + 1);
+  kuranTok.set(dil, toks); kuranDF.set(dil, df);
+}
+// sorgu kelimesi, ayet kelimesinin ÖNEKİ ise eşleşir (adalet→adaleti, namaz→namazı)
+function lexPuan(dil, qw) {
+  kuranIndeks(dil);
+  const toks = kuranTok.get(dil), df = kuranDF.get(dil), N = ayat.length;
+  const idf = new Map();
+  for (const w of qw) {
+    let n = 0;
+    for (const [k, c] of df) if (k.startsWith(w)) n += c;
+    idf.set(w, Math.log(1 + N / (1 + n)));
+  }
+  const out = new Float32Array(ayat.length);
+  for (let i = 0; i < toks.length; i++) {
+    let s = 0;
+    for (const w of qw) { for (const k of toks[i]) if (k.startsWith(w)) { s += idf.get(w); break; } }
+    out[i] = s / Math.sqrt(toks[i].size || 1);
+  }
+  return out;
+}
 // Hadis semantik vektörleri (varsa) — konu araması semantik olsun. Yoksa lexical'e düşer.
 let hadisVek = null;
 try { hadisVek = { tr: vekYukle('vektor-hadis-tr.f32'), en: vekYukle('vektor-hadis-en.f32') }; console.log('Hadis semantik vektörleri yüklendi.'); }
@@ -294,11 +324,87 @@ async function konu(sorgu, dil = 'tr') {
 // Kur'an: konuya göre ayet getir — SEMANTİK (anlamsal) arama, dile göre vektör.
 // Kullanıcı kavramın adını bilmese de anlamını/tarifini yazınca doğru ayeti bulur.
 // Meal + Arapça + okunuş yerleşik veriden GETİRİLİR, LLM üretmez.
+// Ayet "hub" düzeltmesi: çok kısa ayetlerin vektörü anlamsal uzayda merkeze yakın
+// düşer ve HER sorguya yüksek benzerlik verir (ör. "Cennetime gir" hem "sabır" hem
+// "namaz" sorgusunda 1. çıkıyordu). Bunu iki şekilde kırıyoruz:
+//   1) her ayetin ortalama benzerliğini (hub skoru) çıkar  → merkezîlik cezası
+//   2) semantiği lexical eşleşmeyle harmanla (kelime geçiyorsa öne çıksın)
+let hubSkor = null;                       // dil → Float32Array(ayat)
+function hubHesapla(vek) {
+  const n = ayat.length, h = new Float32Array(n);
+  const ORNEK = 160, adim = Math.max(1, Math.floor(n / ORNEK));
+  const ornekler = [];
+  for (let i = 0; i < n; i += adim) ornekler.push(i);
+  for (let i = 0; i < n; i++) {
+    let t = 0;
+    for (const j of ornekler) t += cos(vek, i * DIM, vek.subarray(j * DIM, j * DIM + DIM));
+    h[i] = t / ornekler.length;           // bu ayet "genel olarak" ne kadar her şeye benziyor
+  }
+  return h;
+}
+const trNorm = (s) => (s || '').toLocaleLowerCase('tr').normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/[^\p{L}\p{N} ]/gu, ' ');
+
+// Kavram → meâlde geçen karşılık. Diyanet meâli terimi değil ANLAMINI yazar:
+// "tevekkül" meâlde hiç geçmez ("Allah'a güven" der), "infak"/"ihlas" da öyle.
+// Terimi genişletmezsek arama boşa düşer. (Sadece ARAMA metnini genişletir —
+// gösterilen meâl her zaman veriden gelir, üretilmez.)
+const KAVRAM = {
+  tevekkul: "Allah'a güvenmek, dayanmak, işini Allah'a bırakmak, vekil",
+  infak: 'Allah yolunda mal harcamak, sadaka vermek, yoksula vermek',
+  ihlas: 'içten, samimi, yalnız Allah için, dini Allah\'a has kılmak',
+  takva: 'Allah\'tan sakınmak, korkmak, günahtan kaçınmak',
+  sukur: 'şükretmek, Allah\'a şükür, nimetin karşılığını bilmek, nankörlük etmemek',
+  tovbe: 'tövbe etmek, günahtan dönmek, bağışlanma dilemek, pişmanlık',
+  zikir: 'Allah\'ı anmak, hatırlamak',
+  kanaat: 'yetinmek, aza razı olmak, hırs etmemek',
+  gibet: 'arkadan çekiştirmek, birinin arkasından kötü konuşmak',
+  sila: 'akrabayı ziyaret, akrabalık bağını gözetmek',
+  helal: 'temiz ve helal kazanç, haramdan sakınmak',
+  kul_hakki: 'başkasının hakkını yemek, haksızlık, zulüm',
+};
+const kavramAnahtar = (s) => (s || '').toLocaleLowerCase('tr')
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i')
+  .replace(/[^a-z ]/g, '').trim().replace(/ +/g, '_');
+
 async function kuranKonu(sorgu, dil = 'tr') {
-  const qv = await embedOne(sorgu);
+  // arama metnini zenginleştir: terim + meâldeki karşılığı
+  let aramaMetni = sorgu;
+  if (dil === 'tr') {
+    // Yalnızca meâlde KARŞILIĞI OLMAYAN terimleri aç. Meâlde zaten geçen
+    // kelimeler (sabır, namaz, adalet…) olduğu gibi daha iyi sonuç veriyor;
+    // serbest LLM genişletmesi bunları bozuyordu, o yüzden kullanılmıyor.
+    const k = KAVRAM[kavramAnahtar(sorgu)];
+    if (k) aramaMetni = `${sorgu} — ${k}`;
+  }
+  // ANA: önek eşleşmeli lexical — meâlde geçen kelimeyi eklerine rağmen bulur
+  const qwLex = [...new Set(trNorm(aramaMetni).split(' '))].filter(w => w.length > 2);
+  const lexArr = qwLex.length ? lexPuan(dil, qwLex) : null;
+  let lexMax = 0; if (lexArr) for (const v of lexArr) if (v > lexMax) lexMax = v;
+  // DESTEK: semantik — kelime geçmese de anlamca yakın ayetleri yakalar
+  const qv = await embedOne(aramaMetni);
   const vek = vekAl(kuranVek, dil);
+  if (!hubSkor) hubSkor = hubHesapla(vek);
+  // sorgu kelimeleri (lexical destek)
+  const qw = [...new Set(trNorm(aramaMetni).split(' '))].filter(w => w.length > 2);
   const puan = new Array(ayat.length);
-  for (let i = 0; i < ayat.length; i++) puan[i] = [i, cos(vek, i * DIM, qv)];
+  for (let i = 0; i < ayat.length; i++) {
+    const a = ayat[i];
+    const metin = metinAl(a, dil) || '';
+    // merkezîlik cezası: 'her şeye benzeyen' ayetleri düşür. (Bölme denendi ama
+    // nadir/tuhaf ayetleri aşırı yükseltiyordu; çıkarma daha dengeli.)
+    const sem = cos(vek, i * DIM, qv) - 0.45 * hubSkor[i];        // merkezîlik düzeltmeli semantik
+    const lx = lexMax ? lexArr[i] / lexMax : 0;                      // 0..1 normalize lexical
+    let s = 0.62 * lx + 0.38 * Math.max(0, sem);                    // lexical ağırlıklı harman
+    if (qw.length) {                                        // lexical katkı
+      const mn = trNorm(metin);
+      let hit = 0; for (const w of qw) if (mn.includes(w)) hit++;
+      if (hit) s += 0.10 * (hit / qw.length);   // tam kelime geçişi ek destek
+    }
+    // bağlamsız kalan çok kısa meâller konu sonucu olarak anlamsız (ör. 'Cennetime gir')
+    if (metin.length < 45) s -= 0.05 * (1 - metin.length / 45);   // bağlamsız kısa meâl
+    puan[i] = [i, s];
+  }
   puan.sort((a, b) => b[1] - a[1]);
   return {
     konu: sorgu,
