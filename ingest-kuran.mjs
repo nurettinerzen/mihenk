@@ -42,6 +42,7 @@ async function main() {
   const sure = chapters.map((c, i) => ({
     no: c.chapter,
     ad: AD[i] || c.name,
+    adEn: (c.name || `Surah ${c.chapter}`),   // en/fr/ur/id arayüzü bunu kullanır
     adAr: c.arabicname || '',
     inis: /mec|mek/i.test(c.revelation || '') ? 'Mekke' : 'Medine',
     ayetSayisi: (c.verses || []).length,

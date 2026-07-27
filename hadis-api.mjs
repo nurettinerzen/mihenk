@@ -66,14 +66,24 @@ const kuranVek = { tr: vekYukle('vektor-kuran-tr.f32'), en: vekYukle('vektor-kur
 // (Fethu'l-Bari, "Diğer tahric", AÇIKLAMA…). Bunlar hadis DEĞİL; aramada
 // "ilim adamları/tevazu yoluyla" gibi şerh cümleleri hadis sanılıp konuları
 // çökertiyordu. Aramada ve gösterimde yalnızca rivayet metnini kullanırız.
-const SERH_KALIP = /(Diğer tahric|Fethu'?l-?Bari|Fethul Bari|İZAH|IZAH|ŞERH|Şerh:|AÇIKLAMA|Açıklama:|Tahric|Not:)/;
+const SERH_KALIP = /(Diğer tahric|Fethu'?l-?Bari|Fethul Bari|İZAH|IZAH|ŞERH|Şerh:|AÇIKLAMA|Açıklama:|Tahric|Not:|Tekrarı?\s*:)/;
 // Hadis metni "Bize X rivayet etti… şöyle buyurdu:" diye başlar; asıl söz (matn)
 // bundan sonrasıdır. Arama isnad'daki râvi adlarına takılıyordu.
-const MATN_KALIP = /(şöyle buyurdu(lar)?\s*:?|buyurmuştur\s*:?|buyurdu ki\s*:?|şöyle dedi\s*:?|dedi ki\s*:?|demiştir\s*:?)/i;
+const MATN_KALIP = /(şöyle buyurdu(lar)?\s*:?|buyurdukları?nı? nakletti\s*:?|buyurmuştur\s*:?|buyurdu ki\s*:?|buyurdular\s*:?|rivâyet edildiğine göre\s*[;:]?|rivayet edildiğine göre\s*[;:]?|bersabda\s*:?|a dit\s*:?|said\s*:?|قَالَ رَسُولُ|قال رسول)/gi;
+// İsnad zinciri ("Bize A rivayet etti. (Dediki): Bize B…") onlarca râvi sürebiliyor.
+// Yalnızca matn'ın KESİN başlangıç kalıpları kullanılır: "dedi ki/demiştir" gibi
+// belirsiz kalıplar isnad'ın ortasında da geçtiği için metni yanlış yerden kesip
+// "): Bize Ma'mer…" gibi anlamsız parçalar bırakıyordu.
 function hadisMatn(t) {
   const x = hadisMetni(t);
-  const m = x.match(MATN_KALIP);
-  return (m && m.index > 20 && x.length - m.index > 40) ? x.slice(m.index + m[0].length).trim() : x;
+  const re = new RegExp(MATN_KALIP.source, 'gi');
+  let son = null, m;
+  while ((m = re.exec(x))) { if (m.index < x.length * 0.72) son = m; else break; }
+  if (!son || son.index <= 20 || x.length - son.index <= 60) return x;
+  const kalan = x.slice(son.index + son[0].length).replace(/^[\s:;."“«»)\]]+/, '').trim();
+  // Kesme sağlıklı mı: cümle bir harfle başlamalı ve bağlaç artığıyla açılmamalı.
+  if (kalan.length < 40 || !/^[\p{L}"“]/u.test(kalan) || /^(ki|ve|de|da)\b/i.test(kalan)) return x;
+  return kalan;
 }
 function hadisMetni(t) {
   let x = (t || '').trim();
@@ -101,13 +111,13 @@ function lexHadis(dil, qw) {
   const arMi2 = dil === 'ar';
   const vars = qw.map(w => (arMi2 ? arVaryant(w) : kokVaryant(w)));
   const idf = vars.map(vs => {
-    let n = 0; for (let i = 0; i < N; i++) if (vs.some(v => v.length >= (arMi2 ? 3 : 2) && arr[i].includes(arMi2 ? v : ' ' + v))) n++;
+    let n = 0; for (let i = 0; i < N; i++) if (vs.some(v => arr[i].includes(arMi2 ? v : ' ' + v))) n++;
     return Math.log(1 + N / (1 + n));
   });
   const out = new Float32Array(N);
   for (let i = 0; i < N; i++) {
     let sc = 0;
-    for (let k = 0; k < vars.length; k++) if (vars[k].some(v => v.length >= (arMi2 ? 3 : 2) && arr[i].includes(arMi2 ? v : ' ' + v))) sc += idf[k];
+    for (let k = 0; k < vars.length; k++) if (vars[k].some(v => arr[i].includes(arMi2 ? v : ' ' + v))) sc += idf[k];
     out[i] = sc;
   }
   return out;
@@ -127,21 +137,21 @@ function kuranIndeks(dil) {
   kuranTok.set(dil, toks); kuranDF.set(dil, df);
 }
 // sorgu kelimesi, ayet kelimesinin ÖNEKİ ise eşleşir (adalet→adaleti, namaz→namazı)
-function lexPuan(dil, qw) {
+function lexPuan(dil, qw, kati = false) {
   kuranIndeks(dil);
   const arMi = dil === 'ar';
   const toks = kuranTok.get(dil), df = kuranDF.get(dil), N = ayat.length;
   const idf = new Map();
   const esles = (k, v) => arMi ? k.includes(v) : k.startsWith(v);
   for (const w of qw) {
-    let n = 0; const vs = arMi ? arVaryant(w) : kokVaryant(w);
-    for (const [k, c] of df) if (vs.some(v => v.length >= (arMi ? 3 : 2) && esles(k, v))) n += c;
+    let n = 0; const vs = arMi ? arVaryant(w) : kokVaryant(w, kati);
+    for (const [k, c] of df) if (vs.some(v => esles(k, v))) n += c;
     idf.set(w, Math.log(1 + N / (1 + n)));
   }
   const out = new Float32Array(ayat.length);
   for (let i = 0; i < toks.length; i++) {
     let s = 0;
-    for (const w of qw) { const vs = arMi ? arVaryant(w) : kokVaryant(w); for (const k of toks[i]) if (vs.some(v => v.length >= (arMi ? 3 : 2) && esles(k, v))) { s += idf.get(w); break; } }
+    for (const w of qw) { const vs = arMi ? arVaryant(w) : kokVaryant(w, kati); for (const k of toks[i]) if (vs.some(v => esles(k, v))) { s += idf.get(w); break; } }
     out[i] = s / Math.sqrt(toks[i].size || 1);
   }
   return out;
@@ -233,7 +243,7 @@ const alimlerDil = (alimler, dil) => (alimler || []).map(a => ({ ...a, alim: ali
 
 function derecele(h, dil = 'tr') {
   const b = DERECE_BILGI[h.derece] || DERECE_BILGI.bilinmiyor;
-  const metin = hadisMetni(metinAl(h, dil)); // şerh ayıklanmış; yoksa en→tr
+  const metin = hadisMatn(metinAl(h, dil)); // şerh + isnad zinciri ayıklanmış; yoksa en→tr
   return {
     id: h.id, tr: metin, ar: h.ar, kaynak: h.kaynak, kitapTr: h.kitapTr, no: h.no,
     derece: h.derece, dereceEtiket: b.etiket[dil] || b.etiket.en || b.etiket.tr, dereceRenk: b.renk,
@@ -250,14 +260,25 @@ async function eslestir(metin, adaylar, dil = 'tr') {
     // mock: en yüksek skorlu adayı, skoru belirginse eşleşmiş say. Yakınlığı mock yargılayamaz → null.
     const en = adaylar[0];
     const es = en && en._skor > 12 ? en.id : null;
-    return { eslesenId: es, yakinId: null, yakinGuven: 0, guven: en ? Math.min(1, en._skor / 40) : 0 };
+    return { eslesenId: es, anlamFarki: false, farkNotu: '', yakinId: null, yakinGuven: 0, guven: en ? Math.min(1, en._skor / 40) : 0 };
   }
-  const liste = adaylar.map((a) => `[${a.id}] ${(metinAl(a, dil) || '').slice(0, 300)}`).join('\n\n');
+  // İsnad zinciri ("Bize A tahdis etti… O B'den…") 300 karakterin tamamını yiyip
+  // asıl sözü listeden dışarıda bırakıyordu; model karşılaştıramadığı için hem
+  // eşleşmeyi kaçırıyor hem anlam farkını göremiyordu. Matn'ı gönder.
+  const liste = adaylar.map((a) => `[${a.id}] ${(hadisMatn(metinAl(a, dil)) || '').slice(0, 420)}`).join('\n\n');
   const r = await anthropic.messages.create({
     model: MODEL,
     max_tokens: 300,
     system: 'Sen bir hadis METİN EŞLEŞTİRME aracısın. Görevin SADECE metin ilişkilendirmek — sahihlik/uydurma/hüküm KARARI VERME, bu senin işin değil.\n' +
-      '- eslesenId: Yapıştırılan metinle AYNI hadis (aynı Peygamber sözü, lafız farklı olabilir) olan adayın id\'si. Net karşılık yoksa null.\n' +
+      '- eslesenId: Yapıştırılan metinle AYNI hadis (aynı Peygamber sözü) olan adayın id\'si. Net karşılık yoksa null.\n' +
+      '  Lafız/çeviri farkı normaldir. ANLAM farkı DEĞİLDİR.\n' +
+      '- anlamFarki: Kullanıcının metni, eşleşen adayın MANASINI değiştiriyorsa true. Bunlar anlam farkıdır:\n' +
+      '  • olumsuzlama eklenmiş/kaldırılmış ("niyetlere göredir" ↔ "niyetlere göre DEĞİLDİR")\n' +
+      '  • sayı/miktar değişmiş ("beş şey" ↔ "üç şey")\n' +
+      '  • hükmü tersine çeviren kelime ("elinden dilinden EMİN olduğu" ↔ "ZARAR GÖRDÜĞÜ")\n' +
+      '  • kaynakta olmayan bir cümle/şart EKLENMİŞ ("…hayır söylesin" ↔ "…dilediğini söylesin", "+kadınlar müstesnadır")\n' +
+      '  Şüphedeysen true ver. Yanlış onay, onaysızlıktan çok daha zararlıdır.\n' +
+      '- farkNotu: anlamFarki true ise farkı TEK cümleyle, kullanıcının dilinde yaz (ör. "Kaynakta \'beş\' geçiyor, senin metninde \'üç\' yazıyor."). Değilse boş string.\n' +
       '- yakinId: eslesenId null ise VE adaylardan biri kullanıcının metniyle GERÇEKTEN AYNI KONU/MANA taşıyorsa onun id\'si.\n' +
       '  ⚠️ ÇOK ÖNEMLİ: Sırf ortak bir kelime paylaşmak (ör. "imandandır", "iman", "Allah", "cennet", "namaz") YAKINLIK DEĞİLDİR. Konu/mesaj gerçekten örtüşmüyorsa null döndür. Zorlama eşleştirme yanlış bilgidir. Şüphedeysen null.\n' +
       '- yakinGuven: yakinId adayının kullanıcının kastıyla ne kadar aynı konuda olduğunu 0-1 ver (alakasızsa 0).\n' +
@@ -270,24 +291,30 @@ async function eslestir(metin, adaylar, dil = 'tr') {
         type: 'object',
         properties: {
           eslesenId: { type: ['string', 'null'], description: 'Aynı hadis olan adayın id\'si (örn "h123"), yoksa null' },
+          anlamFarki: { type: 'boolean', description: 'Kullanıcının metni kaynağın manasını değiştiriyorsa true' },
+          farkNotu: { type: 'string', description: 'anlamFarki true ise farkı tek cümleyle anlat, değilse boş' },
           yakinId: { type: ['string', 'null'], description: 'Aynı değil ama GERÇEKTEN aynı konuda en yakın adayın id\'si, yoksa null' },
           yakinGuven: { type: 'number', description: '0-1, yakinId ne kadar aynı konuda' },
           guven: { type: 'number', description: '0-1 arası eşleşme güveni' },
         },
-        required: ['eslesenId', 'yakinId', 'yakinGuven', 'guven'],
+        required: ['eslesenId', 'anlamFarki', 'farkNotu', 'yakinId', 'yakinGuven', 'guven'],
       },
     }],
     tool_choice: { type: 'tool', name: 'eslesme' },
   });
   const tu = r.content.find(c => c.type === 'tool_use');
-  return tu ? tu.input : { eslesenId: null, yakinId: null, yakinGuven: 0, guven: 0 };
+  return tu ? tu.input : { eslesenId: null, anlamFarki: false, farkNotu: '', yakinId: null, yakinGuven: 0, guven: 0 };
 }
 
 // --- Arapça lexical arama (korpustaki asıl Arapça metin üzerinde) ---
 // Harekeleri/tatweel'i atar, elif-hemze ve tâ marbûta varyantlarını sadeleştirir,
 // sonra nadir kelimelerin örtüşmesine göre puanlar. Üretmez; yalnızca aday getirir.
 const arNorm = (s) => (s || '')
-  .replace(/[ً-ْـٰ]/g, '')      // hareke + tatweel
+  // Osmanî mushafta hareke dışında hançer elif (U+0670) ve durak/tecvid işaretleri
+  // (U+06D6–U+06ED) var; bunlar "harf değil" sayılıp BOŞLUĞA çevrilince kelimeler
+  // parçalanıyordu (ٱلۡخَمۡرُ → "ل خم ر") ve Arapça arama büyük ölçüde ölüydü.
+  .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '')
+  .replace(/\u0671/g, 'ا')     // vasl elifi → elif
   .replace(/[إأآا]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه')
   .replace(/[^ء-ي\s]/g, ' ').replace(/\s+/g, ' ').trim();
 const AR_STOP = new Set(['من','في','على','عن','الى','ان','ما','لا','هو','هي','قال','عليه','وسلم','صلى','الله','رسول','عن','بن','حدثنا','اخبرنا','كان','الي','هذا','التي','الذي']);
@@ -336,11 +363,13 @@ async function dogrula(metin, dil = 'tr') {
     adaylar = hadisMotor(dil).ara(metin, 8);
   }
   if (!adaylar.length) return { bulundu: false, yakin: null, benzerler: [] };
-  const { eslesenId, yakinId, yakinGuven, guven } = await eslestir(metin, adaylar, dil);
+  const { eslesenId, anlamFarki, farkNotu, yakinId, yakinGuven, guven } = await eslestir(metin, adaylar, dil);
   const es = eslesenId && guven >= 0.45 ? adaylar.find(a => a.id === eslesenId) : null;
   if (es) {
+    // Kaynak sahih olsa bile kullanıcının metni manayı değiştiriyorsa "sahih" demek
+    // yanlış bilgidir; kaydı gösterir ama farkı açıkça bildiririz.
     return {
-      bulundu: true, guven,
+      bulundu: true, guven, anlamFarki: !!anlamFarki, farkNotu: anlamFarki ? (farkNotu || '') : '',
       hadis: derecele(es, dil),
       benzerler: adaylar.filter(a => a.id !== es.id).slice(0, 3).map(a => derecele(a, dil)),
     };
@@ -454,15 +483,24 @@ const UNLU_DUSMESI = {
   hayir: 'hayr', sehir: 'sehr', nakil: 'nakl', kisim: 'kism', resim: 'resm',
 };
 // Arapça kök: harf-i tarif ve tek harfli ön ekleri at (الصبر→صبر, فاصبر→صبر)
-const arKok = (w) => w.replace(/^(وال|فال|بال|كال|لل|ال)/, '').replace(/^[وفبكل]/, '');
-// Uthmani imlada uzun elif bazen vav yazılır (صلاة ↔ صلوة); iki varyantı da ara
-const arVaryant = (w) => { const k = arKok(w); return k.includes('ا') ? [k, k.replace(/ا/g, 'و')] : [k]; };
-const kokVaryant = (w) => {
+// SADECE harf-i tarif atılır. Baştaki tek harfi (و/ف/ب/ك/ل) koşulsuz atmak kökü
+// yiyordu: الكبر→"بر", الفقر→"قر", الوالدين→"الدين" (= din!) ve arama saçmalıyordu.
+const arKok = (w) => w.replace(/^(وال|فال|بال|كال|لل|ال)/, '');
+// Osmanî imlada uzun elif ya hiç yazılmaz ya vav ile yazılır
+// (وَٰلِدَيۡنِ = "ولدين", صَلَوٰة = "صلوه"); üç varyantı da ara.
+const arVaryant = (w) => {
+  const k = arKok(w), v = [k];
+  if (k.includes('ا')) { v.push(k.replace(/ا/g, '')); v.push(k.replace(/ا/g, 'و')); }
+  return [...new Set(v)].filter(x => x.length >= 2);
+};
+const kokVaryant = (w, kati = false) => {
   const v = [w];
   if (UNLU_DUSMESI[w]) v.push(UNLU_DUSMESI[w]);
   // Türev ekleri: "sabretmek"/"yalancılık"/"evlilik" gibi uzun türevlerde
   // kelimenin ilk 5 harfi önek olarak da denenir (sabretmek→sabre, yalancılık→yalan).
-  if (w.length >= 7) v.push(w.slice(0, 5));
+  // `kati`: alakasızlık kapısı bu kısayolu KULLANMAZ — "bilgisayar"→"bilgi" diye
+  // Kur'an dışı sorgular kapıdan geçiyordu.
+  if (!kati && w.length >= 7) v.push(w.slice(0, 5));
   return v;
 };
 const trNorm = (s) => (s || '').toLocaleLowerCase('tr').normalize('NFD')
@@ -474,7 +512,7 @@ const trNorm = (s) => (s || '').toLocaleLowerCase('tr').normalize('NFD')
 // gösterilen meâl her zaman veriden gelir, üretilmez.)
 const KAVRAM = {
   alkol: 'içki, şarap, sarhoş edici içecek, hamr',
-  icki2: 'içki, şarap, sarhoşluk, hamr',
+  icki: 'içki, şarap, sarhoşluk, hamr',
   kumar: 'kumar, şans oyunu, bahis',
   zina: 'zina, iffetsizlik, namusa aykırı ilişki',
   hirsizlik: 'hırsızlık, çalmak',
@@ -492,6 +530,12 @@ const KAVRAM = {
   sila: 'akrabayı ziyaret, akrabalık bağını gözetmek',
   helal: 'temiz ve helal kazanç, haramdan sakınmak',
   kul_hakki: 'başkasının hakkını yemek, haksızlık, zulüm',
+};
+// Kavramın meâlde BİREBİR geçen ayırt edici karşılığı — lexical kanalına eklenir.
+// (Genel kelimeler burada YOK; onlar aramayı ele geçiriyordu.)
+const KAVRAM_LEX = {
+  alkol: ['sarap'], icki: ['sarap'], kumar: ['kumar'], faiz: ['faiz'],
+  giybet: ['cekistir'], tevekkul: ['guven'], infak: ['harca'], zina: ['zina'],
 };
 const kavramAnahtar = (s) => (s || '').toLocaleLowerCase('tr')
   .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i')
@@ -512,7 +556,10 @@ async function kuranKonu(sorgu, dil = 'tr') {
   // kelimeler ("hak", "mal", "yardım") aramayı ele geçiriyordu. Genişletme
   // yalnızca anlam (embedding) kanalına gider.
   const nfQ = dil === 'ar' ? arNorm : trNorm;
-  const qwLex = [...new Set(nfQ(sorgu).split(' '))].filter(w => w.length > 2);
+  // Eşik 2 idi: "af", "su", "hac" gibi 2 harfli sorgular lexical listeyi BOŞ bırakıyor,
+  // boş liste hem alakasızlık kapısını hem tek-terim korumasını atlatıp saf çöp döndürüyordu.
+  const qwLex = [...new Set(nfQ(sorgu).split(' '))].filter(w => w.length >= 2);
+  if (dil === 'tr') for (const t of (KAVRAM_LEX[kavramAnahtar(sorgu)] || [])) if (!qwLex.includes(t)) qwLex.push(t);
   const lexArr = qwLex.length ? lexPuan(dil, qwLex) : null;
   let lexMax = 0; if (lexArr) for (const v of lexArr) if (v > lexMax) lexMax = v;
   // Konu Kur'an'da geçmiyorsa DÜRÜSTÇE boş dön. Saf semantik her sorguya bir şey
@@ -521,7 +568,12 @@ async function kuranKonu(sorgu, dil = 'tr') {
   // Kavram sözlüğünde karşılığı olan terim (gıybet→çekiştirmek) meâlde kelime
   // olarak geçmez ama konu Kur'an'da VARDIR → kapıya takılmamalı.
   const kavramVar = dil === 'tr' && !!KAVRAM[kavramAnahtar(sorgu)];
-  if (qwLex.length && lexMax === 0 && !kavramVar) return { konu: sorgu, sonuclar: [], alakasiz: true };
+  // Kapı, gevşek varyantlarla (7+ harfin ilk 5'i) değil TAM kelimeyle karar verir:
+  // "bilgisayar"→"bilgi", "hastane"→"hasta", "yazılım"→"yazıl" diye Kur'an dışı
+  // sorgular ayet döndürüyordu. Sıralama gevşek kalsın, kapı katı olsun.
+  const lexKati = qwLex.length ? lexPuan(dil, qwLex, true) : null;
+  let katiMax = 0; if (lexKati) for (const v of lexKati) if (v > katiMax) katiMax = v;
+  if (qwLex.length && katiMax === 0 && !kavramVar) return { konu: sorgu, sonuclar: [], alakasiz: true };
   const tekTerim = qwLex.length === 1;   // tek terim → lexical, cümle → anlam ağırlıklı
   // DESTEK: semantik — kelime geçmese de anlamca yakın ayetleri yakalar
   const qv = await embedOne(aramaMetni);
@@ -598,16 +650,24 @@ async function kuranKonu(sorgu, dil = 'tr') {
 // Günün ayeti + hadisi — tarihe göre deterministik (herkes aynısını görür, her gün değişir).
 // Ayet seçimi bilinen/manevî ayetlerden; metin yine yerleşik veriden gelir.
 const GUNUN_AYETLER = [[2,286],[94,5],[13,28],[2,152],[65,3],[39,53],[2,153],[16,128],[14,7],[29,69],[3,139],[10,57],[2,45],[3,159],[93,4],[2,255],[8,46],[64,11],[3,173],[57,4]];
-const gununHadisHavuz = corpus.filter(h => h.derece === 'sahih' && h.tr && h.tr.length > 40 && h.tr.length < 340);
+// Ana ekranda bağlamsız gösterilecek içerik: had/ceza, savaş, kıyamet alameti, ırk
+// tasviri gibi bağlam isteyen rivayetler günlük ilham kartına uygun değil.
+const GUNUN_ELE = /(kıyamet|cehennem|azâb|azap|recm|celde|kırbaç|öldür|katl|savaş|gazve|deccal|zina|cariye|köle|kesil|lânet|lanet|helâk|helak|burnu|yüzlü)/i;
+const gununHadisHavuz = corpus.filter(h => h.derece === 'sahih' && h.tr
+  && h.tr.length > 60 && h.tr.length < 340
+  && !GUNUN_ELE.test(h.tr)
+  && !/^\s*(Bize|Bana)\b/.test(h.tr));   // isnad'la açılan kayıt kartta kötü duruyor
 function gunSeed() { const d = new Date(); return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5); }
 function gunun(dil = 'tr') {
   const gi = gunSeed();
   const [s, a] = GUNUN_AYETLER[gi % GUNUN_AYETLER.length];
   const ay = ayat.find(x => x.sure === s && x.ayet === a);
-  const hd = gununHadisHavuz.length ? gununHadisHavuz[(gi * 7) % gununHadisHavuz.length] : null;
+  // (gi*7) havuzun sonunu hiç görmüyordu (366*7 < havuz) → bir yıl boyunca hep aynı
+  // bölümden, ardışık kayıtlar geliyordu. Büyük asal ile havuzun tamamına dağıt.
+  const hd = gununHadisHavuz.length ? gununHadisHavuz[(gi * 7919) % gununHadisHavuz.length] : null;
   return {
     ayet: ay ? { kaynak: dil === 'tr' ? ay.kaynak : ay.kaynakEn, ar: ay.ar, okunus: dil === 'tr' ? ay.okunus : '', tr: metinAl(ay, dil) } : null,
-    hadis: hd ? { kaynak: hd.kaynak, tr: metinAl(hd, dil), ar: hd.ar, dereceEtiket: (DERECE_BILGI.sahih.etiket[dil] || DERECE_BILGI.sahih.etiket.en) } : null,
+    hadis: hd ? { kaynak: hd.kaynak, tr: hadisMatn(metinAl(hd, dil)), ar: hd.ar, dereceEtiket: (DERECE_BILGI.sahih.etiket[dil] || DERECE_BILGI.sahih.etiket.en) } : null,
   };
 }
 
@@ -644,6 +704,13 @@ function namaz(lat, lng) {
 // Basit IP başına rate limit (saatte LIMIT istek) — LLM/embedding maliyetini korur.
 const istekSayac = new Map();
 const LIMIT = Number(process.env.RATE_LIMIT || 120);
+// Map'ler istemciden gelen anahtarlarla (IP, cihaz) büyüyor ve hiç temizlenmiyordu.
+// Saatte bir süresi geçmiş kayıtları at; premium kayıtları korunur.
+setInterval(() => {
+  const now = Date.now(), g = bugun();
+  for (const [k, v] of istekSayac) if (now > v.reset) istekSayac.delete(k);
+  for (const [k, v] of kullanim) if (v.gun !== g) kullanim.delete(k);
+}, 3600_000).unref();
 function limitAsildi(ip) {
   const now = Date.now(), pencere = 3600_000;
   let r = istekSayac.get(ip);
@@ -674,7 +741,11 @@ function hakKullan(c) {
 // Lisans doğrulama — ŞİMDİLİK stub (test anahtarı). LemonSqueezy bağlanınca gerçek API ile değişecek.
 async function lisansGecerli(anahtar) {
   if (!anahtar) return false;
-  if (anahtar.trim() === (process.env.TEST_LISANS || 'MIHENK-TEST-2026')) return true;
+  // Sabit varsayılan vardı; anahtar herkese açık olduğu için üretimde bedava premium
+  // demekti (ve Apple 3.1.1 açısından IAP dışı kilit açma sayılır). Artık yalnızca
+  // ortam değişkeni tanımlıysa ve boş değilse geçerli.
+  const test = (process.env.TEST_LISANS || '').trim();
+  if (test && anahtar.trim() === test) return true;
   // TODO(LemonSqueezy): POST https://api.lemonsqueezy.com/v1/licenses/validate {license_key} → .valid
   return false;
 }
@@ -730,13 +801,14 @@ http.createServer(async (req, res) => {
       if (req.headers['x-app-key'] !== APP_KEY) { res.writeHead(401); return res.end(JSON.stringify({ hata: 'yetkisiz' })); }
       // X-Forwarded-For istemciden gelir ve taklit edilebilir; SADECE güvenilir proxy
       // arkasındayken (Render) kullan. Aksi halde soket adresi esas alınır.
-      const xff = (req.headers['x-forwarded-for'] || '').split(',').pop().trim();
+      const xff = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
       const ip = (process.env.PROXY_GUVENILIR === '1' && xff) || req.socket.remoteAddress || 'x';
       if (limitAsildi(ip)) { res.writeHead(429); return res.end(JSON.stringify({ hata: 'çok fazla istek, biraz bekleyin' })); }
       const body = JSON.parse(await govde(req) || '{}');
       const dil = dilAl(body.dil);
       const cihaz = (body.cihaz || '').toString().slice(0, 64) || 'anon';
-      const yerli = !!body.yerli; // limit sadece native (iOS) isteklerde; web ücretsiz demo
+      // `yerli` istemciden geliyordu: gövdeye yerli:false yazan herkes kotayı tamamen
+      // atlatıyordu (sınırsız ücretsiz AI çağrısı). Kota artık herkese uygulanır.
       // Lisans body'de geldiyse premium'u aktive et
       if (body.lisans && await lisansGecerli(body.lisans)) premiumCihaz.set(cihaz, { anahtar: body.lisans });
 
@@ -747,9 +819,14 @@ http.createServer(async (req, res) => {
         res.writeHead(ok ? 200 : 400, { 'content-type': 'application/json' });
         return res.end(JSON.stringify({ premium: ok }));
       }
-      // IAP onayı — RevenueCat satın almayı doğruladıktan sonra app bildirir; cihazı premium işaretle.
-      // ⚠️ MVP: güven-tabanlı (spoof edilebilir). İleride RevenueCat webhook ile sunucu-taraflı doğrulama.
+      // IAP onayı — satın alma SUNUCUDA RevenueCat'e sorulur; istemcinin sözüne güvenilmez.
       if (url.pathname === '/api/iap-onay') {
+        // Doğrulama anahtarı yoksa premium VERİLMEZ. Önceden bu durumda kontrol
+        // tamamen atlanıyordu: tek curl ile kalıcı premium alınabiliyordu.
+        if (!RC_SECRET) {
+          res.writeHead(503, { 'content-type': 'application/json' });
+          return res.end(JSON.stringify({ premium: false, hata: 'dogrulama-yapilandirilmadi' }));
+        }
         // RevenueCat'ten sunucu tarafında doğrula: istemcinin sözüne güvenmek
         // tek curl ile ücretsiz premium demekti. Anahtar yoksa (yerel geliştirme)
         // eski davranış korunur.
@@ -769,18 +846,21 @@ http.createServer(async (req, res) => {
       // Durum: premium mi + kalan hak
       if (url.pathname === '/api/durum') {
         res.writeHead(200, { 'content-type': 'application/json' });
-        return res.end(JSON.stringify({ premium: premiumMi(cihaz), kalan: (premiumMi(cihaz) || !yerli) ? -1 : kalanHak(cihaz), limit: FREE_LIMIT, checkout: CHECKOUT_URL }));
+        return res.end(JSON.stringify({ premium: premiumMi(cihaz), kalan: premiumMi(cihaz) ? -1 : kalanHak(cihaz), limit: FREE_LIMIT, checkout: CHECKOUT_URL }));
       }
       // AI-sorgu limiti (namaz hariç, sadece native)
-      if (AI_YOLLAR.includes(url.pathname) && yerli && !premiumMi(cihaz) && kalanHak(cihaz) <= 0) {
+      if (AI_YOLLAR.includes(url.pathname) && !premiumMi(cihaz) && kalanHak(cihaz) <= 0) {
         res.writeHead(402, { 'content-type': 'application/json' });
         return res.end(JSON.stringify({ hata: 'limit', premium: false, limit: FREE_LIMIT, checkout: CHECKOUT_URL }));
       }
 
       let out;
       if (url.pathname === '/api/namaz') {
-        const lat = Number(body.lat), lng = Number(body.lng);
-        if (!isFinite(lat) || !isFinite(lng)) { res.writeHead(400); return res.end(JSON.stringify({ hata: 'konum geçersiz' })); }
+        const lat = Number(body.lat), lng = Number(body.lng ?? body.lon);
+        if (!isFinite(lat) || !isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+          res.writeHead(400, { 'content-type': 'application/json' });
+          return res.end(JSON.stringify({ hata: 'konum geçersiz' }));
+        }
         out = namaz(lat, lng);
         res.writeHead(200, { 'content-type': 'application/json' });
         return res.end(JSON.stringify(out));
@@ -800,8 +880,8 @@ http.createServer(async (req, res) => {
       }
       // AI sorgusu başarılı → hak düş + kalan bilgisini ekle
       if (AI_YOLLAR.includes(url.pathname)) {
-        if (yerli && !premiumMi(cihaz)) hakKullan(cihaz);
-        out.kalan = (premiumMi(cihaz) || !yerli) ? -1 : kalanHak(cihaz);
+        if (!premiumMi(cihaz)) hakKullan(cihaz);
+        out.kalan = premiumMi(cihaz) ? -1 : kalanHak(cihaz);
         out.premium = premiumMi(cihaz);
         out.limit = FREE_LIMIT;
       }

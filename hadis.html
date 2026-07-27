@@ -51,8 +51,8 @@
   .paywall-arka.acik{display:flex;animation:bel .25s ease}
   .paywall-kart{background:linear-gradient(180deg,var(--yuzey),#0f1814);border:1px solid var(--cizgi);
     border-radius:22px;padding:26px 22px;max-width:400px;width:100%;position:relative;box-shadow:0 20px 60px #000a}
-  .paywall-kapat{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--daha-soluk);
-    font-size:26px;line-height:1;cursor:pointer}
+  .paywall-kapat{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--daha-soluk);
+    font-size:26px;line-height:1;cursor:pointer;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;line-height:1}
   .paywall-amblem{font-size:26px;color:var(--pirinc);text-align:center}
   .paywall-baslik{font-family:'Sora',sans-serif;font-weight:700;font-size:23px;text-align:center;color:var(--metin);margin:8px 0 4px}
   .paywall-alt{text-align:center;color:var(--soluk);font-size:14px;line-height:1.5;margin-bottom:18px}
@@ -79,7 +79,7 @@
   .paywall-mesaj.ok{color:var(--zumrut)} .paywall-mesaj.hata{color:var(--kirmizi)}
 
   /* --- Dil seçici --- */
-  .dil-sec{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;margin:0;max-width:230px}
+  .dil-sec{max-width:none;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;margin:0;max-width:230px}
   .dil{padding:5px 12px;border:1px solid var(--cizgi);background:transparent;color:var(--daha-soluk);
     font-family:inherit;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;letter-spacing:.5px}
   .dil.aktif{background:var(--yuzey2);color:var(--pirinc);border-color:var(--zumrut-koyu)}
@@ -217,6 +217,15 @@
     cursor:pointer;padding:0;margin-top:6px;font-weight:600}
 
   .uyari-kart{border-color:#4a3a1f;background:linear-gradient(180deg,#1f1a10,#161109)}
+  .ayet.hedef{box-shadow:0 0 0 2px var(--zumrut-koyu) inset;transition:box-shadow .4s}
+  .ses-uyari{position:fixed;left:50%;bottom:88px;transform:translate(-50%,14px);z-index:60;
+    max-width:86vw;padding:11px 16px;border-radius:12px;border:1px solid #4a3a1f;
+    background:#1f1a10;color:var(--turuncu);font-size:13.5px;text-align:center;
+    opacity:0;pointer-events:none;transition:opacity .22s,transform .22s}
+  .ses-uyari.gorunur{opacity:1;transform:translate(-50%,0)}
+  .paywall-yasal{margin-top:14px;font-size:11.5px;line-height:1.55;color:var(--soluk);text-align:center}
+  .paywall-yasal-baglanti{margin-top:7px;display:flex;gap:7px;justify-content:center}
+  .paywall-yasal-baglanti a{color:var(--soluk);text-decoration:underline}
   .uyari-baslik{color:var(--turuncu);font-weight:700;font-size:15px;display:flex;gap:9px;align-items:center}
   .benzer-baslik{font-size:11.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--daha-soluk);margin:18px 0 10px}
 
@@ -390,11 +399,12 @@
       <button class="btn" id="paywallSatinAl" data-i18n="pw_devam" style="margin-top:14px">Devam et</button>
       <div class="paywall-mesaj" id="lisansMesaj" style="text-align:center"></div>
       <button class="restore-link" id="restoreBtn" data-i18n="pw_restore">Satın almaları geri yükle</button>
-      <div class="paywall-lisans">
-        <span data-i18n="pw_lisans_soru">Lisans anahtarın var mı?</span>
-        <div class="paywall-lisans-giris">
-          <input class="metin" id="lisansInput" placeholder="MIHENK-…" autocapitalize="characters" spellcheck="false">
-          <button class="btn" id="lisansBtn" data-i18n="pw_etkinlestir" style="margin-top:0;width:auto;padding:11px 16px">Etkinleştir</button>
+      <div class="paywall-yasal">
+        <div data-i18n="pw_yenileme">Abonelik, dönem bitiminden en az 24 saat önce iptal edilmedikçe kendini yeniler. Yönetim ve iptal App Store hesap ayarlarından yapılır.</div>
+        <div class="paywall-yasal-baglanti">
+          <a href="https://mihenk-api.onrender.com/kullanim" target="_blank" rel="noopener" data-i18n="ayar_kullanim">Kullanım Koşulları</a>
+          <span>·</span>
+          <a href="https://mihenk-api.onrender.com/gizlilik" target="_blank" rel="noopener" data-i18n="ayar_gizlilik">Gizlilik Politikası</a>
         </div>
       </div>
     </div>
@@ -470,6 +480,8 @@ const KKONULAR = {
 };
 const L = {
   tr: {
+    yogun_baslik:'Şu an çok yoğunuz',
+    ses_hata:'Tilavet indirilemedi. İnternet bağlantını kontrol et.',fark_title:'Metnin kaynaktakinden farklı',fark_body:'Aşağıdaki kayıt bu hadisin kaynaktaki hâlidir. Derecelendirme kaynak metne aittir, senin yazdığın metne değil.',pw_yenileme:'Abonelik, dönem bitiminden en az 24 saat önce iptal edilmedikçe kendini yeniler. Yönetim ve iptal App Store hesap ayarlarından yapılır.',
     yogun:'Şu an çok yoğunuz, birazdan tekrar dene.',
     sure_bulunamadi:'Sûre bulunamadı', girdi_kisa:'Lütfen doğrulamak istediğin hadis metnini yapıştır.', girdi_bos:'Lütfen bir konu yaz.',
     surede_oku:'Sûrede oku & dinle',
@@ -484,7 +496,7 @@ const L = {
     lbl_kuran:'Bir konu ya da anlamını yaz — Kur\'an ne diyor?', ph_kuran:'sabır, anne-baba, faiz, "işini Allah\'a bırakmak"…', btn_kuran:'Ayetleri getir',
     ex_niyet:'Örnek: niyet hadisi', ex_cennet:'Örnek: cennet-anne', ex_temizlik:'Örnek: temizlik',
     disc:'Mihenk, kanonik kaynaklardaki hadis metnini ve âlimlerin derecelendirmesini, Kur\'an ayetlerini ve <b>Diyanet meâlini</b> <b>getirir</b> — hadis, meal ya da fıkhî hüküm <b>üretmez</b>. Meâl bir çeviridir; ihtilaflı konularda bir âlime / müftülüğe danışınız.',
-    yukleniyor:'Kanonik kaynaklarda aranıyor…', err_title:'Bağlanamadım', err_body:'Sunucuya ulaşılamadı. Backend çalışıyor mu? (localhost:8788)',
+    yukleniyor:'Kanonik kaynaklarda aranıyor…', err_title:'Bağlanamadım', err_body:'Sunucuya şu an ulaşılamıyor. İnternet bağlantını kontrol edip tekrar dener misin?',
     nf_title:'Bu söz kanonik kaynaklarda geçmiyor',
     nf_body:'Girdiğin metin <b>Kütüb-i Sitte\'de</b> (Buhârî, Müslim, Tirmizî, Ebû Dâvûd, Nesâî, İbn Mâce) bu haliyle yer almıyor — bu kaynaklarda sağlam bir dayanağı görünmüyor. <span style="opacity:.75">(Başka bir muteber kaynakta farklı lafızla geçme ihtimali ayrıca araştırılmalı; bu yüzden "kesinlikle uydurma" değil, "sağlam kaynağı gösterilemedi" diyoruz.)</span>',
     similar:'Benzer / ilgili hadisler', meal:'Meâl: Diyanet İşleri',
@@ -504,6 +516,8 @@ const L = {
     pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
   },
   en: {
+    yogun_baslik:'We are busy right now',
+    ses_hata:'Could not load the recitation. Check your connection.',fark_title:'Your text differs from the source',fark_body:'The record below is how this hadith appears in the source. The grading belongs to the source text, not to the text you entered.',pw_yenileme:'Subscription renews automatically unless cancelled at least 24 hours before the end of the period. Manage or cancel in your App Store account settings.',
     yogun:'We are busy right now, please try again shortly.',
     sure_bulunamadi:'No surah found', girdi_kisa:'Please paste the hadith text you want to verify.', girdi_bos:'Please enter a topic.',
     surede_oku:'Read in surah & listen',
@@ -518,7 +532,7 @@ const L = {
     lbl_kuran:'Type a topic or its meaning — what does the Quran say?', ph_kuran:'patience, parents, interest, "putting trust in God"…', btn_kuran:'Get verses',
     ex_niyet:'Ex: intentions', ex_cennet:'Ex: paradise-mothers', ex_temizlik:'Ex: cleanliness',
     disc:'Mihenk <b>brings</b> the hadith text from canonical sources with scholars\' gradings, Quran verses and their <b>translation</b> — it does <b>not generate</b> hadith, translation or rulings. A translation is interpretive; consult a scholar on disputed matters.',
-    yukleniyor:'Searching canonical sources…', err_title:'Connection failed', err_body:'Could not reach the server. Is the backend running? (localhost:8788)',
+    yukleniyor:'Searching canonical sources…', err_title:'Connection failed', err_body:'Could not reach the server. Please check your connection and try again.',
     nf_title:'This saying is not found in the canonical sources',
     nf_body:'Your text does not appear in this form in the <b>Six Books</b> (Bukhari, Muslim, Tirmidhi, Abu Dawud, Nasa\'i, Ibn Majah) — it has no sound basis in these sources. <span style="opacity:.75">(It may exist with different wording in another reputable source, which should be checked separately; hence "no sound source shown" rather than "certainly fabricated".)</span>',
     similar:'Similar / related hadiths', meal:'Translation: Abdel Haleem',
@@ -538,6 +552,8 @@ const L = {
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
   },
   fr: {
+    yogun_baslik:'Service très sollicité',
+    ses_hata:'Récitation indisponible. Vérifie ta connexion.',fark_title:'Ton texte diffère de la source',fark_body:'La fiche ci-dessous correspond au hadith tel qu\'il figure dans la source. Le degré d\'authenticité concerne le texte source, pas celui que tu as saisi.',pw_yenileme:'L\'abonnement se renouvelle automatiquement sauf résiliation au moins 24 heures avant la fin de la période. Gestion et résiliation dans les réglages de ton compte App Store.',
     yogun:'Service très sollicité, réessaie dans un instant.',
     sure_bulunamadi:'Aucune sourate trouvée', girdi_kisa:'Colle le texte du hadith à vérifier.', girdi_bos:'Saisis un thème.',
     surede_oku:'Lire dans la sourate',
@@ -572,6 +588,8 @@ const L = {
     pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
   },
   id: {
+    yogun_baslik:'Sedang sibuk',
+    ses_hata:'Rekaman tidak dapat dimuat. Periksa koneksi internetmu.',fark_title:'Teksmu berbeda dari sumber',fark_body:'Catatan di bawah adalah bunyi hadis ini dalam sumbernya. Derajat keabsahan berlaku untuk teks sumber, bukan teks yang kamu masukkan.',pw_yenileme:'Langganan diperpanjang otomatis kecuali dibatalkan minimal 24 jam sebelum periode berakhir. Kelola atau batalkan di pengaturan akun App Store.',
     yogun:'Sedang sibuk, coba lagi sebentar.',
     sure_bulunamadi:'Surah tidak ditemukan', girdi_kisa:'Tempel teks hadis yang ingin diverifikasi.', girdi_bos:'Masukkan sebuah topik.',
     surede_oku:'Baca di surah',
@@ -606,6 +624,8 @@ const L = {
     pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
   },
   ar: {
+    yogun_baslik:'الخدمة مزدحمة الآن',
+    ses_hata:'تعذّر تحميل التلاوة. تحقّق من اتصالك بالإنترنت.',fark_title:'نصّك يختلف عن المصدر',fark_body:'السجل أدناه هو نصّ الحديث كما ورد في المصدر. الحكم يخصّ نصّ المصدر لا النصّ الذي أدخلته.',pw_yenileme:'يتجدّد الاشتراك تلقائيًا ما لم يُلغَ قبل نهاية المدة بأربع وعشرين ساعة على الأقل. الإدارة والإلغاء من إعدادات حساب App Store.',
     yogun:'الخدمة مزدحمة الآن، حاول بعد قليل.',
     sure_bulunamadi:'لم يتم العثور على سورة', girdi_kisa:'الصق نص الحديث المراد التحقق منه.', girdi_bos:'اكتب موضوعًا.',
     surede_oku:'اقرأ في السورة',
@@ -640,6 +660,8 @@ const L = {
     pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
   },
   ur: {
+    yogun_baslik:'ابھی رش ہے',
+    ses_hata:'تلاوت لوڈ نہیں ہو سکی۔ اپنا انٹرنیٹ کنکشن دیکھیں۔',fark_title:'آپ کا متن ماخذ سے مختلف ہے',fark_body:'نیچے دیا گیا اندراج اس حدیث کی ماخذ میں موجود صورت ہے۔ درجہ ماخذ کے متن کا ہے، آپ کے لکھے متن کا نہیں۔',pw_yenileme:'رکنیت خود بخود تجدید ہوتی ہے جب تک مدت ختم ہونے سے کم از کم 24 گھنٹے قبل منسوخ نہ کی جائے۔ انتظام اور منسوخی App Store اکاؤنٹ کی ترتیبات سے۔',
     yogun:'ابھی رش ہے، تھوڑی دیر بعد کوشش کریں۔',
     sure_bulunamadi:'کوئی سورہ نہیں ملی', girdi_kisa:'تصدیق کے لیے حدیث کا متن پیسٹ کریں۔', girdi_bos:'کوئی موضوع لکھیں۔',
     surede_oku:'سورہ میں پڑھیں',
@@ -674,6 +696,9 @@ const L = {
     pw_hata:'مکمل نہ ہوسکا۔ دوبارہ کوشش کریں۔', pw_restore_yok:'بحال کرنے کو کوئی سبسکرپشن نہیں۔',
   },
 };
+window.addEventListener('error', e=>{ try{ console.error('MIHENK hata:', e.message, e.filename+':'+e.lineno); }catch(_){} });
+window.addEventListener('unhandledrejection', e=>{ try{ console.error('MIHENK reddedilen söz:', e.reason); }catch(_){} });
+if(!L[dil]) dil='tr';   // bozuk/eski dil değeri her açılışta T.* erişimini patlatırdı
 let T = L[dil];
 
 function renkSinif(r){return {yesil:'r-yesil',turuncu:'r-turuncu',kirmizi:'r-kirmizi',gri:'r-gri'}[r]||'r-gri';}
@@ -721,7 +746,7 @@ function ayetKarti(a){
 }
 
 async function istek(yol, govde){
-  const r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil, cihaz, lisans, yerli:YERLI})});
+  const r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil, cihaz})});
   if(r.status===429){ const e=new Error('limit'); e.yogun=true; throw e; }   // 'bağlanamadım' demek yanıltıcıydı
   if(r.status===402){ const j=await r.json(); if(j.checkout) checkoutUrl=j.checkout; paywallGoster(); throw {paywall:true}; }
   if(!r.ok) throw new Error('sunucu '+r.status);
@@ -730,7 +755,7 @@ async function istek(yol, govde){
   return j;
 }
 function yukleniyor(el){el.className='sonuc gorunur';el.innerHTML=`<div class="yukleniyor"><span class="spin"></span>${T.yukleniyor}</div>`;}
-function hata(el,e){const yogun=e&&e.yogun;el.className='sonuc gorunur';el.innerHTML=`<div class="kart uyari-kart"><div class="uyari-baslik">${yogun?(T.yogun||'').split('.')[0]:T.err_title}</div><div class="anlam">${yogun?T.yogun:T.err_body}</div></div>`;}
+function hata(el,e){const yogun=e&&e.yogun;el.className='sonuc gorunur';el.innerHTML=`<div class="kart uyari-kart"><div class="uyari-baslik">${yogun?(T.yogun_baslik||T.err_title):T.err_title}</div><div class="anlam">${yogun?T.yogun:T.err_body}</div></div>`;}
 
 // --- Doğrula ---
 async function calistirDogrula(){
@@ -741,7 +766,13 @@ async function calistirDogrula(){
   try{
     const j=await istek('/api/dogrula',{metin});
     if(j.bulundu){
-      el.innerHTML=`<div class="kart">${hadisKarti(j.hadis,true)}</div>`+benzerBlok(j.benzerler);
+      // Kaynak sahih olsa bile kullanıcının metni manayı değiştiriyorsa yeşil rozeti
+      // tek başına göstermek yanlış onaydır; farkı kartın ÜSTÜNDE açıkça bildiririz.
+      const fark = j.anlamFarki ? `<div class="kart uyari-kart" style="margin-bottom:10px">
+        <div class="uyari-baslik">${T.fark_title||'Metnin kaynaktan farklı'}</div>
+        <div class="anlam">${esc(j.farkNotu||'')} ${T.fark_body||''}</div>
+      </div>` : '';
+      el.innerHTML=fark+`<div class="kart">${hadisKarti(j.hadis,true)}</div>`+benzerBlok(j.benzerler);
     }else{
       el.innerHTML=`<div class="kart uyari-kart">
         <div class="uyari-baslik">${T.nf_title}</div>
@@ -780,7 +811,7 @@ async function calistirKonu(){
 // --- Kur'an ---
 async function calistirKuran(){
   const konu=document.getElementById('kkonu').value.trim();
-  if(konu.length<2){ const e=document.getElementById('sonucKonu'); e.className='sonuc gorunur'; e.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.girdi_bos||'Lütfen bir konu yaz.'}</div></div>`; return; }
+  if(konu.length<2){ const e=document.getElementById('sonucKuran'); e.className='sonuc gorunur'; e.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.girdi_bos||'Lütfen bir konu yaz.'}</div></div>`; return; }
   const el=document.getElementById('sonucKuran'); yukleniyor(el);
   document.getElementById('btnKuran').disabled=true;
   try{
@@ -798,7 +829,8 @@ async function calistirKuran(){
 
 // --- Ezan / namaz vakitleri ---
 let ezanVeri=null, ezanTimer=null;
-function fmtSaat(ts){const loc={tr:'tr-TR',en:'en-GB',fr:'fr-FR',id:'id-ID',ar:'en-GB',ur:'en-GB'}[dil]||'en-GB';return new Date(ts).toLocaleTimeString(loc, {hour:'2-digit',minute:'2-digit',hour12:false,timeZone:(ezanVeri&&ezanVeri.tz)||undefined});}
+function fmtSaat(ts){if(ts==null||!isFinite(ts)) return '—';   // kutupta vakit oluşmuyor; epoch'u 00:00 diye göstermeyelim
+  const loc={tr:'tr-TR',en:'en-GB',fr:'fr-FR',id:'id-ID',ar:'en-GB',ur:'en-GB'}[dil]||'en-GB';return new Date(ts).toLocaleTimeString(loc, {hour:'2-digit',minute:'2-digit',hour12:false,timeZone:(ezanVeri&&ezanVeri.tz)||undefined});}
 async function konumAl(){
   const cap=window.Capacitor;
   if(cap&&cap.isNativePlatform&&cap.isNativePlatform()&&cap.Plugins&&cap.Plugins.Geolocation){
@@ -813,8 +845,16 @@ async function konumAl(){
 async function ezanBaslat(){
   const btn=document.getElementById('btnEzan'), intro=document.querySelector('#ezanBaslangic .anlam');
   btn.disabled=true;
-  try{ const k=await konumAl(); ezanVeri=await istek('/api/namaz',k); ezanCiz(); pusulaBaslat(); }
-  catch(e){ if(!e||!e.paywall) intro.textContent=T.ezan_konum_hata; }
+  try{
+    let k; try{ k=await konumAl(); }catch(ke){ ke.konum=true; throw ke; }
+    ezanVeri=await istek('/api/namaz',k); ezanCiz(); pusulaBaslat();
+  }
+  catch(e){
+    if(e && e.paywall) { /* paywall kendi ekranını açar */ }
+    else if(e && e.yogun) intro.textContent = T.yogun;          // 429'u konum izni sanmayalım
+    else if(e && e.konum) intro.textContent = T.ezan_konum_hata;
+    else intro.textContent = T.err_body;
+  }
   btn.disabled=false;
 }
 // Canlı kıble pusulası: cihaz yönüne göre bütün pusulayı döndür (N gerçek kuzeyi, ok gerçek kıbleyi gösterir).
@@ -845,7 +885,13 @@ function ezanCiz(){
   const sira=[['imsak',v.imsak],['gunes',v.gunes],['ogle',v.ogle],['ikindi',v.ikindi],['aksam',v.aksam],['yatsi',v.yatsi]];
   let nextKey=null,nextTs=null;
   for(const [k,ts] of sira){ if(ts>now){ nextKey=k; nextTs=ts; break; } }
-  if(!nextTs && ezanVeri.yarinImsak){ nextKey='imsak'; nextTs=ezanVeri.yarinImsak; } // bugün bitti → yarın imsak
+  // Kutup bölgelerinde sunucu bazen yatsıdan ÖNCE bir "yarın imsak" döndürüyor;
+  // geçmiş bir zamana geri sayınca tik() → ezanCiz() → tik() sonsuz özyinelemeye
+  // giriyor ve ekran kalıcı bozuluyordu (RangeError). Geçmişse bir gün ileri al.
+  if(!nextTs && ezanVeri.yarinImsak){
+    nextKey='imsak'; nextTs=ezanVeri.yarinImsak;
+    while(nextTs <= now) nextTs += 864e5;
+  }
   const deg=ezanVeri.kible, yon=T.yon[Math.round(deg/45)%8];
   document.getElementById('ezanIcerik').innerHTML=`
     <div class="ezan-sonraki">
@@ -870,7 +916,9 @@ function ezanCiz(){
   document.getElementById('ezanIcerik').style.display='';
   document.getElementById('ezanBaslangic').style.display='none';
   if(nextTs){
-    const tik=()=>{ const d=nextTs-Date.now(); if(d<=0){ ezanCiz(); return; }
+    const tik=()=>{ const d=nextTs-Date.now();
+      // setTimeout ile bir sonraki turda çiz: senkron çağrı özyineleme yapıyordu
+      if(d<=0){ clearInterval(ezanTimer); setTimeout(ezanCiz,300); return; }
       const h=Math.floor(d/3.6e6),m=Math.floor(d%3.6e6/6e4),s=Math.floor(d%6e4/1000);
       const el=document.getElementById('ezanGeri'); if(el) el.textContent=`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${T.ezan_kaldi}`;
     };
@@ -943,7 +991,7 @@ async function restore(){
 }
 async function durumYukle(){
   try{
-    const r=await fetch(API+'/api/durum',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz,lisans,yerli:YERLI})});
+    const r=await fetch(API+'/api/durum',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz})});
     const j=await r.json(); premium=!!j.premium; kalan=j.premium?null:j.kalan; checkoutUrl=j.checkout||''; hakGoster();
   }catch(e){}
 }
@@ -953,8 +1001,10 @@ let gununVeri=null;
 async function gununYukle(){
   try{
     const r=await fetch(API+'/api/gunun',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({dil})});
+    // r.ok kontrol edilmiyordu: 429 gövdesi "veri" sanılıp ekran sessizce boş kalıyordu.
+    if(!r.ok){ const e=new Error('gunun'); e.yogun = r.status===429; throw e; }
     gununVeri=await r.json(); gununCiz();
-  }catch(e){ document.getElementById('gununIcerik').innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.err_body}</div></div>`; }
+  }catch(e){ document.getElementById('gununIcerik').innerHTML=`<div class="kart uyari-kart"><div class="anlam">${e&&e.yogun?T.yogun:T.err_body}</div></div>`; }
 }
 function gununCiz(){
   if(!gununVeri) return;
@@ -1019,11 +1069,20 @@ const sureAdi=(s)=> dil==='ar' ? (s.adAr||s.ad) : dil==='tr' ? s.ad : (s.adEn||s
 // "yasin" yazınca "Yâsîn"i bulsun: şapka/aksan ve ı-i farkını yok say
 const sadeAd=(s)=>(s||'').toLocaleLowerCase('tr').normalize('NFD')
   .replace(/[\u0300-\u036f]/g,'').replace(/ı/g,'i').replace(/[^a-z0-9]/g,'');
+// Arapça/Urduca sorguda sadeAd boş stringe düşüyordu → "filtre yok" sanılıp 114 satır
+// dönüyordu. Arapça adlar için ayrı normalize (hareke ve harf-i tarif yok sayılır).
+const sadeAr=(s)=>(s||'').replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g,'')
+  .replace(/\u0671/g,'ا').replace(/[إأآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه')
+  .replace(/^(سورة|سوره)\s*/,'').replace(/^ال/,'').replace(/\s+/g,'').trim();
 
 function sureListesiCiz(filtre=''){
   const el=document.getElementById('sureListe'); if(!SURELER) return;
-  const f=sadeAd(filtre);
-  const liste=SURELER.filter(s=>!f || String(s.no)===f || sadeAd(s.ad).includes(f) || sadeAd(s.adEn).includes(f));
+  const ham=(filtre||'').trim(), f=sadeAd(filtre), fa=sadeAr(filtre);
+  const arapcaSorgu=/[\u0600-\u06FF]/.test(ham);
+  const liste=SURELER.filter(s=> !ham
+    || String(s.no)===ham.trim()
+    || (arapcaSorgu ? (fa && sadeAr(s.adAr).includes(fa))
+                    : (f && (sadeAd(s.ad).includes(f) || sadeAd(s.adEn).includes(f)))));
   if(!liste.length){ el.innerHTML=`<div class="kuran-yukleniyor">${T.sure_bulunamadi||'Sûre bulunamadı'}</div>`; kaldigimYeriCiz(); return; }
   el.innerHTML=liste.map(s=>`
     <div class="sure-sat" data-sure="${s.no}">
@@ -1046,7 +1105,23 @@ function kaldigimYeriCiz(){
   k.querySelector('.kaldim').onclick=()=>sureAc(y.sure, y.ayet);
 }
 
+// Okuma konumunu kaydırmaya göre izle: yer imi yalnızca ses çalınca güncelleniyordu,
+// sessiz okuyan kullanıcı her dönüşte 1. ayete düşüyordu.
+let okumaGozcu=null;
+function okumaTakibiKur(){
+  okumaGozcu?.disconnect();
+  const kartlar=document.querySelectorAll('#ayetler .ayet'); if(!kartlar.length) return;
+  okumaGozcu=new IntersectionObserver((gs)=>{
+    const gor=gs.filter(g=>g.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top)[0];
+    if(!gor) return;
+    const a=KURAN?.find(x=>'ay-'+x.id===gor.target.id);
+    if(a) localStorage.setItem('kuranYer', JSON.stringify({sure:a.sure, ayet:a.ayet}));
+  },{rootMargin:'-45% 0px -45% 0px'});
+  kartlar.forEach(k=>okumaGozcu.observe(k));
+}
+const kuranYer=()=>{ try{ return JSON.parse(localStorage.getItem('kuranYer')||'null'); }catch(e){ return null; } };
 function sureAc(no, gitAyet){
+  sesDurdur();          // başka sûreye geçerken çalan ses ekranda kontrolsüz kalıyordu
   const s=SURELER.find(x=>x.no===no); if(!s) return;
   document.getElementById('sureListeSar').style.display='none';
   const kap=document.getElementById('sureOku'); kap.style.display='';
@@ -1066,11 +1141,20 @@ function sureAc(no, gitAyet){
     </div>`).join('');
   document.getElementById('ayetler').querySelectorAll('.ses-btn')
     .forEach(b=>b.onclick=()=>sesCal(+b.dataset.ses));
-  localStorage.setItem('kuranYer', JSON.stringify({sure:no, ayet:gitAyet||1}));
+  // Yer imi: sadece hedefli açılışta yaz. Her açılışta ayet:1 yazmak, sûreye şöyle
+  // bir göz atmayı "kaldığın yer" sanıp gerçek yer imini siliyordu.
+  if(gitAyet) localStorage.setItem('kuranYer', JSON.stringify({sure:no, ayet:gitAyet}));
+  else if((kuranYer()||{}).sure!==no) localStorage.setItem('kuranYer', JSON.stringify({sure:no, ayet:1}));
   if(gitAyet){
     const t=ayetler.find(a=>a.ayet===gitAyet);
-    if(t) setTimeout(()=>document.getElementById('ay-'+t.id)?.scrollIntoView({block:'center'}),60);
+    if(t) setTimeout(()=>{
+      const el=document.getElementById('ay-'+t.id);
+      el?.scrollIntoView({block:'center'});
+      el?.classList.add('hedef');                 // aranan ayet komşularından ayırt edilsin
+      setTimeout(()=>el?.classList.remove('hedef'),2600);
+    },60);
   }else window.scrollTo(0,0);
+  okumaTakibiKur();
 }
 
 // Dile göre meâl alanı. DİKKAT: Endonezce alan adı 'idn' — 'id' kaydın sayısal
@@ -1078,6 +1162,14 @@ function sureAc(no, gitAyet){
 const ALAN_DIL = { id: 'idn' };
 function metinDil(a){ const k = ALAN_DIL[dil] || dil; return a[k] || a.en || a.tr || ''; }
 
+// Tilavet indirilemedi uyarısı (kısa, kendiliğinden kaybolur)
+function sesUyari(){
+  let el=document.getElementById('sesUyari');
+  if(!el){ el=document.createElement('div'); el.id='sesUyari'; el.className='ses-uyari'; document.body.appendChild(el); }
+  el.textContent=T.ses_hata||'Tilavet indirilemedi. İnternet bağlantını kontrol et.';
+  el.classList.add('gorunur');
+  clearTimeout(sesUyari._t); sesUyari._t=setTimeout(()=>el.classList.remove('gorunur'),3200);
+}
 function sesDurdur(){
   if(calanSes){ calanSes.pause(); calanSes=null; }
   if(calanId!=null){
@@ -1093,7 +1185,11 @@ function sesCal(id){
   const kart=document.getElementById('ay-'+id);
   calanId=id; kart?.classList.add('calan'); if(b) b.textContent='‖';
   calanSes=new Audio(sesUrl(id));
-  calanSes.play().catch(()=>{ if(b) b.textContent='▶'; kart?.classList.remove('calan'); calanId=null; calanSes=null; });
+  // Ağ yoksa play() reddi gelmeyebiliyor; 'error' olayı da yakalanmalı, yoksa
+  // buton '‖'de kilitli kalıp kullanıcı uygulamayı bozuk sanıyordu.
+  const sesHata=()=>{ sesDurdur(); sesUyari(); };
+  calanSes.onerror=sesHata;
+  calanSes.play().catch(sesHata);
   calanSes.onended=()=>{
     const sonraki=KURAN.find(a=>a.id===id+1);
     sesDurdur();
@@ -1132,23 +1228,8 @@ document.addEventListener('click', (e)=>{
   if(b) ayetiSuredeAc(b.dataset.sure, b.dataset.ayet);
 });
 
-// Lisans anahtarı (test/erken erişim): sınırsız kullanım açar
-async function lisansEtkinlestir(){
-  const inp=document.getElementById('lisansInput'), msj=document.getElementById('lisansMesaj');
-  const anahtar=(inp.value||'').trim(); if(!anahtar) return;
-  try{
-    const r=await fetch(API+'/api/lisans',{method:'POST',
-      headers:{'content-type':'application/json','x-app-key':APP_KEY},
-      body:JSON.stringify({anahtar,cihaz,yerli:YERLI})});
-    const j=await r.json();
-    if(j.premium){
-      lisans=anahtar; localStorage.setItem('lisans',anahtar);
-      premium=true; localStorage.setItem('premium','1'); hakGoster();
-      msj.textContent=T.pw_basarili; msj.style.color='var(--zumrut)';
-      setTimeout(()=>paywallGizle(),900);
-    } else { msj.textContent=T.pw_gecersiz; msj.style.color='#e0a35a'; }
-  }catch(e){ msj.textContent=T.err_body; }
-}
+// Lisans anahtarı akışı KALDIRILDI: IAP dışı kilit açma App Store 3.1.1'e aykırı
+// ve sabit test anahtarı üretimde herkese bedava premium veriyordu.
 
 async function okuModuAc(){
   const ok=await kuranVeriYukle();
@@ -1161,6 +1242,7 @@ document.querySelectorAll('.unav').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.unav').forEach(x=>x.classList.remove('aktif'));
   b.classList.add('aktif');
   BOLUMLER.forEach(x=>document.getElementById('bolum-'+x).style.display = x===b.dataset.bol?'':'none');
+  if(b.dataset.bol!=='kuran') sesDurdur();   // başka bölümde duraklatma butonu erişilemez oluyordu
   if(b.dataset.bol==='bugun' && !gununVeri) gununYukle();
 });
 // Ayarlar
@@ -1199,7 +1281,6 @@ document.getElementById('sureGeri').onclick=()=>{
   kaldigimYeriCiz(); yuzenGeriGuncelle();
 };
 document.getElementById('sureAra').oninput=e=>sureListesiCiz(e.target.value);
-document.getElementById('lisansBtn').onclick=lisansEtkinlestir;
 // Örnek hadisin o dildeki metni (yoksa EN, yoksa TR)
 const ORNEK_METIN = {
   niyet:{tr:'Ameller ancak niyetlere göredir',en:'Actions are judged by intentions',fr:'Les actes ne valent que par les intentions',ar:'إنما الأعمال بالنيات',ur:'اعمال کا دارومدار نیتوں پر ہے',id:'Amal itu tergantung niatnya'},

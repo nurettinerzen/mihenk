@@ -15,3 +15,14 @@ services:
         value: claude-haiku-4-5
       - key: RATE_LIMIT
         value: "120"
+      # Render'ın kenar proxy'si arkasındayız: istemci IP'si X-Forwarded-For'dan
+      # okunur. Bu bayrak olmadan herkes tek kovada toplanıp 120 istek/saatte
+      # TÜM kullanıcılar 429 yiyordu.
+      - key: PROXY_GUVENILIR
+        value: "1"
+      # RevenueCat GİZLİ anahtarı (sk_...). Tanımlı değilse /api/iap-onay premium VERMEZ.
+      - key: RC_SECRET
+        sync: false          # Render panelinden gir
+      # Test lisansı — tanımlı DEĞİLSE lisans akışı tamamen kapalıdır (üretimde böyle olmalı).
+      - key: TEST_LISANS
+        sync: false
