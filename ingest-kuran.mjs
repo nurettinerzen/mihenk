@@ -1,5 +1,5 @@
 // ingest-kuran.mjs — Kur'an ayet korpusunu inşa eder (Arapça + Türkçe meal).
-// Kaynak: fawazahmed0/quran-api (CDN). Meal = Diyanet İşleri (resmî). Arapça = Uthmani (hafs).
+// Kaynak: fawazahmed0/quran-api (CDN). Meal = Diyanet Vakfı (ayet ayet; Diyanet İşleri edisyonu BLOK meal olduğu için ardışık ayetlerde aynı metni tekrarlıyordu). Arapça = Uthmani (hafs).
 // İLKE: Meal GETİRİLİR, üretilmez — yerleşik resmî çeviri. LLM meal yazmaz.
 //
 // Çıktı: ayat.json → [{id, sure, sureAd, ayet, ar, tr, kaynak}]  ve  sure.json → [{no, ad, iniş, ayetSayisi}]
@@ -20,7 +20,7 @@ async function getir(ed) {
 async function main() {
   console.log('Kur\'an indiriliyor (TR meal + EN meal + arapça + okunuş + info)...');
   const [tur, eng, ara, fra, ind, urd, okunusR, infoR] = await Promise.all([
-    getir('tur-diyanetisleri'),
+    getir('tur-diyanetvakfi'),
     getir('eng-abdelhaleem'),
     getir('ara-quranuthmanihaf'),
     getir('fra-muhammadhameedu'),
@@ -29,7 +29,9 @@ async function main() {
     getir('tur-latinalphabet').catch(() => null),
     fetch(`${CDN}/info.json`).then(r => r.json()),
   ]);
-  const okunusMap = new Map((okunusR || []).map(a => [`${a.chapter}:${a.verse}`, a.text]));
+  // Okunuş edisyonunda kaynak artıkları var: ´ (kesme yerine akut) ve * (durak işareti).
+  const okunusTemiz = (t) => (t || '').replace(/\*/g, '').replace(/´/g, "'").replace(/\s{2,}/g, ' ').trim();
+  const okunusMap = new Map((okunusR || []).map(a => [`${a.chapter}:${a.verse}`, okunusTemiz(a.text)]));
   const engMap = new Map((eng || []).map(a => [`${a.chapter}:${a.verse}`, a.text]));
   const fraMap = new Map((fra || []).map(a => [`${a.chapter}:${a.verse}`, a.text]));
   const indMap = new Map((ind || []).map(a => [`${a.chapter}:${a.verse}`, a.text]));
@@ -55,6 +57,13 @@ async function main() {
     for (const v of (c.verses || [])) meta.set(`${c.chapter}:${v.verse}`, { sayfa: v.page, cuz: v.juz });
   }
 
+  // Kaynak meâllerde sondaki noktalama kırpıldığı için kapanmamış tırnak kalıyor.
+  const mealTemiz = (t) => {
+    let x = (t || '').trim();
+    const cift = (x.match(/"/g) || []).length;
+    if (cift % 2 === 1) x = x.startsWith('"') ? x + '"' : x.replace(/"/, '');
+    return x;
+  };
   const ayat = tur.map((a, i) => {
     const ad = AD[a.chapter - 1] || `Sure ${a.chapter}`;
     const m = meta.get(`${a.chapter}:${a.verse}`) || {};
@@ -69,7 +78,7 @@ async function main() {
       cuz: m.cuz || null,
       ar: araMap.get(`${a.chapter}:${a.verse}`) || '',
       okunus: okunusMap.get(`${a.chapter}:${a.verse}`) || '',
-      tr: a.text,
+      tr: mealTemiz(a.text),
       en: engMap.get(`${a.chapter}:${a.verse}`) || '',
       fr: fraMap.get(`${a.chapter}:${a.verse}`) || '',
       idn: indMap.get(`${a.chapter}:${a.verse}`) || '',   // Endonezce (id anahtarını EZMEZ)

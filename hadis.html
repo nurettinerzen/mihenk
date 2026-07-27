@@ -294,9 +294,9 @@
       <label class="ust" data-i18n="lbl_dogrula">Bir hadis yapıştır — kaynağını ve derecesini göster</label>
       <textarea id="metin" data-i18n-ph="ph_dogrula" placeholder="Duyduğun ya da paylaşılan bir hadis metnini buraya yapıştır…"></textarea>
       <div class="cipler" id="ornekler">
-        <button class="cip" data-t="Ameller ancak niyetlere göredir" data-t-en="Actions are judged by intentions" data-i18n="ex_niyet">Örnek: niyet hadisi</button>
-        <button class="cip" data-t="Cennet annelerin ayakları altındadır" data-t-en="Paradise lies at the feet of mothers" data-i18n="ex_cennet">Örnek: cennet-anne</button>
-        <button class="cip" data-t="Temizlik imandan bir parçadır" data-t-en="Cleanliness is part of faith" data-i18n="ex_temizlik">Örnek: temizlik</button>
+        <button class="cip" data-ornek="niyet" data-i18n="ex_niyet">Örnek: niyet hadisi</button>
+        <button class="cip" data-ornek="cennet" data-i18n="ex_cennet">Örnek: cennet-anne</button>
+        <button class="cip" data-ornek="temizlik" data-i18n="ex_temizlik">Örnek: temizlik</button>
       </div>
       <button class="btn" id="btnDogrula" data-i18n="btn_dogrula">Doğrula</button>
     </div>
@@ -470,6 +470,8 @@ const KKONULAR = {
 };
 const L = {
   tr: {
+    yogun:'Şu an çok yoğunuz, birazdan tekrar dene.',
+    sure_bulunamadi:'Sûre bulunamadı', girdi_kisa:'Lütfen doğrulamak istediğin hadis metnini yapıştır.', girdi_bos:'Lütfen bir konu yaz.',
     surede_oku:'Sûrede oku & dinle',
     kari:'Kâri',
     inis:{Mekke:'Mekke',Medine:'Medine'},
@@ -502,6 +504,8 @@ const L = {
     pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
   },
   en: {
+    yogun:'We are busy right now, please try again shortly.',
+    sure_bulunamadi:'No surah found', girdi_kisa:'Please paste the hadith text you want to verify.', girdi_bos:'Please enter a topic.',
     surede_oku:'Read in surah & listen',
     kari:'Reciter',
     inis:{Mekke:'Meccan',Medine:'Medinan'},
@@ -534,6 +538,8 @@ const L = {
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
   },
   fr: {
+    yogun:'Service très sollicité, réessaie dans un instant.',
+    sure_bulunamadi:'Aucune sourate trouvée', girdi_kisa:'Colle le texte du hadith à vérifier.', girdi_bos:'Saisis un thème.',
     surede_oku:'Lire dans la sourate',
     kari:'Récitateur',
     inis:{Mekke:'Mecquoise',Medine:'Médinoise'},
@@ -566,6 +572,8 @@ const L = {
     pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
   },
   id: {
+    yogun:'Sedang sibuk, coba lagi sebentar.',
+    sure_bulunamadi:'Surah tidak ditemukan', girdi_kisa:'Tempel teks hadis yang ingin diverifikasi.', girdi_bos:'Masukkan sebuah topik.',
     surede_oku:'Baca di surah',
     kari:'Qari',
     inis:{Mekke:'Makkiyah',Medine:'Madaniyah'},
@@ -598,6 +606,8 @@ const L = {
     pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
   },
   ar: {
+    yogun:'الخدمة مزدحمة الآن، حاول بعد قليل.',
+    sure_bulunamadi:'لم يتم العثور على سورة', girdi_kisa:'الصق نص الحديث المراد التحقق منه.', girdi_bos:'اكتب موضوعًا.',
     surede_oku:'اقرأ في السورة',
     kari:'القارئ',
     inis:{Mekke:'مكية',Medine:'مدنية'},
@@ -630,6 +640,8 @@ const L = {
     pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
   },
   ur: {
+    yogun:'ابھی رش ہے، تھوڑی دیر بعد کوشش کریں۔',
+    sure_bulunamadi:'کوئی سورہ نہیں ملی', girdi_kisa:'تصدیق کے لیے حدیث کا متن پیسٹ کریں۔', girdi_bos:'کوئی موضوع لکھیں۔',
     surede_oku:'سورہ میں پڑھیں',
     kari:'قاری',
     inis:{Mekke:'مکی',Medine:'مدنی'},
@@ -710,6 +722,7 @@ function ayetKarti(a){
 
 async function istek(yol, govde){
   const r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil, cihaz, lisans, yerli:YERLI})});
+  if(r.status===429){ const e=new Error('limit'); e.yogun=true; throw e; }   // 'bağlanamadım' demek yanıltıcıydı
   if(r.status===402){ const j=await r.json(); if(j.checkout) checkoutUrl=j.checkout; paywallGoster(); throw {paywall:true}; }
   if(!r.ok) throw new Error('sunucu '+r.status);
   const j = await r.json();
@@ -717,12 +730,12 @@ async function istek(yol, govde){
   return j;
 }
 function yukleniyor(el){el.className='sonuc gorunur';el.innerHTML=`<div class="yukleniyor"><span class="spin"></span>${T.yukleniyor}</div>`;}
-function hata(el){el.className='sonuc gorunur';el.innerHTML=`<div class="kart uyari-kart"><div class="uyari-baslik">${T.err_title}</div><div class="anlam">${T.err_body}</div></div>`;}
+function hata(el,e){const yogun=e&&e.yogun;el.className='sonuc gorunur';el.innerHTML=`<div class="kart uyari-kart"><div class="uyari-baslik">${yogun?(T.yogun||'').split('.')[0]:T.err_title}</div><div class="anlam">${yogun?T.yogun:T.err_body}</div></div>`;}
 
 // --- Doğrula ---
 async function calistirDogrula(){
   const metin=document.getElementById('metin').value.trim();
-  if(metin.length<8) return;
+  if(metin.length<8){ const e=document.getElementById('sonucDogrula'); e.className='sonuc gorunur'; e.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.girdi_kisa||'Lütfen doğrulamak istediğin hadis metnini yapıştır.'}</div></div>`; return; }
   const el=document.getElementById('sonucDogrula'); yukleniyor(el);
   document.getElementById('btnDogrula').disabled=true;
   try{
@@ -736,7 +749,7 @@ async function calistirDogrula(){
       </div>`;
     }
     el.className='sonuc gorunur';
-  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el); }
+  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el,e); }
   document.getElementById('btnDogrula').disabled=false;
 }
 function benzerBlok(list){
@@ -748,7 +761,7 @@ function benzerBlok(list){
 // --- Konu ---
 async function calistirKonu(){
   const konu=document.getElementById('konu').value.trim();
-  if(konu.length<2) return;
+  if(konu.length<2){ const e=document.getElementById('sonucKonu'); e.className='sonuc gorunur'; e.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.girdi_bos||'Lütfen bir konu yaz.'}</div></div>`; return; }
   const el=document.getElementById('sonucKonu'); yukleniyor(el);
   document.getElementById('btnKonu').disabled=true;
   try{
@@ -760,14 +773,14 @@ async function calistirKonu(){
         j.sonuclar.map(h=>`<div class="mini">${hadisKarti(h,false)}</div>`).join('');
     }
     el.className='sonuc gorunur';
-  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el); }
+  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el,e); }
   document.getElementById('btnKonu').disabled=false;
 }
 
 // --- Kur'an ---
 async function calistirKuran(){
   const konu=document.getElementById('kkonu').value.trim();
-  if(konu.length<2) return;
+  if(konu.length<2){ const e=document.getElementById('sonucKonu'); e.className='sonuc gorunur'; e.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.girdi_bos||'Lütfen bir konu yaz.'}</div></div>`; return; }
   const el=document.getElementById('sonucKuran'); yukleniyor(el);
   document.getElementById('btnKuran').disabled=true;
   try{
@@ -779,7 +792,7 @@ async function calistirKuran(){
         j.sonuclar.map(a=>`<div class="mini">${ayetKarti(a)}</div>`).join('');
     }
     el.className='sonuc gorunur';
-  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el); }
+  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el,e); }
   document.getElementById('btnKuran').disabled=false;
 }
 
@@ -946,10 +959,11 @@ async function gununYukle(){
 function gununCiz(){
   if(!gununVeri) return;
   const a=gununVeri.ayet, h=gununVeri.hadis;
+  const ayetMealGoster = dil!=='ar';
   const ayetKart = a?`<div class="kart" style="margin-bottom:14px">
     <div class="bugun-etk">✦ ${T.gun_ayet}</div>
     ${a.ar?`<div class="arapca">${esc(a.ar)}</div>`:''}
-    <div class="hadis-metin">${esc(a.tr)}</div>
+    ${ayetMealGoster?`<div class="hadis-metin">${esc(a.tr)}</div>`:''}
     <div class="kaynak" style="margin-top:10px">${esc(a.kaynak)}</div>
   </div>`:'';
   const hadisKart = h?`<div class="kart">
@@ -1010,6 +1024,7 @@ function sureListesiCiz(filtre=''){
   const el=document.getElementById('sureListe'); if(!SURELER) return;
   const f=sadeAd(filtre);
   const liste=SURELER.filter(s=>!f || String(s.no)===f || sadeAd(s.ad).includes(f) || sadeAd(s.adEn).includes(f));
+  if(!liste.length){ el.innerHTML=`<div class="kuran-yukleniyor">${T.sure_bulunamadi||'Sûre bulunamadı'}</div>`; kaldigimYeriCiz(); return; }
   el.innerHTML=liste.map(s=>`
     <div class="sure-sat" data-sure="${s.no}">
       <div class="sure-no">${s.no}</div>
@@ -1058,8 +1073,10 @@ function sureAc(no, gitAyet){
   }else window.scrollTo(0,0);
 }
 
-// dile göre meal alanı (backend'deki metinAl ile aynı fallback zinciri)
-function metinDil(a){ return a[dil] || a.en || a.tr || ''; }
+// Dile göre meâl alanı. DİKKAT: Endonezce alan adı 'idn' — 'id' kaydın sayısal
+// ayet numarasıdır; a['id'] dönerse esc() patlar ve okuma ekranı komple çöker.
+const ALAN_DIL = { id: 'idn' };
+function metinDil(a){ const k = ALAN_DIL[dil] || dil; return a[k] || a.en || a.tr || ''; }
 
 function sesDurdur(){
   if(calanSes){ calanSes.pause(); calanSes=null; }
@@ -1183,7 +1200,17 @@ document.getElementById('sureGeri').onclick=()=>{
 };
 document.getElementById('sureAra').oninput=e=>sureListesiCiz(e.target.value);
 document.getElementById('lisansBtn').onclick=lisansEtkinlestir;
-document.getElementById('ornekler').onclick=e=>{const t=(dil==='tr'?e.target.dataset.t:e.target.dataset.tEn)||e.target.dataset.t;if(t){document.getElementById('metin').value=t;}};
+// Örnek hadisin o dildeki metni (yoksa EN, yoksa TR)
+const ORNEK_METIN = {
+  niyet:{tr:'Ameller ancak niyetlere göredir',en:'Actions are judged by intentions',fr:'Les actes ne valent que par les intentions',ar:'إنما الأعمال بالنيات',ur:'اعمال کا دارومدار نیتوں پر ہے',id:'Amal itu tergantung niatnya'},
+  cennet:{tr:'Cennet annelerin ayakları altındadır',en:'Paradise lies at the feet of mothers',fr:'Le paradis est sous les pieds des mères',ar:'الجنة تحت أقدام الأمهات',ur:'جنت ماں کے قدموں تلے ہے',id:'Surga di bawah telapak kaki ibu'},
+  temizlik:{tr:'Temizlik imandan bir parçadır',en:'Cleanliness is part of faith',fr:'La propreté fait partie de la foi',ar:'الطهور شطر الإيمان',ur:'پاکیزگی نصف ایمان ہے',id:'Kebersihan sebagian dari iman'},
+};
+document.getElementById('ornekler').onclick=e=>{
+  const k=e.target.dataset.ornek; if(!k) return;
+  const o=ORNEK_METIN[k]||{}; const t=o[dil]||o.en||o.tr;
+  if(t) document.getElementById('metin').value=t;
+};
 document.getElementById('btnDogrula').onclick=calistirDogrula;
 document.getElementById('btnKonu').onclick=calistirKonu;
 document.getElementById('btnKuran').onclick=calistirKuran;
