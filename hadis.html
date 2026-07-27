@@ -127,6 +127,12 @@
   .oku-bar{display:flex;align-items:center;gap:12px;margin-bottom:16px}
   .geri-btn{flex:none;width:40px;height:40px;border-radius:12px;background:var(--yuzey);
     border:1px solid var(--cizgi);color:var(--zumrut);font-size:25px;line-height:1;cursor:pointer}
+  /* Uzun sûrede aşağı inince geri dönebilmek için ekrana sabit kopya */
+  .geri-yuzen{position:fixed;left:14px;bottom:22px;z-index:60;width:50px;height:50px;border-radius:50%;
+    background:linear-gradient(180deg,#1b2c25,#12201b);border:1px solid var(--zumrut-koyu);color:var(--zumrut);
+    font-size:27px;line-height:1;cursor:pointer;display:none;box-shadow:0 10px 26px rgba(0,0,0,.55)}
+  html[dir="rtl"] .geri-yuzen{left:auto;right:14px;transform:scaleX(-1)}
+  .geri-yuzen.gorunur{display:block}
   .oku-baslik{flex:1;min-width:0}
   .oku-baslik>div:first-child{font-family:'Sora',sans-serif;font-weight:700;font-size:19px;color:var(--metin)}
   .ar-iz{unicode-bidi:isolate;font-family:'Amiri',serif;font-size:14px;color:var(--pirinc)}
@@ -333,6 +339,7 @@
         <input class="metin" id="sureAra" data-i18n-ph="ph_sure" placeholder="Sûre ara…" style="margin-bottom:12px">
         <div id="sureListe" class="sure-liste"></div>
       </div>
+      <button class="geri-yuzen" id="sureGeriYuzen" aria-label="Geri">‹</button>
       <div id="sureOku" style="display:none">
         <div class="oku-bar">
           <button class="geri-btn" id="sureGeri" aria-label="Geri">‹</button>
@@ -1160,11 +1167,19 @@ document.querySelectorAll('.ksekme').forEach(b=>b.onclick=()=>{
   document.getElementById('kmod-oku').style.display=m==='oku'?'':'none';
   if(m==='oku') okuModuAc(); else sesDurdur();
 });
+function yuzenGeriGuncelle(){
+  const b=document.getElementById('sureGeriYuzen'); if(!b) return;
+  const acik=document.getElementById('sureOku')?.style.display!=='none'
+    && document.getElementById('kmod-oku')?.style.display!=='none';
+  b.classList.toggle('gorunur', !!acik && window.scrollY>240);
+}
+window.addEventListener('scroll', yuzenGeriGuncelle, {passive:true});
+document.getElementById('sureGeriYuzen').onclick=()=>document.getElementById('sureGeri').click();
 document.getElementById('sureGeri').onclick=()=>{
   sesDurdur();
   document.getElementById('sureOku').style.display='none';
   document.getElementById('sureListeSar').style.display='';
-  kaldigimYeriCiz();
+  kaldigimYeriCiz(); yuzenGeriGuncelle();
 };
 document.getElementById('sureAra').oninput=e=>sureListesiCiz(e.target.value);
 document.getElementById('lisansBtn').onclick=lisansEtkinlestir;

@@ -50,6 +50,31 @@ const ayat = JSON.parse(readFileSync(yol('ayat.json'), 'utf8'));
 // Kur'an semantik indeksi — dile göre ayrı vektör (yerel embedding).
 const vekYukle = (f) => { const b = readFileSync(yol(f)); return new Float32Array(b.buffer, b.byteOffset, b.length / 4); };
 const kuranVek = { tr: vekYukle('vektor-kuran-tr.f32'), en: vekYukle('vektor-kuran-en.f32') };
+// Hadis metinlerinin normalize kopyası (önek eşleşmeli lexical için, tek sefer).
+let hadisNorm = null;
+function hadisNormAl(dil) {
+  if (hadisNorm && hadisNorm.dil === dil) return hadisNorm.arr;
+  hadisNorm = { dil, arr: corpus.map(h => ' ' + trNorm(metinAl(h, dil) || '')) };
+  return hadisNorm.arr;
+}
+// sorgu kelimesi, metindeki bir kelimenin ÖNEKİ ise eşleşir (sabır→sabreden değil ama
+// sabır→sabırla evet; kelime başına boşluk şartı kısmi/ortadan eşleşmeyi engeller)
+function lexHadis(dil, qw) {
+  const N = corpus.length, arr = hadisNormAl(dil);
+  const vars = qw.map(kokVaryant);
+  const idf = vars.map(vs => {
+    let n = 0; for (let i = 0; i < N; i++) if (vs.some(v => arr[i].includes(' ' + v))) n++;
+    return Math.log(1 + N / (1 + n));
+  });
+  const out = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    let sc = 0;
+    for (let k = 0; k < vars.length; k++) if (vars[k].some(v => arr[i].includes(' ' + v))) sc += idf[k];
+    out[i] = sc;
+  }
+  return out;
+}
+
 // Kur'an konu aramasının ANA motoru: ÖNEK eşleşmeli, idf ağırlıklı lexical.
 // BM25 tam kelime arıyordu ve Türkçe eklerde patlıyordu ("adalet" ↛ "adaleti").
 // Önek eşleşmesi bu sorunu çözer; embedding ise anlam desteği verir.
@@ -68,14 +93,14 @@ function lexPuan(dil, qw) {
   const toks = kuranTok.get(dil), df = kuranDF.get(dil), N = ayat.length;
   const idf = new Map();
   for (const w of qw) {
-    let n = 0;
-    for (const [k, c] of df) if (k.startsWith(w)) n += c;
+    let n = 0; const vs = kokVaryant(w);
+    for (const [k, c] of df) if (vs.some(v => k.startsWith(v))) n += c;
     idf.set(w, Math.log(1 + N / (1 + n)));
   }
   const out = new Float32Array(ayat.length);
   for (let i = 0; i < toks.length; i++) {
     let s = 0;
-    for (const w of qw) { for (const k of toks[i]) if (k.startsWith(w)) { s += idf.get(w); break; } }
+    for (const w of qw) { const vs = kokVaryant(w); for (const k of toks[i]) if (vs.some(v => k.startsWith(v))) { s += idf.get(w); break; } }
     out[i] = s / Math.sqrt(toks[i].size || 1);
   }
   return out;
@@ -303,9 +328,13 @@ async function genislet(konu, dil) {
 }
 
 async function konu(sorgu, dil = 'tr') {
+  // Kur'an'daki gibi: metinlerde karşılığı olmayan terimi aç ("alkol" hadis
+  // metinlerinde hiç geçmez, "içki/şarap" geçer).
+  let aramaK = sorgu;
+  if (dil === 'tr') { const k = KAVRAM[kavramAnahtar(sorgu)]; if (k) aramaK = `${sorgu} — ${k}`; }
   // Alaka kapısı: konu hadis metinlerinde hiç geçmiyorsa dürüstçe boş dön.
   // (Saf semantik "bilgisayar"a da 10 hadis buluyordu.)
-  const qwK = [...new Set(trNorm(sorgu).split(' '))].filter(w => w.length > 2);
+  const qwK = [...new Set(trNorm(aramaK).split(' '))].filter(w => w.length > 2);
   if (qwK.length) {
     let sinyal = false;
     for (const h of hadisAll) {
@@ -314,14 +343,24 @@ async function konu(sorgu, dil = 'tr') {
     }
     if (!sinyal) return { konu: sorgu, sonuclar: [], alakasiz: true };
   }
-  // Semantik (vektör varsa): kavramın adını değil anlamını yazınca da bulur.
+  // Semantik + lexical harman (Kur'an tarafındaki ile aynı mantık): saf semantik
+  // "içki" sorgusunda alakasız hadisleri öne çıkarıyordu.
   if (hadisVek) {
-    const qv = await embedOne(sorgu);
+    const qv = await embedOne(aramaK);
     const vek = vekAl(hadisVek, dil);
+    // lexical: önek eşleşmeli (BM25 tam kelime arıyor, Türkçe eklerde kaçırıyor)
+    const qwH = [...new Set(trNorm(aramaK).split(' '))].filter(w => w.length > 2);
+    const lexArrH = qwH.length ? lexHadis(dil, qwH) : null;
+    let lexMax = 0; if (lexArrH) for (const v of lexArrH) if (v > lexMax) lexMax = v;
+    const tekTerimK = [...new Set(trNorm(sorgu).split(' '))].filter(w => w.length > 2).length === 1;
     const puan = [];
     for (let i = 0; i < corpus.length; i++) {
-      const d = corpus[i].derece;
-      if (d === 'sahih' || d === 'hasen') puan.push([i, cos(vek, i * DIM, qv)]);
+      const h = corpus[i];
+      if (h.derece !== 'sahih' && h.derece !== 'hasen') continue;
+      const lx = lexMax ? lexArrH[i] / lexMax : 0;
+      if (tekTerimK && lx === 0) continue;                 // tek terim → o kelime geçmeli
+      const sem = cos(vek, i * DIM, qv);
+      puan.push([i, (0.35 + 0.65 * lx) * Math.max(0, sem)]);
     }
     puan.sort((a, b) => b[1] - a[1]);
     return { konu: sorgu, sonuclar: puan.slice(0, 10).map(([i]) => derecele(corpus[i], dil)) };
@@ -353,6 +392,17 @@ function hubHesapla(vek) {
   }
   return h;
 }
+// Türkçe ünlü düşmesi: sabır→sabr(eden), şükür→şükr(etmek), akıl→akl(ı).
+// Önek eşleşmesi bunları kaçırıyordu; kelimeyi kök varyantıyla birlikte ararız.
+const kokVaryant = (w) => {
+  const v = [w];
+  if (w.length >= 5) {
+    const sonUnlu = /[aeiıoöuü]/.test(w[w.length - 2]);
+    const sonUnsuz = !/[aeiıoöuü]/.test(w[w.length - 1]);
+    if (sonUnlu && sonUnsuz) v.push(w.slice(0, -2) + w[w.length - 1]);
+  }
+  return v;
+};
 const trNorm = (s) => (s || '').toLocaleLowerCase('tr').normalize('NFD')
   .replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/[^\p{L}\p{N} ]/gu, ' ');
 
@@ -361,6 +411,13 @@ const trNorm = (s) => (s || '').toLocaleLowerCase('tr').normalize('NFD')
 // Terimi genişletmezsek arama boşa düşer. (Sadece ARAMA metnini genişletir —
 // gösterilen meâl her zaman veriden gelir, üretilmez.)
 const KAVRAM = {
+  alkol: 'içki, şarap, sarhoş edici içecek, hamr',
+  icki: 'içki, şarap, sarhoşluk, hamr',
+  kumar: 'kumar, şans oyunu, bahis',
+  zina: 'zina, iffetsizlik, namusa aykırı ilişki',
+  hirsizlik: 'hırsızlık, çalmak',
+  yalan: 'yalan söylemek, doğru olmayan söz',
+  komsu: 'komşu, komşuluk hakkı',
   tevekkul: "Allah'a güvenmek, dayanmak, işini Allah'a bırakmak, vekil",
   infak: 'Allah yolunda mal harcamak, sadaka vermek, yoksula vermek',
   ihlas: 'içten, samimi, yalnız Allah için, dini Allah\'a has kılmak',
