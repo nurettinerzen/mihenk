@@ -222,6 +222,15 @@ const dilAl = (d) => (DILLER.includes(d) ? d : 'tr');
 // Dil kodu → veri alanı. Endonezce alanı 'idn' (kaydın 'id' alanını ezmemesi için).
 const ALAN = { id: 'idn' };
 const metinAl = (o, dil) => o[ALAN[dil] || dil] || o.en || o.tr;   // görünen metin, fallback zinciri
+// Metnin HANGİ dilden geldiği: kaynak edisyonlarda boşluk var (ind-muslim'in %35'i,
+// fr'nin %14'ü boş) ve sessizce İngilizce'ye düşmek kullanıcıya hata gibi görünüyordu.
+// Elimizde olmayanı uydurmuyoruz; olmadığını söylüyoruz.
+const metinDili = (o, dil) => {
+  const k = ALAN[dil] || dil;
+  if (o[k] && String(o[k]).trim()) return dil;
+  if (o.en && String(o.en).trim()) return 'en';
+  return 'tr';
+};
 const vekAl = (V, dil) => V[dil] || V.en || V.tr;     // fr/id/ur/ar → EN pivot vektör
 
 // Korpustaki âlim/kaynak etiketleri Türkçe üretilmiş ("Buhârî ittifakı",
@@ -248,6 +257,7 @@ function derecele(h, dil = 'tr') {
   const metin = hadisMatn(metinAl(h, dil)); // şerh + isnad zinciri ayıklanmış; yoksa en→tr
   return {
     id: h.id, tr: metin, ar: h.ar, kaynak: h.kaynak, kitapTr: h.kitapTr, no: h.no,
+    metinDili: metinDili(h, dil),   // istenen dilden farklıysa istemci uyarı gösterir
     derece: h.derece, dereceEtiket: b.etiket[dil] || b.etiket.en || b.etiket.tr, dereceRenk: b.renk,
     // Grade açıklaması artık 6 dilde; eksikse en→tr'ye düşer.
     dereceAnlam: h.aciklama || (b.anlam[dil] || b.anlam.en || b.anlam.tr),

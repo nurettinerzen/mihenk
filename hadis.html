@@ -216,6 +216,16 @@
   .ac-btn{background:none;border:none;color:var(--zumrut);font-family:inherit;font-size:13px;
     cursor:pointer;padding:0;margin-top:6px;font-weight:600}
 
+  .mini-calar{position:fixed;left:0;right:0;bottom:0;z-index:55;display:none;
+    align-items:center;gap:12px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    background:rgba(13,21,18,.97);border-top:1px solid var(--cizgi);backdrop-filter:blur(12px)}
+  .mini-calar.acik{display:flex}
+  .mini-bilgi{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+  .mini-bilgi b{font-size:13.5px;color:var(--metin);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini-bilgi span{font-size:11.5px;color:var(--daha-soluk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mini-btn{min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--zumrut-koyu);
+    background:var(--yuzey);color:var(--zumrut);font-size:17px;cursor:pointer}
+  .dil-not{margin-top:7px;font-size:11.5px;color:var(--daha-soluk);font-style:italic}
   .uyari-kart{border-color:#4a3a1f;background:linear-gradient(180deg,#1f1a10,#161109)}
   .ayet.hedef{box-shadow:0 0 0 2px var(--zumrut-koyu) inset;transition:box-shadow .4s}
   .ses-uyari{position:fixed;left:50%;bottom:88px;transform:translate(-50%,14px);z-index:60;
@@ -284,6 +294,11 @@
     <button class="unav" data-bol="hadis" data-i18n="nav_hadis">Hadis</button>
     <button class="unav" data-bol="kuran" data-i18n="nav_kuran">Kur'an</button>
     <button class="unav" data-bol="ezan" data-i18n="nav_ezan">Ezan</button>
+  </div>
+
+  <div id="miniCalar" class="mini-calar">
+    <div class="mini-bilgi"><b id="miniAd"></b><span id="miniKari"></span></div>
+    <button id="miniDurdur" class="mini-btn" aria-label="Durdur">‖</button>
   </div>
 
   <!-- BUGÜN -->
@@ -480,6 +495,7 @@ const KKONULAR = {
 };
 const L = {
   tr: {
+    ceviri_yok:'Bu rivayetin Türkçe çevirisi kaynakta yok; {dil} metni gösteriliyor.',
     yogun_baslik:'Şu an çok yoğunuz',
     ses_hata:'Tilavet indirilemedi. İnternet bağlantını kontrol et.',fark_title:'Metnin kaynaktakinden farklı',fark_body:'Aşağıdaki kayıt bu hadisin kaynaktaki hâlidir. Derecelendirme kaynak metne aittir, senin yazdığın metne değil.',pw_yenileme:'Abonelik, dönem bitiminden en az 24 saat önce iptal edilmedikçe kendini yeniler. Yönetim ve iptal App Store hesap ayarlarından yapılır.',
     yogun:'Şu an çok yoğunuz, birazdan tekrar dene.',
@@ -516,6 +532,7 @@ const L = {
     pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
   },
   en: {
+    ceviri_yok:'This narration has no translation in the source; showing the {dil} text.',
     yogun_baslik:'We are busy right now',
     ses_hata:'Could not load the recitation. Check your connection.',fark_title:'Your text differs from the source',fark_body:'The record below is how this hadith appears in the source. The grading belongs to the source text, not to the text you entered.',pw_yenileme:'Subscription renews automatically unless cancelled at least 24 hours before the end of the period. Manage or cancel in your App Store account settings.',
     yogun:'We are busy right now, please try again shortly.',
@@ -552,6 +569,7 @@ const L = {
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
   },
   fr: {
+    ceviri_yok:'Cette narration n\'a pas de traduction dans la source ; texte en {dil} affiché.',
     yogun_baslik:'Service très sollicité',
     ses_hata:'Récitation indisponible. Vérifie ta connexion.',fark_title:'Ton texte diffère de la source',fark_body:'La fiche ci-dessous correspond au hadith tel qu\'il figure dans la source. Le degré d\'authenticité concerne le texte source, pas celui que tu as saisi.',pw_yenileme:'L\'abonnement se renouvelle automatiquement sauf résiliation au moins 24 heures avant la fin de la période. Gestion et résiliation dans les réglages de ton compte App Store.',
     yogun:'Service très sollicité, réessaie dans un instant.',
@@ -588,6 +606,7 @@ const L = {
     pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
   },
   id: {
+    ceviri_yok:'Riwayat ini tidak memiliki terjemahan di sumber; menampilkan teks {dil}.',
     yogun_baslik:'Sedang sibuk',
     ses_hata:'Rekaman tidak dapat dimuat. Periksa koneksi internetmu.',fark_title:'Teksmu berbeda dari sumber',fark_body:'Catatan di bawah adalah bunyi hadis ini dalam sumbernya. Derajat keabsahan berlaku untuk teks sumber, bukan teks yang kamu masukkan.',pw_yenileme:'Langganan diperpanjang otomatis kecuali dibatalkan minimal 24 jam sebelum periode berakhir. Kelola atau batalkan di pengaturan akun App Store.',
     yogun:'Sedang sibuk, coba lagi sebentar.',
@@ -624,6 +643,7 @@ const L = {
     pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
   },
   ar: {
+    ceviri_yok:'لا تتوفر ترجمة لهذه الرواية في المصدر؛ يُعرض النص بلغة {dil}.',
     yogun_baslik:'الخدمة مزدحمة الآن',
     ses_hata:'تعذّر تحميل التلاوة. تحقّق من اتصالك بالإنترنت.',fark_title:'نصّك يختلف عن المصدر',fark_body:'السجل أدناه هو نصّ الحديث كما ورد في المصدر. الحكم يخصّ نصّ المصدر لا النصّ الذي أدخلته.',pw_yenileme:'يتجدّد الاشتراك تلقائيًا ما لم يُلغَ قبل نهاية المدة بأربع وعشرين ساعة على الأقل. الإدارة والإلغاء من إعدادات حساب App Store.',
     yogun:'الخدمة مزدحمة الآن، حاول بعد قليل.',
@@ -660,6 +680,7 @@ const L = {
     pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
   },
   ur: {
+    ceviri_yok:'اس روایت کا ترجمہ ماخذ میں موجود نہیں؛ {dil} متن دکھایا جا رہا ہے۔',
     yogun_baslik:'ابھی رش ہے',
     ses_hata:'تلاوت لوڈ نہیں ہو سکی۔ اپنا انٹرنیٹ کنکشن دیکھیں۔',fark_title:'آپ کا متن ماخذ سے مختلف ہے',fark_body:'نیچے دیا گیا اندراج اس حدیث کی ماخذ میں موجود صورت ہے۔ درجہ ماخذ کے متن کا ہے، آپ کے لکھے متن کا نہیں۔',pw_yenileme:'رکنیت خود بخود تجدید ہوتی ہے جب تک مدت ختم ہونے سے کم از کم 24 گھنٹے قبل منسوخ نہ کی جائے۔ انتظام اور منسوخی App Store اکاؤنٹ کی ترتیبات سے۔',
     yogun:'ابھی رش ہے، تھوڑی دیر بعد کوشش کریں۔',
@@ -719,10 +740,14 @@ function hadisKarti(h, tam){
   // Arapça arayüzde ana metin zaten Arapça → ayrıca .arapca bloğu gösterme (tekrar olur)
   const arapca = tam && h.ar && dil!=='ar' ? `<div class="arapca">${esc(h.ar)}</div>` : '';
   const ref = h.mevzuat && h.referans ? `<div class="alimler"><b>${lbl('kaynak')}:</b> ${esc(h.referans)}</div>` : '';
+  // Kaynak edisyonda o dilde metin yoksa hangi dile düşüldüğünü açıkça söyle
+  const DIL_ADI = {tr:'Türkçe',en:'English',fr:'Français',id:'Indonesia',ar:'العربية',ur:'اردو'};
+  const dilNot = (h.metinDili && h.metinDili !== dil)
+    ? `<div class="dil-not">${(T.ceviri_yok||'Bu rivayetin çevirisi kaynakta yok; {dil} metni gösteriliyor.').replace('{dil}', DIL_ADI[h.metinDili]||h.metinDili)}</div>` : '';
   return `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
       ${rozet(h)}<span class="kaynak">${esc(h.kaynak)}</span>
-    </div>
+    </div>${dilNot}
     <div class="${dil==='ar'?'arapca':'hadis-metin'}">${esc(h.tr)}</div>
     ${arapca}
     <div class="anlam">${esc(h.dereceAnlam)}</div>
@@ -1162,6 +1187,25 @@ function sureAc(no, gitAyet){
 const ALAN_DIL = { id: 'idn' };
 function metinDil(a){ const k = ALAN_DIL[dil] || dil; return a[k] || a.en || a.tr || ''; }
 
+// Kilit ekranı / kulaklık kontrolleri: arka planda çalarken kullanıcı sesi
+// yönetebilmeli (Apple arka plan ses modunda bunu bekler).
+function kilitEkraniKur(id){
+  if(!('mediaSession' in navigator)) return;
+  const a=KURAN&&KURAN.find(x=>x.id===id); if(!a) return;
+  const s=SURELER&&SURELER.find(x=>x.no===a.sure);
+  try{
+    navigator.mediaSession.metadata=new MediaMetadata({
+      title:`${s?sureAdi(s):''} ${a.ayet}`,
+      artist:kariAdi(KARILER.find(k=>k.id===kari)||KARILER[0]),
+      album:'Mihenk',
+    });
+    navigator.mediaSession.setActionHandler('pause', ()=>sesDurdur());
+    navigator.mediaSession.setActionHandler('play', ()=>{ if(calanId==null) sesCal(id); });
+    navigator.mediaSession.setActionHandler('nexttrack', ()=>{ const s2=KURAN.find(x=>x.id===id+1); if(s2&&s2.sure===a.sure) sesCal(s2.id); });
+    navigator.mediaSession.setActionHandler('previoustrack', ()=>{ const o=KURAN.find(x=>x.id===id-1); if(o&&o.sure===a.sure) sesCal(o.id); });
+  }catch(e){}
+}
+
 // Tilavet indirilemedi uyarısı (kısa, kendiliğinden kaybolur)
 function sesUyari(){
   let el=document.getElementById('sesUyari');
@@ -1170,7 +1214,17 @@ function sesUyari(){
   el.classList.add('gorunur');
   clearTimeout(sesUyari._t); sesUyari._t=setTimeout(()=>el.classList.remove('gorunur'),3200);
 }
+function miniCalarCiz(id){
+  const el=document.getElementById('miniCalar'); if(!el) return;
+  const a=KURAN&&KURAN.find(x=>x.id===id);
+  if(!a){ el.classList.remove('acik'); return; }
+  const su=SURELER&&SURELER.find(x=>x.no===a.sure);
+  document.getElementById('miniAd').textContent=`${su?sureAdi(su):''} · ${a.ayet}`;
+  document.getElementById('miniKari').textContent=kariAdi(KARILER.find(k=>k.id===kari)||KARILER[0]);
+  el.classList.add('acik');
+}
 function sesDurdur(){
+  document.getElementById('miniCalar')?.classList.remove('acik');
   if(calanSes){ calanSes.pause(); calanSes=null; }
   if(calanId!=null){
     document.getElementById('ay-'+calanId)?.classList.remove('calan');
@@ -1185,6 +1239,8 @@ function sesCal(id){
   const kart=document.getElementById('ay-'+id);
   calanId=id; kart?.classList.add('calan'); if(b) b.textContent='‖';
   calanSes=new Audio(sesUrl(id));
+  kilitEkraniKur(id);
+  miniCalarCiz(id);
   // Ağ yoksa play() reddi gelmeyebiliyor; 'error' olayı da yakalanmalı, yoksa
   // buton '‖'de kilitli kalıp kullanıcı uygulamayı bozuk sanıyordu.
   const sesHata=()=>{ sesDurdur(); sesUyari(); };
@@ -1242,13 +1298,15 @@ document.querySelectorAll('.unav').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.unav').forEach(x=>x.classList.remove('aktif'));
   b.classList.add('aktif');
   BOLUMLER.forEach(x=>document.getElementById('bolum-'+x).style.display = x===b.dataset.bol?'':'none');
-  if(b.dataset.bol!=='kuran') sesDurdur();   // başka bölümde duraklatma butonu erişilemez oluyordu
+  // Bölüm değişince tilavet DEVAM eder (arka plan sesi amaçlı); kontrol kilit
+  // ekranından ve mini oynatıcıdan yapılabiliyor.
   if(b.dataset.bol==='bugun' && !gununVeri) gununYukle();
 });
 // Ayarlar
 document.getElementById('ayarBtn').onclick=()=>document.getElementById('ayarlar').classList.add('acik');
 document.getElementById('ayarKapat').onclick=()=>document.getElementById('ayarlar').classList.remove('acik');
 document.getElementById('ayarlar').onclick=e=>{ if(e.target.id==='ayarlar') e.currentTarget.classList.remove('acik'); };
+document.getElementById('miniDurdur').onclick=sesDurdur;
 document.getElementById('btnEzan').onclick=ezanBaslat;
 document.querySelectorAll('.sekme').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.sekme').forEach(x=>x.classList.remove('aktif'));
