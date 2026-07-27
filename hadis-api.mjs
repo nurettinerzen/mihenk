@@ -381,6 +381,7 @@ async function kuranKonu(sorgu, dil = 'tr') {
   const qwLex = [...new Set(trNorm(aramaMetni).split(' '))].filter(w => w.length > 2);
   const lexArr = qwLex.length ? lexPuan(dil, qwLex) : null;
   let lexMax = 0; if (lexArr) for (const v of lexArr) if (v > lexMax) lexMax = v;
+  const wLex = qwLex.length <= 2 ? 0.62 : 0.52;   // tek terim → lexical, cümle → anlam ağırlıklı
   // DESTEK: semantik — kelime geçmese de anlamca yakın ayetleri yakalar
   const qv = await embedOne(aramaMetni);
   const vek = vekAl(kuranVek, dil);
@@ -395,7 +396,10 @@ async function kuranKonu(sorgu, dil = 'tr') {
     // nadir/tuhaf ayetleri aşırı yükseltiyordu; çıkarma daha dengeli.)
     const sem = cos(vek, i * DIM, qv) - 0.45 * hubSkor[i];        // merkezîlik düzeltmeli semantik
     const lx = lexMax ? lexArr[i] / lexMax : 0;                      // 0..1 normalize lexical
-    let s = 0.62 * lx + 0.38 * Math.max(0, sem);                    // lexical ağırlıklı harman
+    // Ağırlık sorgunun türüne göre: tek terim ("adalet") lexical ister —
+    // kelimenin kendisi meâlde geçer. Cümle ("kalbin huzur bulması") anlam ister;
+    // orada lexical çokanlamlılığa takılıyor ("huzurumuza getirilecekler").
+    let s = wLex * lx + (1 - wLex) * Math.max(0, sem);
     if (qw.length) {                                        // lexical katkı
       const mn = trNorm(metin);
       let hit = 0; for (const w of qw) if (mn.includes(w)) hit++;
@@ -408,11 +412,38 @@ async function kuranKonu(sorgu, dil = 'tr') {
   puan.sort((a, b) => b[1] - a[1]);
   return {
     konu: sorgu,
-    sonuclar: puan.slice(0, 10).map(([i, s]) => {
+    sonuclar: (() => {
+      const secili = [], alinan = new Set(), gorulenMetin = new Set();
+      for (const [i, sk] of puan) {
+        if (secili.length >= 10) break;
+        // bağlam birleştirmesi komşu ayetleri de kapsıyor → örtüşen sonuçları atla
+        if (alinan.has(i) || alinan.has(i - 1) || alinan.has(i + 1)) continue;
+        // bazı meâllerde ardışık ayetler aynı cümleyi tekrar eder (ör. Abese 34-37)
+        const imza = trNorm(metinAl(ayat[i], dil)).slice(0, 55);
+        if (gorulenMetin.has(imza)) continue;
+        gorulenMetin.add(imza); alinan.add(i); secili.push([i, sk]);
+      }
+      return secili;
+    })().map(([i, s]) => {
       const a = ayat[i];
-      return { id: a.id, sure: a.sure, sureAd: dil === 'tr' ? a.sureAd : a.sureAdEn, ayet: a.ayet,
-        sayfa: a.sayfa, cuz: a.cuz, kaynak: dil === 'tr' ? a.kaynak : a.kaynakEn,
-        ar: a.ar, okunus: dil === 'tr' ? a.okunus : '', tr: metinAl(a, dil), skor: +s.toFixed(3) };
+      // "Faiz yiyenler", "Şükrederseniz…" gibi tek başına anlam vermeyen kısa
+      // meâlleri komşu ayetle tamamla (aynı sûre içinde). Metin yine VERİDEN gelir,
+      // sadece bitişik ayet eklenir — üretim yok.
+      let metin = metinAl(a, dil), arapca = a.ar || '', ayetEt = String(a.ayet), okunusEt = a.okunus || '';
+      if (metin.length < 90) {
+        const nx = ayat[i + 1], pv = ayat[i - 1];
+        if (nx && nx.sure === a.sure) {
+          metin += ' ' + metinAl(nx, dil); arapca += ' ' + (nx.ar || '');
+          okunusEt += ' ' + (nx.okunus || ''); ayetEt = `${a.ayet}-${nx.ayet}`;
+        } else if (pv && pv.sure === a.sure) {
+          metin = metinAl(pv, dil) + ' ' + metin; arapca = (pv.ar || '') + ' ' + arapca;
+          okunusEt = (pv.okunus || '') + ' ' + okunusEt; ayetEt = `${pv.ayet}-${a.ayet}`;
+        }
+      }
+      const ad = dil === 'tr' ? a.sureAd : a.sureAdEn;
+      return { id: a.id, sure: a.sure, sureAd: ad, ayet: a.ayet, ayetEt,
+        sayfa: a.sayfa, cuz: a.cuz, kaynak: `${ad} ${ayetEt}`,
+        ar: arapca, okunus: dil === 'tr' ? okunusEt : '', tr: metin, skor: +s.toFixed(3) };
     }),
   };
 }

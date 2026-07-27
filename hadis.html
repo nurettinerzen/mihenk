@@ -131,6 +131,9 @@
   .oku-baslik>div:first-child{font-family:'Sora',sans-serif;font-weight:700;font-size:19px;color:var(--metin)}
   .ar-iz{unicode-bidi:isolate;font-family:'Amiri',serif;font-size:14px;color:var(--pirinc)}
   .oku-alt{font-size:12.5px;color:var(--soluk);margin-top:2px}
+  .surede-ac{margin-top:13px;background:linear-gradient(180deg,#16241e,#101a16);border:1px solid var(--zumrut-koyu);
+    color:var(--zumrut);font-family:inherit;font-size:13px;font-weight:600;padding:9px 14px;border-radius:11px;cursor:pointer}
+  .surede-ac:active{background:var(--yuzey2)}
   .kari-sec{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:10px 14px;
     background:var(--yuzey);border:1px solid var(--cizgi);border-radius:13px}
   .kari-etk{font-size:11.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--zumrut);flex:none}
@@ -453,6 +456,7 @@ const KKONULAR = {
 };
 const L = {
   tr: {
+    surede_oku:'Sûrede oku & dinle',
     kari:'Kâri',
     inis:{Mekke:'Mekke',Medine:'Medine'},
     ktab_ara:'Konuya Göre', ktab_oku:'Oku & Dinle', ph_sure:'Sûre ara…', ayet_sayisi:'ayet', ayet_tek:'ayet', kaldim:'Kaldığın yer', kuran_yukleniyor:'Kur\'an yükleniyor…',
@@ -484,6 +488,7 @@ const L = {
     pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
   },
   en: {
+    surede_oku:'Read in surah & listen',
     kari:'Reciter',
     inis:{Mekke:'Meccan',Medine:'Medinan'},
     ktab_ara:'By Topic', ktab_oku:'Read & Listen', ph_sure:'Search surah…', ayet_sayisi:'verses', ayet_tek:'verse', kaldim:'Continue where you left off', kuran_yukleniyor:'Loading the Quran…',
@@ -515,6 +520,7 @@ const L = {
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
   },
   fr: {
+    surede_oku:'Lire dans la sourate',
     kari:'Récitateur',
     inis:{Mekke:'Mecquoise',Medine:'Médinoise'},
     ktab_ara:'Par thème', ktab_oku:'Lire & Écouter', ph_sure:'Chercher une sourate…', ayet_sayisi:'versets', ayet_tek:'verset', kaldim:'Reprendre la lecture', kuran_yukleniyor:'Chargement du Coran…',
@@ -546,6 +552,7 @@ const L = {
     pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
   },
   id: {
+    surede_oku:'Baca di surah',
     kari:'Qari',
     inis:{Mekke:'Makkiyah',Medine:'Madaniyah'},
     ktab_ara:'Menurut Topik', ktab_oku:'Baca & Dengar', ph_sure:'Cari surah…', ayet_sayisi:'ayat', ayet_tek:'ayat', kaldim:'Lanjutkan bacaan', kuran_yukleniyor:'Memuat Al-Qur\'an…',
@@ -577,6 +584,7 @@ const L = {
     pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
   },
   ar: {
+    surede_oku:'اقرأ في السورة',
     kari:'القارئ',
     inis:{Mekke:'مكية',Medine:'مدنية'},
     ktab_ara:'حسب الموضوع', ktab_oku:'اقرأ واستمع', ph_sure:'ابحث عن سورة…', ayet_sayisi:'آية', ayet_tek:'آية', kaldim:'تابع من حيث توقفت', kuran_yukleniyor:'جارٍ تحميل القرآن…',
@@ -608,6 +616,7 @@ const L = {
     pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
   },
   ur: {
+    surede_oku:'سورہ میں پڑھیں',
     kari:'قاری',
     inis:{Mekke:'مکی',Medine:'مدنی'},
     ktab_ara:'موضوع کے مطابق', ktab_oku:'پڑھیں اور سنیں', ph_sure:'سورہ تلاش کریں…', ayet_sayisi:'آیات', ayet_tek:'آیت', kaldim:'جہاں چھوڑا تھا وہاں سے', kuran_yukleniyor:'قرآن لوڈ ہو رہا ہے…',
@@ -676,12 +685,13 @@ function ayetKarti(a){
       <span class="rozet r-yesil"><span class="nokta"></span>${T.nav_kuran}</span><span class="kaynak">${ref}</span>
     </div>`;
   // Arapça arayüz: ayetin kendisi Arapça → sadece Arapça metni göster (meal = kaynağın kendisi)
-  if(dil==='ar') return `${head}${a.ar?`<div class="arapca">${esc(a.ar)}</div>`:''}`;
+  if(dil==='ar') return `${head}${a.ar?`<div class="arapca">${esc(a.ar)}</div>`:''}<button class="surede-ac" data-sure="${a.sure}" data-ayet="${a.ayet}">${T.surede_oku||'اقرأ في السورة'} ›</button>`;
   return `${head}
     ${a.ar?`<div class="arapca">${esc(a.ar)}</div>`:''}
     ${okunus}
     <div class="hadis-metin">${esc(a.tr)}</div>
-    <div class="alimler">${T.meal}</div>`;
+    <div class="alimler">${T.meal}</div>
+    <button class="surede-ac" data-sure="${a.sure}" data-ayet="${a.ayet}">${T.surede_oku||'Sûrede oku & dinle'} ›</button>`;
 }
 
 async function istek(yol, govde){
@@ -1073,6 +1083,23 @@ function kariSeciciKur(){
     if(calanId!=null){ const id=calanId; sesDurdur(); sesCal(id); }   // yeni kâriyle devam
   };
 }
+
+// Konu sonucundaki ayetten sûre okumasına geç (aynı ayete kaydırır)
+async function ayetiSuredeAc(sure, ayet){
+  document.querySelector('.unav[data-bol="kuran"]').click();
+  document.querySelectorAll('.ksekme').forEach(x=>x.classList.remove('aktif'));
+  document.querySelector('.ksekme[data-kmod="oku"]').classList.add('aktif');
+  document.getElementById('kmod-ara').style.display='none';
+  document.getElementById('kmod-oku').style.display='';
+  const ok = await kuranVeriYukle();
+  if(!ok) return;
+  sureListesiCiz('');
+  sureAc(+sure, +ayet);
+}
+document.addEventListener('click', (e)=>{
+  const b = e.target.closest('.surede-ac');
+  if(b) ayetiSuredeAc(b.dataset.sure, b.dataset.ayet);
+});
 
 async function okuModuAc(){
   const ok=await kuranVeriYukle();
