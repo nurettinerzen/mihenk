@@ -19,15 +19,21 @@ async function getir(ed) {
 
 async function main() {
   console.log('Kur\'an indiriliyor (TR meal + EN meal + arapça + okunuş + info)...');
-  const [tur, eng, ara, okunusR, infoR] = await Promise.all([
+  const [tur, eng, ara, fra, ind, urd, okunusR, infoR] = await Promise.all([
     getir('tur-diyanetisleri'),
     getir('eng-abdelhaleem'),
     getir('ara-quranuthmanihaf'),
+    getir('fra-muhammadhameedu'),
+    getir('ind-indonesianislam'),
+    getir('urd-ahmedali'),
     getir('tur-latinalphabet').catch(() => null),
     fetch(`${CDN}/info.json`).then(r => r.json()),
   ]);
   const okunusMap = new Map((okunusR || []).map(a => [`${a.chapter}:${a.verse}`, a.text]));
   const engMap = new Map((eng || []).map(a => [`${a.chapter}:${a.verse}`, a.text]));
+  const fraMap = new Map((fra || []).map(a => [`${a.chapter}:${a.verse}`, a.text]));
+  const indMap = new Map((ind || []).map(a => [`${a.chapter}:${a.verse}`, a.text]));
+  const urdMap = new Map((urd || []).map(a => [`${a.chapter}:${a.verse}`, a.text]));
 
   // info.json → sure meta
   const chapters = infoR.chapters || [];
@@ -53,7 +59,8 @@ async function main() {
     const ad = AD[a.chapter - 1] || `Sure ${a.chapter}`;
     const m = meta.get(`${a.chapter}:${a.verse}`) || {};
     return {
-      id: `k${i}`,
+      // 1..6236 — cdn.islamic.network ayet numarasıyla birebir (ses için)
+      id: i + 1,
       sure: a.chapter,
       sureAd: ad,
       sureAdEn: adEn.get(a.chapter) || `Surah ${a.chapter}`,
@@ -64,6 +71,9 @@ async function main() {
       okunus: okunusMap.get(`${a.chapter}:${a.verse}`) || '',
       tr: a.text,
       en: engMap.get(`${a.chapter}:${a.verse}`) || '',
+      fr: fraMap.get(`${a.chapter}:${a.verse}`) || '',
+      idn: indMap.get(`${a.chapter}:${a.verse}`) || '',   // Endonezce (id anahtarını EZMEZ)
+      ur: urdMap.get(`${a.chapter}:${a.verse}`) || '',
       kaynak: `${ad} ${a.verse}`,
       kaynakEn: `${adEn.get(a.chapter) || 'Surah ' + a.chapter} ${a.verse}`,
     };

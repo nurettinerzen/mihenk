@@ -328,6 +328,10 @@
         <div class="dil-sec">
           <button class="dil aktif" data-dil="tr">TR</button>
           <button class="dil" data-dil="en">EN</button>
+          <button class="dil" data-dil="fr">FR</button>
+          <button class="dil" data-dil="id">ID</button>
+          <button class="dil" data-dil="ar">عربي</button>
+          <button class="dil" data-dil="ur">اردو</button>
         </div>
       </div>
       <a class="ayar-satir" href="https://mihenk-api.onrender.com/gizlilik" target="_blank" rel="noopener">
@@ -366,10 +370,18 @@ const YERLI = !!(window.Capacitor && window.Capacitor.isNativePlatform && window
 const KONULAR = {
   tr: ['yalancılık','evlilik','ticaret','komşuluk','sabır','namaz','anne-baba','öfke','tevazu','sadaka'],
   en: ['lying','marriage','trade','neighbors','patience','prayer','parents','anger','humility','charity'],
+  fr: ['mensonge','mariage','commerce','voisinage','patience','prière','parents','colère','humilité','aumône'],
+  id: ['dusta','pernikahan','perdagangan','tetangga','sabar','salat','orang tua','amarah','kerendahan hati','sedekah'],
+  ar: ['الكذب','الزواج','التجارة','الجوار','الصبر','الصلاة','الوالدان','الغضب','التواضع','الصدقة'],
+  ur: ['جھوٹ','نکاح','تجارت','ہمسائیگی','صبر','نماز','والدین','غصہ','عاجزی','صدقہ'],
 };
 const KKONULAR = {
   tr: ['sabır','anne-baba','faiz','tevekkül','adalet','şükür','namaz','infak','tövbe','ölüm'],
   en: ['patience','parents','interest','trust in God','justice','gratitude','prayer','giving','repentance','death'],
+  fr: ['patience','parents','usure','confiance en Dieu','justice','gratitude','prière','aumône','repentir','mort'],
+  id: ['sabar','orang tua','riba','tawakal','keadilan','syukur','salat','sedekah','tobat','kematian'],
+  ar: ['الصبر','الوالدان','الربا','التوكل','العدل','الشكر','الصلاة','الإنفاق','التوبة','الموت'],
+  ur: ['صبر','والدین','سود','توکل','عدل','شکر','نماز','صدقہ','توبہ','موت'],
 };
 const L = {
   tr: {
@@ -428,6 +440,118 @@ const L = {
     pw_yillik:'Yearly', pw_aylik:'Monthly', pw_avantaj:'Save 58%', pw_devam:'Continue', pw_restore:'Restore purchases',
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
   },
+  fr: {
+    alt:'Votre guide de foi, avec ses sources', nav_hadis:'Hadith', nav_kuran:'Coran',
+    tab_dogrula:'Vérifier un hadith', tab_konu:'Par thème',
+    lbl_dogrula:'Collez un hadith — voyez sa source et son degré',
+    ph_dogrula:'Collez un hadith que vous avez entendu ou reçu…', btn_dogrula:'Vérifier',
+    lbl_konu:'Écrivez un thème — obtenez des hadiths authentiques', ph_konu:'mensonge, mariage, commerce, voisinage…', btn_konu:'Chercher',
+    lbl_kuran:'Écrivez un thème ou son sens — que dit le Coran ?', ph_kuran:'patience, parents, intérêt, « s\'en remettre à Dieu »…', btn_kuran:'Voir les versets',
+    ex_niyet:'Ex : intentions', ex_cennet:'Ex : paradis-mères', ex_temizlik:'Ex : pureté',
+    disc:'Mihenk <b>rapporte</b> le texte du hadith depuis les sources canoniques avec le jugement des savants, les versets du Coran et leur <b>traduction</b> — il ne <b>génère</b> ni hadith, ni traduction, ni avis juridique. Une traduction est interprétative ; consultez un savant pour les questions litigieuses.',
+    yukleniyor:'Recherche dans les sources canoniques…', err_title:'Échec de connexion', err_body:'Impossible de joindre le serveur.',
+    nf_title:'Cette parole ne figure pas dans les sources canoniques',
+    nf_body:'Votre texte n\'apparaît pas sous cette forme dans les <b>Six Livres</b> (Bukhari, Muslim, Tirmidhi, Abu Dawud, Nasa\'i, Ibn Majah) — il n\'a aucun fondement solide dans ces sources. <span style="opacity:.75">(Il peut exister sous une autre formulation dans une source fiable, à vérifier séparément ; d\'où « aucune source solide montrée » plutôt que « certainement forgé ».)</span>',
+    similar:'Hadiths similaires / liés', meal:'Traduction : Hamidullah',
+    konu_bos:'Aucun hadith authentique trouvé pour ce thème. Essayez un autre mot.', kuran_bos:'Aucun verset trouvé. Essayez un autre mot.',
+    konu_bul:(n)=>`${n} hadiths authentiques`, kuran_bul:(n)=>`${n} versets`,
+    nav_ezan:'Prière', ezan_intro:'J\'ai besoin de votre position pour les horaires de prière et la qibla.', ezan_btn:'Utiliser ma position',
+    ezan_sonraki:'Prochaine prière', ezan_kaldi:'restant', ezan_konum_hata:'Position indisponible. Autorisation requise.',
+    vakit:{imsak:'Fajr',gunes:'Lever du soleil',ogle:'Dhuhr',ikindi:'Asr',aksam:'Maghrib',yatsi:'Isha'},
+    kible_etk:'Direction de la qibla', yon:['Nord','Nord-est','Est','Sud-est','Sud','Sud-ouest','Ouest','Nord-ouest'],
+    pw_alt:'Vérification de hadiths et recherche coranique illimitées', pw_m1:'Vérification de hadiths illimitée', pw_m2:'Recherche coranique et thématique illimitée', pw_m3:'Sans publicité, accès prioritaire',
+    pw_satinal:'Passer à Mihenk Plus', pw_lisans_soru:'Vous avez une clé de licence ?', pw_etkinlestir:'Activer',
+    pw_kalan:(n)=>`${n} requêtes gratuites restantes`, pw_aktif:'Plus actif', pw_basarili:'Activé ! Accès illimité débloqué.', pw_gecersiz:'Clé invalide.', pw_yakinda:'Achat bientôt disponible (App Store).',
+    nav_bugun:'Aujourd\'hui', ayar_baslik:'Réglages', ayar_dil:'Langue', ayar_gizlilik:'Politique de confidentialité', ayar_kullanim:'Conditions d\'utilisation',
+    ayar_hakkinda:'Mihenk rapporte le texte du hadith, le degré des savants et la traduction du Coran depuis des sources vérifiées — il ne les génère pas. Consultez un savant pour les questions litigieuses.',
+    selam:'As-salâmu alaykum', gun_ayet:'Verset du jour', gun_hadis:'Hadith du jour',
+    pw_yillik:'Annuel', pw_aylik:'Mensuel', pw_avantaj:'-58 %', pw_devam:'Continuer', pw_restore:'Restaurer les achats',
+    pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
+  },
+  id: {
+    alt:'Panduan iman dengan sumbernya', nav_hadis:'Hadis', nav_kuran:'Al-Qur\'an',
+    tab_dogrula:'Verifikasi Hadis', tab_konu:'Berdasarkan Topik',
+    lbl_dogrula:'Tempel sebuah hadis — lihat sumber dan derajatnya',
+    ph_dogrula:'Tempel hadis yang Anda dengar atau diteruskan kepada Anda…', btn_dogrula:'Verifikasi',
+    lbl_konu:'Tulis sebuah topik — dapatkan hadis sahih', ph_konu:'dusta, pernikahan, perdagangan, tetangga…', btn_konu:'Cari',
+    lbl_kuran:'Tulis topik atau maknanya — apa kata Al-Qur\'an?', ph_kuran:'sabar, orang tua, riba, "bertawakal kepada Allah"…', btn_kuran:'Tampilkan ayat',
+    ex_niyet:'Cth: niat', ex_cennet:'Cth: surga-ibu', ex_temizlik:'Cth: kebersihan',
+    disc:'Mihenk <b>menyajikan</b> teks hadis dari sumber kanonik beserta penilaian ulama, ayat Al-Qur\'an dan <b>terjemahannya</b> — bukan <b>mengarang</b> hadis, terjemahan, atau hukum. Terjemahan bersifat tafsiri; rujuklah kepada ulama untuk masalah yang diperselisihkan.',
+    yukleniyor:'Mencari di sumber kanonik…', err_title:'Gagal terhubung', err_body:'Tidak dapat menjangkau server.',
+    nf_title:'Perkataan ini tidak ditemukan dalam sumber kanonik',
+    nf_body:'Teks Anda tidak muncul dalam bentuk ini di <b>Kutubus Sittah</b> (Bukhari, Muslim, Tirmidzi, Abu Dawud, Nasa\'i, Ibnu Majah) — tidak ada dasar yang kuat dalam sumber-sumber ini. <span style="opacity:.75">(Mungkin ada dengan redaksi berbeda di sumber tepercaya lain, yang perlu diperiksa terpisah; karena itu "tidak ada sumber kuat" bukan "pasti palsu".)</span>',
+    similar:'Hadis serupa / terkait', meal:'Terjemahan: Kemenag RI',
+    konu_bos:'Tidak ada hadis sahih untuk topik ini. Coba kata lain.', kuran_bos:'Tidak ada ayat ditemukan. Coba kata lain.',
+    konu_bul:(n)=>`${n} hadis sahih/hasan`, kuran_bul:(n)=>`${n} ayat`,
+    nav_ezan:'Salat', ezan_intro:'Saya butuh lokasi Anda untuk waktu salat dan kiblat.', ezan_btn:'Gunakan lokasi saya',
+    ezan_sonraki:'Salat berikutnya', ezan_kaldi:'lagi', ezan_konum_hata:'Lokasi tidak tersedia. Izin diperlukan.',
+    vakit:{imsak:'Subuh',gunes:'Terbit',ogle:'Zuhur',ikindi:'Asar',aksam:'Magrib',yatsi:'Isya'},
+    kible_etk:'Arah kiblat', yon:['Utara','Timur laut','Timur','Tenggara','Selatan','Barat daya','Barat','Barat laut'],
+    pw_alt:'Verifikasi hadis dan pencarian Al-Qur\'an tanpa batas', pw_m1:'Verifikasi hadis tanpa batas', pw_m2:'Pencarian Al-Qur\'an & topik tanpa batas', pw_m3:'Tanpa iklan, akses prioritas',
+    pw_satinal:'Dapatkan Mihenk Plus', pw_lisans_soru:'Punya kunci lisensi?', pw_etkinlestir:'Aktifkan',
+    pw_kalan:(n)=>`${n} kueri gratis tersisa`, pw_aktif:'Plus aktif', pw_basarili:'Aktif! Akses tanpa batas terbuka.', pw_gecersiz:'Kunci tidak valid.', pw_yakinda:'Pembelian segera hadir (App Store).',
+    nav_bugun:'Hari Ini', ayar_baslik:'Pengaturan', ayar_dil:'Bahasa', ayar_gizlilik:'Kebijakan Privasi', ayar_kullanim:'Ketentuan Penggunaan',
+    ayar_hakkinda:'Mihenk menyajikan teks hadis, penilaian ulama, dan terjemahan Al-Qur\'an dari sumber terverifikasi — bukan mengarangnya. Rujuklah kepada ulama untuk masalah yang diperselisihkan.',
+    selam:'Assalamu\'alaikum', gun_ayet:'Ayat Hari Ini', gun_hadis:'Hadis Hari Ini',
+    pw_yillik:'Tahunan', pw_aylik:'Bulanan', pw_avantaj:'Hemat 58%', pw_devam:'Lanjutkan', pw_restore:'Pulihkan pembelian',
+    pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
+  },
+  ar: {
+    alt:'دليلك الديني بمصادره', nav_hadis:'الحديث', nav_kuran:'القرآن',
+    tab_dogrula:'تحقّق من حديث', tab_konu:'حسب الموضوع',
+    lbl_dogrula:'الصق حديثًا — انظر مصدره ودرجته',
+    ph_dogrula:'الصق حديثًا سمعته أو وصلك…', btn_dogrula:'تحقّق',
+    lbl_konu:'اكتب موضوعًا — احصل على أحاديث صحيحة', ph_konu:'الكذب، الزواج، التجارة، الجوار…', btn_konu:'أحضِر',
+    lbl_kuran:'اكتب موضوعًا أو معناه — ماذا يقول القرآن؟', ph_kuran:'الصبر، الوالدان، الربا، «التوكّل على الله»…', btn_kuran:'أحضِر الآيات',
+    ex_niyet:'مثال: النية', ex_cennet:'مثال: الجنة والأم', ex_temizlik:'مثال: الطهارة',
+    disc:'يُحضِر مِحَنك نصّ الحديث من المصادر المعتمدة مع حُكم العلماء، وآيات القرآن مع <b>ترجمتها</b> — ولا <b>يُنشئ</b> حديثًا ولا ترجمةً ولا حُكمًا فقهيًّا. الترجمة تفسيرية؛ فاسأل عالمًا في المسائل الخلافية.',
+    yukleniyor:'يجري البحث في المصادر المعتمدة…', err_title:'تعذّر الاتصال', err_body:'تعذّر الوصول إلى الخادم.',
+    nf_title:'هذا القول غير موجود في المصادر المعتمدة',
+    nf_body:'نصّك لا يرد بهذه الصيغة في <b>الكتب الستة</b> (البخاري، مسلم، الترمذي، أبو داود، النسائي، ابن ماجه) — ولا أصل ثابت له فيها. <span style="opacity:.75">(قد يرد بلفظ آخر في مصدر معتبر آخر ويُتحقّق منه على حدة؛ لذا نقول «لم يُظهَر له مصدر ثابت» لا «موضوع قطعًا».)</span>',
+    similar:'أحاديث مشابهة / ذات صلة', meal:'المصحف: رواية حفص',
+    konu_bos:'لم يُعثر على حديث صحيح لهذا الموضوع. جرّب كلمة أخرى.', kuran_bos:'لم يُعثر على آية. جرّب كلمة أخرى.',
+    konu_bul:(n)=>`${n} حديثًا صحيحًا/حسنًا`, kuran_bul:(n)=>`${n} آية`,
+    nav_ezan:'الصلاة', ezan_intro:'أحتاج موقعك لأوقات الصلاة والقبلة.', ezan_btn:'استخدم موقعي',
+    ezan_sonraki:'الصلاة التالية', ezan_kaldi:'متبقٍّ', ezan_konum_hata:'تعذّر تحديد الموقع. يلزم الإذن.',
+    vakit:{imsak:'الفجر',gunes:'الشروق',ogle:'الظهر',ikindi:'العصر',aksam:'المغرب',yatsi:'العشاء'},
+    kible_etk:'اتجاه القبلة', yon:['شمال','شمال شرقي','شرق','جنوب شرقي','جنوب','جنوب غربي','غرب','شمال غربي'],
+    pw_alt:'تحقّق غير محدود من الأحاديث وبحث في القرآن', pw_m1:'تحقّق غير محدود من الأحاديث', pw_m2:'بحث غير محدود في القرآن والمواضيع', pw_m3:'بلا إعلانات، ووصول ذو أولوية',
+    pw_satinal:'اشترك في مِحَنك بلس', pw_lisans_soru:'لديك مفتاح ترخيص؟', pw_etkinlestir:'تفعيل',
+    pw_kalan:(n)=>`بقي ${n} استعلامات مجانية`, pw_aktif:'بلس مُفعّل', pw_basarili:'تم التفعيل! وصول غير محدود.', pw_gecersiz:'مفتاح غير صالح.', pw_yakinda:'الشراء قريبًا (App Store).',
+    nav_bugun:'اليوم', ayar_baslik:'الإعدادات', ayar_dil:'اللغة', ayar_gizlilik:'سياسة الخصوصية', ayar_kullanim:'شروط الاستخدام',
+    ayar_hakkinda:'يُحضِر مِحَنك نصّ الحديث وحُكم العلماء وترجمة القرآن من مصادر موثّقة — لا يُنشئها. اسأل عالمًا في المسائل الخلافية.',
+    selam:'السلام عليكم', gun_ayet:'آية اليوم', gun_hadis:'حديث اليوم',
+    pw_yillik:'سنوي', pw_aylik:'شهري', pw_avantaj:'توفير 58%', pw_devam:'متابعة', pw_restore:'استعادة المشتريات',
+    pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
+  },
+  ur: {
+    alt:'باحوالہ دینی رہنما', nav_hadis:'حدیث', nav_kuran:'قرآن',
+    tab_dogrula:'حدیث کی تصدیق', tab_konu:'موضوع کے مطابق',
+    lbl_dogrula:'ایک حدیث چسپاں کریں — اس کا ماخذ اور درجہ دیکھیں',
+    ph_dogrula:'کوئی سنی یا آگے بھیجی گئی حدیث یہاں چسپاں کریں…', btn_dogrula:'تصدیق کریں',
+    lbl_konu:'کوئی موضوع لکھیں — صحیح احادیث حاصل کریں', ph_konu:'جھوٹ، نکاح، تجارت، ہمسائیگی…', btn_konu:'لائیں',
+    lbl_kuran:'کوئی موضوع یا اس کا مفہوم لکھیں — قرآن کیا کہتا ہے؟', ph_kuran:'صبر، والدین، سود، "اللہ پر توکل"…', btn_kuran:'آیات لائیں',
+    ex_niyet:'مثال: نیت', ex_cennet:'مثال: جنت اور ماں', ex_temizlik:'مثال: طہارت',
+    disc:'مِحنک مستند مآخذ سے حدیث کا متن، علما کی تحقیق اور قرآن کی آیات و <b>ترجمہ</b> <b>پیش کرتا ہے</b> — حدیث، ترجمہ یا فقہی حکم <b>خود نہیں گھڑتا</b>۔ ترجمہ تشریحی ہے؛ اختلافی مسائل میں کسی عالم سے رجوع کریں۔',
+    yukleniyor:'مستند مآخذ میں تلاش…', err_title:'رابطہ ناکام', err_body:'سرور تک رسائی ممکن نہیں۔',
+    nf_title:'یہ قول مستند مآخذ میں موجود نہیں',
+    nf_body:'آپ کا متن اس شکل میں <b>کتبِ ستّہ</b> (بخاری، مسلم، ترمذی، ابو داؤد، نسائی، ابن ماجہ) میں نہیں ملتا — ان مآخذ میں اس کی کوئی مضبوط بنیاد نہیں۔ <span style="opacity:.75">(ممکن ہے کسی اور معتبر ماخذ میں مختلف الفاظ سے ہو، جس کی الگ تصدیق ضروری ہے؛ اسی لیے "مضبوط ماخذ نہیں ملا" کہتے ہیں، "یقیناً من گھڑت" نہیں۔)</span>',
+    similar:'ملتی جلتی / متعلقہ احادیث', meal:'ترجمہ: احمد علی',
+    konu_bos:'اس موضوع پر کوئی صحیح حدیث نہیں ملی۔ کوئی اور لفظ آزمائیں۔', kuran_bos:'کوئی آیت نہیں ملی۔ کوئی اور لفظ آزمائیں۔',
+    konu_bul:(n)=>`${n} صحیح/حسن احادیث`, kuran_bul:(n)=>`${n} آیات`,
+    nav_ezan:'نماز', ezan_intro:'نماز کے اوقات اور قبلہ کے لیے مجھے آپ کا محلِ وقوع درکار ہے۔', ezan_btn:'میرا محلِ وقوع استعمال کریں',
+    ezan_sonraki:'اگلی نماز', ezan_kaldi:'باقی', ezan_konum_hata:'محلِ وقوع دستیاب نہیں۔ اجازت درکار ہے۔',
+    vakit:{imsak:'فجر',gunes:'طلوعِ آفتاب',ogle:'ظہر',ikindi:'عصر',aksam:'مغرب',yatsi:'عشاء'},
+    kible_etk:'قبلہ کی سمت', yon:['شمال','شمال مشرق','مشرق','جنوب مشرق','جنوب','جنوب مغرب','مغرب','شمال مغرب'],
+    pw_alt:'لامحدود حدیث تصدیق اور قرآن تلاش', pw_m1:'لامحدود حدیث تصدیق', pw_m2:'لامحدود قرآن و موضوع تلاش', pw_m3:'بغیر اشتہار، ترجیحی رسائی',
+    pw_satinal:'مِحنک پلس حاصل کریں', pw_lisans_soru:'لائسنس کلید ہے؟', pw_etkinlestir:'فعال کریں',
+    pw_kalan:(n)=>`${n} مفت سوالات باقی`, pw_aktif:'پلس فعال', pw_basarili:'فعال! لامحدود رسائی کھل گئی۔', pw_gecersiz:'کلید غلط ہے۔', pw_yakinda:'خریداری جلد (App Store)۔',
+    nav_bugun:'آج', ayar_baslik:'ترتیبات', ayar_dil:'زبان', ayar_gizlilik:'رازداری پالیسی', ayar_kullanim:'شرائطِ استعمال',
+    ayar_hakkinda:'مِحنک حدیث کا متن، علما کا درجہ اور قرآن کا ترجمہ مستند مآخذ سے پیش کرتا ہے — خود نہیں گھڑتا۔ اختلافی مسائل میں عالم سے رجوع کریں۔',
+    selam:'السلام علیکم', gun_ayet:'آج کی آیت', gun_hadis:'آج کی حدیث',
+    pw_yillik:'سالانہ', pw_aylik:'ماہانہ', pw_avantaj:'58% بچت', pw_devam:'جاری رکھیں', pw_restore:'خریداری بحال کریں',
+    pw_hata:'مکمل نہ ہوسکا۔ دوبارہ کوشش کریں۔', pw_restore_yok:'بحال کرنے کو کوئی سبسکرپشن نہیں۔',
+  },
 };
 let T = L[dil];
 
@@ -435,28 +559,39 @@ function renkSinif(r){return {yesil:'r-yesil',turuncu:'r-turuncu',kirmizi:'r-kir
 function rozet(h){return `<span class="rozet ${renkSinif(h.dereceRenk)}"><span class="nokta"></span>${h.dereceEtiket}</span>`;}
 function esc(s){return (s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));}
 
+const LBL = {
+  kaynak:{tr:'Kaynak / inceleme',en:'Source / review',fr:'Source / examen',id:'Sumber / tinjauan',ar:'المصدر / المراجعة',ur:'ماخذ / جائزہ'},
+  grade:{tr:'Derecelendirme',en:'Grading',fr:'Évaluation',id:'Penilaian',ar:'التقييم',ur:'درجہ بندی'},
+  sayfa:{tr:'Sayfa',en:'Page',fr:'Page',id:'Halaman',ar:'صفحة',ur:'صفحہ'},
+  cuz:{tr:'Cüz',en:'Juz',fr:'Juz',id:'Juz',ar:'جزء',ur:'پارہ'},
+};
+const lbl = (k)=> LBL[k][dil]||LBL[k].en;
+const RTL = (d)=> d==='ar'||d==='ur';
+
 function hadisKarti(h, tam){
   const alim = (h.alimler||[]).map(a=>`${esc(a.alim)}: ${esc(a.derece)}`).join(' · ');
-  const arapca = tam && h.ar ? `<div class="arapca">${esc(h.ar)}</div>` : '';
-  const ref = h.mevzuat && h.referans ? `<div class="alimler"><b>${dil==='en'?'Source / review':'Kaynak / inceleme'}:</b> ${esc(h.referans)}</div>` : '';
+  // Arapça arayüzde ana metin zaten Arapça → ayrıca .arapca bloğu gösterme (tekrar olur)
+  const arapca = tam && h.ar && dil!=='ar' ? `<div class="arapca">${esc(h.ar)}</div>` : '';
+  const ref = h.mevzuat && h.referans ? `<div class="alimler"><b>${lbl('kaynak')}:</b> ${esc(h.referans)}</div>` : '';
   return `
     <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
       ${rozet(h)}<span class="kaynak">${esc(h.kaynak)}</span>
     </div>
-    <div class="hadis-metin">${esc(h.tr)}</div>
+    <div class="${dil==='ar'?'arapca':'hadis-metin'}">${esc(h.tr)}</div>
     ${arapca}
     <div class="anlam">${esc(h.dereceAnlam)}</div>
-    ${alim?`<div class="alimler"><b>${dil==='en'?'Grading':'Derecelendirme'}:</b> ${alim}</div>`:''}${ref}`;
+    ${alim?`<div class="alimler"><b>${lbl('grade')}:</b> ${alim}</div>`:''}${ref}`;
 }
 
 function ayetKarti(a){
-  const sf = dil==='en'?'Page':'Sayfa', cz = dil==='en'?'Juz':'Cüz';
-  const ref = `${esc(a.kaynak)}${a.sayfa?` · ${sf} ${a.sayfa}`:''}${a.cuz?` · ${cz} ${a.cuz}`:''}`;
-  const okunus = dil==='en' ? '' : (a.okunus?`<div class="okunus">${esc(a.okunus)}</div>`:''); // okunuş sadece TR
-  return `
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+  const ref = `${esc(a.kaynak)}${a.sayfa?` · ${lbl('sayfa')} ${a.sayfa}`:''}${a.cuz?` · ${lbl('cuz')} ${a.cuz}`:''}`;
+  const okunus = dil==='tr' && a.okunus ? `<div class="okunus">${esc(a.okunus)}</div>` : ''; // okunuş sadece TR
+  const head = `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
       <span class="rozet r-yesil"><span class="nokta"></span>${T.nav_kuran}</span><span class="kaynak">${ref}</span>
-    </div>
+    </div>`;
+  // Arapça arayüz: ayetin kendisi Arapça → sadece Arapça metni göster (meal = kaynağın kendisi)
+  if(dil==='ar') return `${head}${a.ar?`<div class="arapca">${esc(a.ar)}</div>`:''}`;
+  return `${head}
     ${a.ar?`<div class="arapca">${esc(a.ar)}</div>`:''}
     ${okunus}
     <div class="hadis-metin">${esc(a.tr)}</div>
@@ -540,7 +675,7 @@ async function calistirKuran(){
 
 // --- Ezan / namaz vakitleri ---
 let ezanVeri=null, ezanTimer=null;
-function fmtSaat(ts){return new Date(ts).toLocaleTimeString(dil==='en'?'en-GB':'tr-TR', {hour:'2-digit',minute:'2-digit',hour12:false,timeZone:(ezanVeri&&ezanVeri.tz)||undefined});}
+function fmtSaat(ts){const loc={tr:'tr-TR',en:'en-GB',fr:'fr-FR',id:'id-ID',ar:'en-GB',ur:'en-GB'}[dil]||'en-GB';return new Date(ts).toLocaleTimeString(loc, {hour:'2-digit',minute:'2-digit',hour12:false,timeZone:(ezanVeri&&ezanVeri.tz)||undefined});}
 async function konumAl(){
   const cap=window.Capacitor;
   if(cap&&cap.isNativePlatform&&cap.isNativePlatform()&&cap.Plugins&&cap.Plugins.Geolocation){
@@ -737,7 +872,7 @@ document.querySelectorAll('.sekme').forEach(b=>b.onclick=()=>{
   document.getElementById('mod-dogrula').style.display=m==='dogrula'?'':'none';
   document.getElementById('mod-konu').style.display=m==='konu'?'':'none';
 });
-document.getElementById('ornekler').onclick=e=>{const t=dil==='en'?e.target.dataset.tEn:e.target.dataset.t;if(t){document.getElementById('metin').value=t;}};
+document.getElementById('ornekler').onclick=e=>{const t=(dil==='tr'?e.target.dataset.t:e.target.dataset.tEn)||e.target.dataset.t;if(t){document.getElementById('metin').value=t;}};
 document.getElementById('btnDogrula').onclick=calistirDogrula;
 document.getElementById('btnKonu').onclick=calistirKonu;
 document.getElementById('btnKuran').onclick=calistirKuran;
@@ -750,14 +885,15 @@ function cipleriKur(){
       // Çip SADECE kutuyu doldurur; kullanıcı butona basınca çalışır (çift-çalışma yok).
       b.onclick=()=>{const inp=document.getElementById(inputId);inp.value=k;inp.focus();};kap.appendChild(b);});
   };
-  yap('konuCipler',KONULAR[dil],'konu');
-  yap('kkonuCipler',KKONULAR[dil],'kkonu');
+  yap('konuCipler',KONULAR[dil]||KONULAR.en,'konu');
+  yap('kkonuCipler',KKONULAR[dil]||KKONULAR.en,'kkonu');
 }
 
 // Dil uygula: statik metinler + çipler + T
 function dilUygula(yeni){
   dil=yeni; T=L[dil]; localStorage.setItem('dil',dil);
   document.documentElement.lang=dil;
+  document.documentElement.dir = RTL(dil) ? 'rtl' : 'ltr'; // Arapça + Urduca sağdan sola
   document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n; if(L[dil][k]!==undefined) el.innerHTML=L[dil][k];});
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{const k=el.dataset.i18nPh; if(L[dil][k]!==undefined) el.placeholder=L[dil][k];});
   document.querySelectorAll('.dil').forEach(b=>b.classList.toggle('aktif',b.dataset.dil===dil));

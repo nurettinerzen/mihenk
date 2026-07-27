@@ -2,9 +2,13 @@
 // Konu araması semantik olsun diye. Tek seferlik/offline. ~13 dk (30k × 2 dil).
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { embedBatch, DIM } from './embed.mjs';
 
-const corpus = JSON.parse(readFileSync(new URL('./corpus.json', import.meta.url), 'utf8'));
+const _gz = new URL('./corpus.json.gz', import.meta.url);
+const corpus = existsSync(_gz) ? JSON.parse(gunzipSync(readFileSync(_gz)))
+  : JSON.parse(readFileSync(new URL('./corpus.json', import.meta.url), 'utf8'));
 const N = corpus.length;
 const B = 64;
 

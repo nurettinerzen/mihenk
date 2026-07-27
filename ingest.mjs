@@ -7,6 +7,7 @@
 //
 // Çıktı: corpus.json  → [{id, kitap, kitapTr, no, tr, ar, derece, dereceRaw, alimler[], kaynak, konular[]}]
 
+import { gzipSync } from 'node:zlib';
 import { writeFile } from 'node:fs/promises';
 
 const CDN = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions';
@@ -79,17 +80,23 @@ async function main() {
 
   for (const kitap of KITAPLAR) {
     process.stdout.write(`\n${kitap.kisaTr} indiriliyor... `);
-    const [tur, ara, eng] = await Promise.all([
+    const [tur, ara, eng, fra, ind, urd] = await Promise.all([
       getir(`tur-${kitap.id}`),
       getir(`ara-${kitap.id}`),
       getir(`eng-${kitap.id}`),
+      getir(`fra-${kitap.id}`),
+      getir(`ind-${kitap.id}`),
+      getir(`urd-${kitap.id}`),
     ]);
     if (!tur || !tur.length) { console.log('Türkçe metin yok, atlanıyor.'); continue; }
 
-    // Arapça, İngilizce derece ve İngilizce metni hadithnumber ile indeksle
+    // Arapça, İngilizce derece ve çok dilli metinleri hadithnumber ile indeksle
     const araMap = new Map((ara || []).map(h => [h.hadithnumber, h.text]));
     const engMap = new Map((eng || []).map(h => [h.hadithnumber, h.grades]));
     const engMetinMap = new Map((eng || []).map(h => [h.hadithnumber, (h.text || '').trim()]));
+    const fraMap = new Map((fra || []).map(h => [h.hadithnumber, (h.text || '').trim()]));
+    const indMap = new Map((ind || []).map(h => [h.hadithnumber, (h.text || '').trim()]));
+    const urdMap = new Map((urd || []).map(h => [h.hadithnumber, (h.text || '').trim()]));
 
     let eklendi = 0;
     for (const h of tur) {
@@ -112,6 +119,9 @@ async function main() {
         no: h.hadithnumber,
         tr: metin,
         en: engMetinMap.get(h.hadithnumber) || '',
+        fr: fraMap.get(h.hadithnumber) || '',
+        idn: indMap.get(h.hadithnumber) || '',   // Endonezce. DİKKAT: anahtar 'id' OLAMAZ — kaydın id'sini ezer.
+        ur: urdMap.get(h.hadithnumber) || '',
         ar: arapca,
         derece: dSel.derece,
         dereceRaw: dSel.raw,
@@ -129,7 +139,8 @@ async function main() {
   console.log(`\n\n=== KORPUS HAZIR: ${corpus.length} hadis ===`);
   console.log(say);
 
-  await writeFile(new URL('./corpus.json', import.meta.url), JSON.stringify(corpus));
+  // gzip: depo sınırı (GitHub 100MB) için — backend .gz'yi açarak okur
+  await writeFile(new URL('./corpus.json.gz', import.meta.url), gzipSync(Buffer.from(JSON.stringify(corpus))));
   const mb = (JSON.stringify(corpus).length / 1e6).toFixed(1);
   console.log(`corpus.json yazıldı (${mb} MB)`);
 }

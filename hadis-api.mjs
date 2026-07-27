@@ -10,7 +10,8 @@
 //   GET  /health
 
 import http from 'node:http';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { Motor } from './motor.mjs';
 import { embedOne, embedder, cos, DIM } from './embed.mjs';
 import * as adhan from 'adhan';
@@ -25,7 +26,14 @@ const SURUM = 1;
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
 console.log('Korpus yükleniyor...');
 const yol = (f) => new URL(`./${f}`, import.meta.url).pathname;
-const corpus = JSON.parse(readFileSync(yol('corpus.json'), 'utf8'));
+// Büyük veri dosyaları depoda gzip'li tutulur (corpus 134MB → 37MB; GitHub 100MB sınırı).
+// .gz varsa onu aç, yoksa düz .json'a düş.
+const jsonOku = (ad) => {
+  const gz = yol(`${ad}.gz`);
+  if (existsSync(gz)) return JSON.parse(gunzipSync(readFileSync(gz)));
+  return JSON.parse(readFileSync(yol(ad), 'utf8'));
+};
+const corpus = jsonOku('corpus.json');
 // Mevzuat (halk arasında yaygın, aslı zayıf/olmayan sözler) — küçük, atıflı, âlim incelemesi bekleyen tohum.
 const mevzuat = JSON.parse(readFileSync(yol('mevzuat.json'), 'utf8')).map((m, i) => ({
   id: `m${i}`, kitap: 'mevzuat', kitapTr: 'Halk arasında yaygın söz', kisaTr: 'Yaygın söz',
@@ -52,27 +60,90 @@ console.log(`Hazır: ${corpus.length} hadis + ${mevzuat.length} mevzuat | Kur'an
 
 // Derece → dile göre etiket + anlam + renk (UI kullanır)
 const DERECE_BILGI = {
-  sahih:      { renk: 'yesil',   etiket: { tr: 'Sahih', en: 'Sahih (Authentic)' },
-    anlam: { tr: 'Sened yönünden sağlam, güvenilir. Dinî bir delil olarak kullanılabilir.', en: 'Sound and reliable in its chain. Can be used as religious evidence.' } },
-  hasen:      { renk: 'yesil',   etiket: { tr: 'Hasen', en: 'Hasan (Good)' },
-    anlam: { tr: 'İyi derecede sağlam. Delil olarak kabul edilir; sahihe göre bir alt basamaktır.', en: 'Good and acceptable as evidence; one level below sahih.' } },
-  zayif:      { renk: 'turuncu', etiket: { tr: 'Zayıf', en: 'Weak (Da\'if)' },
-    anlam: { tr: 'Kaynakta geçiyor ama senedinde zayıflık var. Güçlü/kesin bir hadis sayılmaz; tek başına hüküm dayanağı olmaz. Faziletlerde ihtiyatla anılabilir.', en: 'Found in the source but weak in its chain. Not a strong/decisive report; cannot alone be a basis for a ruling.' } },
-  mevzu:      { renk: 'kirmizi', etiket: { tr: 'Aslı sabit değil', en: 'Not authentically established' },
-    anlam: { tr: 'Âlimler bu sözü Peygamber\'e ait güvenilir bir hadis olarak kabul etmiyor; sağlam bir dayanağı yok. Hadis diye aktarmamak daha doğru olur.', en: 'Scholars do not accept this as a reliable saying of the Prophet; it has no sound basis. Better not to relay it as a hadith.' } },
-  bilinmiyor: { renk: 'gri',     etiket: { tr: 'Derece belirsiz', en: 'Grade unclear' },
-    anlam: { tr: 'Bu nüsha için elimizde net bir derecelendirme kaydı yok; kesinliği hakkında hüküm vermek doğru olmaz.', en: 'We have no clear grading record for this narration; its reliability cannot be stated with certainty.' } },
+  sahih: { renk: 'yesil',
+    etiket: { tr: 'Sahih', en: 'Sahih (Authentic)', fr: 'Sahih (authentique)', ar: 'صحيح', ur: 'صحیح', id: 'Sahih (Autentik)' },
+    anlam: {
+      tr: 'Sened yönünden sağlam, güvenilir. Dinî bir delil olarak kullanılabilir.',
+      en: 'Sound and reliable in its chain. Can be used as religious evidence.',
+      fr: 'Chaîne de transmission solide et fiable. Peut servir de preuve religieuse.',
+      ar: 'سنده صحيح موثوق، ويصحّ الاستدلال به.',
+      ur: 'سند کے اعتبار سے مضبوط اور قابلِ اعتماد؛ شرعی دلیل کے طور پر قابلِ استعمال۔',
+      id: 'Sanadnya kuat dan terpercaya. Dapat dijadikan dalil agama.' } },
+  hasen: { renk: 'yesil',
+    etiket: { tr: 'Hasen', en: 'Hasan (Good)', fr: 'Hasan (bon)', ar: 'حسن', ur: 'حسن', id: 'Hasan (Baik)' },
+    anlam: {
+      tr: 'İyi derecede sağlam. Delil olarak kabul edilir; sahihe göre bir alt basamaktır.',
+      en: 'Good and acceptable as evidence; one level below sahih.',
+      fr: 'Bon et recevable comme preuve ; un niveau en dessous du sahih.',
+      ar: 'حسن مقبول للاستدلال، وهو دون الصحيح بدرجة.',
+      ur: 'اچھا اور قابلِ قبول؛ صحیح سے ایک درجہ کم۔',
+      id: 'Baik dan diterima sebagai dalil; satu tingkat di bawah sahih.' } },
+  zayif: { renk: 'turuncu',
+    etiket: { tr: 'Zayıf', en: 'Weak (Da\'if)', fr: 'Faible (da\'îf)', ar: 'ضعيف', ur: 'ضعیف', id: 'Lemah (Da\'if)' },
+    anlam: {
+      tr: 'Kaynakta geçiyor ama senedinde zayıflık var. Güçlü/kesin bir hadis sayılmaz; tek başına hüküm dayanağı olmaz. Faziletlerde ihtiyatla anılabilir.',
+      en: 'Found in the source but weak in its chain. Not a strong/decisive report; cannot alone be a basis for a ruling.',
+      fr: 'Présent dans la source mais faible dans sa chaîne. Ne peut à lui seul fonder une règle.',
+      ar: 'ورد في المصدر لكن في سنده ضعف، ولا يصحّ الاعتماد عليه وحده في الحكم.',
+      ur: 'ماخذ میں موجود ہے مگر سند میں کمزوری ہے؛ تنہا حکم کی بنیاد نہیں بن سکتا۔',
+      id: 'Terdapat dalam sumber tetapi lemah sanadnya; tidak bisa menjadi dasar hukum sendirian.' } },
+  mevzu: { renk: 'kirmizi',
+    etiket: { tr: 'Aslı sabit değil', en: 'Not authentically established', fr: 'Sans fondement établi', ar: 'لا أصل له ثابت', ur: 'کوئی ثابت اصل نہیں', id: 'Tidak ada dasar yang sahih' },
+    anlam: {
+      tr: 'Âlimler bu sözü Peygamber\'e ait güvenilir bir hadis olarak kabul etmiyor; sağlam bir dayanağı yok. Hadis diye aktarmamak daha doğru olur.',
+      en: 'Scholars do not accept this as a reliable saying of the Prophet; it has no sound basis. Better not to relay it as a hadith.',
+      fr: 'Les savants ne le retiennent pas comme parole fiable du Prophète ; il n\'a pas de fondement solide. Mieux vaut ne pas le rapporter comme hadith.',
+      ar: 'لا يعدّه العلماء قولًا ثابتًا عن النبي ﷺ، ولا أصل صحيح له؛ والأولى ألّا يُنقل على أنه حديث.',
+      ur: 'علماء اسے نبی ﷺ کا معتبر قول تسلیم نہیں کرتے؛ اس کی کوئی مضبوط بنیاد نہیں۔ بہتر ہے اسے حدیث کے طور پر نقل نہ کیا جائے۔',
+      id: 'Para ulama tidak menerimanya sebagai sabda Nabi yang sahih; tidak ada dasar yang kuat. Sebaiknya tidak disampaikan sebagai hadis.' } },
+  bilinmiyor: { renk: 'gri',
+    etiket: { tr: 'Derece belirsiz', en: 'Grade unclear', fr: 'Degré indéterminé', ar: 'الدرجة غير محددة', ur: 'درجہ غیر واضح', id: 'Derajat tidak jelas' },
+    anlam: {
+      tr: 'Bu nüsha için elimizde net bir derecelendirme kaydı yok; kesinliği hakkında hüküm vermek doğru olmaz.',
+      en: 'We have no clear grading record for this narration; its reliability cannot be stated with certainty.',
+      fr: 'Nous n\'avons pas de évaluation claire pour cette version ; sa fiabilité ne peut être affirmée.',
+      ar: 'لا يتوفر لدينا تقييم واضح لهذه الرواية، فلا يمكن الجزم بدرجتها.',
+      ur: 'اس روایت کے لیے ہمارے پاس واضح درجہ بندی موجود نہیں؛ اس کی صحت پر قطعی حکم نہیں لگایا جا سکتا۔',
+      id: 'Kami tidak memiliki catatan penilaian yang jelas untuk riwayat ini; keabsahannya tidak dapat dipastikan.' } },
 };
+
+// Desteklenen diller. fr/id/ur/ar: metin yerleşik veriden gelir; semantik eşleştirme
+// çok dilli embedding ile EN vektörü üzerinden yapılır (yeni vektör gerekmez).
+const DILLER = ['tr', 'en', 'fr', 'id', 'ur', 'ar'];
+const dilAl = (d) => (DILLER.includes(d) ? d : 'tr');
+// Dil kodu → veri alanı. Endonezce alanı 'idn' (kaydın 'id' alanını ezmemesi için).
+const ALAN = { id: 'idn' };
+const metinAl = (o, dil) => o[ALAN[dil] || dil] || o.en || o.tr;   // görünen metin, fallback zinciri
+const vekAl = (V, dil) => V[dil] || V.en || V.tr;     // fr/id/ur/ar → EN pivot vektör
+
+// Korpustaki âlim/kaynak etiketleri Türkçe üretilmiş ("Buhârî ittifakı",
+// "… — Nevevî derlemesi", "Kaynak: …"). Veriyi bozmadan, sunum katmanında çevir.
+const ET = {
+  ittifak:  { tr: 'ittifakı',   en: 'consensus',        fr: 'consensus',        ar: 'باتفاق',        ur: 'اتفاق',        id: 'kesepakatan' },
+  derleme:  { tr: 'derlemesi',  en: 'collection',       fr: 'recueil',          ar: 'مجموعة',        ur: 'مجموعہ',       id: 'kumpulan' },
+  kaynak:   { tr: 'Kaynak',     en: 'Source',           fr: 'Source',           ar: 'المصدر',        ur: 'ماخذ',         id: 'Sumber' },
+  ve:       { tr: 've',         en: 'and',              fr: 'et',               ar: 'و',             ur: 'اور',          id: 'dan' },
+};
+const cev = (k, dil) => ET[k][dil] || ET[k].en;
+function alimAdi(ad, dil) {
+  if (dil === 'tr') return ad;
+  return ad
+    .replace(/^Kaynak:/, cev('kaynak', dil) + ':')
+    .replace(/\s+ve\s+/g, ` ${cev('ve', dil)} `)
+    .replace(/\s*ittifakı\s*$/, ` — ${cev('ittifak', dil)}`)
+    .replace(/\s*derlemesi\s*$/, ` ${cev('derleme', dil)}`);
+}
+const alimlerDil = (alimler, dil) => (alimler || []).map(a => ({ ...a, alim: alimAdi(a.alim, dil) }));
 
 function derecele(h, dil = 'tr') {
   const b = DERECE_BILGI[h.derece] || DERECE_BILGI.bilinmiyor;
-  const metin = dil === 'en' ? (h.en || h.tr) : h.tr; // en yoksa tr'ye düş
+  const metin = metinAl(h, dil); // o dildeki metin yoksa en→tr
   return {
     id: h.id, tr: metin, ar: h.ar, kaynak: h.kaynak, kitapTr: h.kitapTr, no: h.no,
-    derece: h.derece, dereceEtiket: b.etiket[dil] || b.etiket.tr, dereceRenk: b.renk,
-    // Mevzuat kaydıysa kendi (nüanslı, atıflı) açıklaması kullanılır (şimdilik TR).
-    dereceAnlam: h.aciklama || (b.anlam[dil] || b.anlam.tr),
-    dereceRaw: h.dereceRaw, alimler: h.alimler,
+    derece: h.derece, dereceEtiket: b.etiket[dil] || b.etiket.en || b.etiket.tr, dereceRenk: b.renk,
+    // Grade açıklaması artık 6 dilde; eksikse en→tr'ye düşer.
+    dereceAnlam: h.aciklama || (b.anlam[dil] || b.anlam.en || b.anlam.tr),
+    dereceRaw: h.dereceRaw, alimler: alimlerDil(h.alimler, dil),
     mevzuat: !!h.mevzuat, referans: h.referans || null,
   };
 }
@@ -85,7 +156,7 @@ async function eslestir(metin, adaylar, dil = 'tr') {
     const es = en && en._skor > 12 ? en.id : null;
     return { eslesenId: es, yakinId: null, yakinGuven: 0, guven: en ? Math.min(1, en._skor / 40) : 0 };
   }
-  const liste = adaylar.map((a) => `[${a.id}] ${((dil === 'en' ? a.en : a.tr) || a.tr || '').slice(0, 300)}`).join('\n\n');
+  const liste = adaylar.map((a) => `[${a.id}] ${(metinAl(a, dil) || '').slice(0, 300)}`).join('\n\n');
   const r = await anthropic.messages.create({
     model: MODEL,
     max_tokens: 300,
@@ -116,8 +187,58 @@ async function eslestir(metin, adaylar, dil = 'tr') {
   return tu ? tu.input : { eslesenId: null, yakinId: null, yakinGuven: 0, guven: 0 };
 }
 
+// --- Arapça lexical arama (korpustaki asıl Arapça metin üzerinde) ---
+// Harekeleri/tatweel'i atar, elif-hemze ve tâ marbûta varyantlarını sadeleştirir,
+// sonra nadir kelimelerin örtüşmesine göre puanlar. Üretmez; yalnızca aday getirir.
+const arNorm = (s) => (s || '')
+  .replace(/[ً-ْـٰ]/g, '')      // hareke + tatweel
+  .replace(/[إأآا]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه')
+  .replace(/[^ء-ي\s]/g, ' ').replace(/\s+/g, ' ').trim();
+const AR_STOP = new Set(['من','في','على','عن','الى','ان','ما','لا','هو','هي','قال','عليه','وسلم','صلى','الله','رسول','عن','بن','حدثنا','اخبرنا','كان','الي','هذا','التي','الذي']);
+let arDF = null; // kelime → kaç kayıtta geçtiği (nadir kelime daha değerli)
+function arIndeks() {
+  if (arDF) return arDF;
+  arDF = new Map();
+  for (const h of corpus) {
+    if (!h.ar) continue;
+    for (const w of new Set(arNorm(h.ar).split(' '))) if (w.length > 2) arDF.set(w, (arDF.get(w) || 0) + 1);
+  }
+  return arDF;
+}
+function arapcaAra(sorgu, k = 10) {
+  const df = arIndeks(), N = corpus.length;
+  const qw = [...new Set(arNorm(sorgu).split(' '))].filter(w => w.length > 2 && !AR_STOP.has(w));
+  if (!qw.length) return [];
+  const puan = [];
+  for (const h of corpus) {
+    if (!h.ar) continue;
+    const hs = new Set(arNorm(h.ar).split(' '));
+    let s = 0;
+    for (const w of qw) if (hs.has(w)) s += Math.log(N / (1 + (df.get(w) || 0)));   // idf ağırlığı
+    if (s > 0) puan.push([s / Math.sqrt(hs.size || 1), h]);                          // uzunluk normalizasyonu
+  }
+  puan.sort((a, b) => b[0] - a[0]);
+  return puan.slice(0, k).map(([, h]) => h);
+}
+
 async function dogrula(metin, dil = 'tr') {
-  const adaylar = hadisMotor(dil).ara(metin, 8);
+  let adaylar;
+  if (dil !== 'tr' && dil !== 'en' && hadisVek) {
+    // fr/id/ur/ar: o dilde BM25 indeksi yok → semantik (EN pivot vektör) aday getir.
+    // Havuz 8 değil 20: pivot çeviri kaybı yüzünden doğru kayıt ilk 8'in dışında kalabiliyor.
+    const qv = await embedOne(metin);
+    const vek = vekAl(hadisVek, dil);
+    const p = [];
+    for (let i = 0; i < corpus.length; i++) p.push([i, cos(vek, i * DIM, qv)]);
+    p.sort((a, b) => b[1] - a[1]);
+    const sem = p.slice(0, 20).map(([i]) => corpus[i]);
+    // Arapça sorguda semantik pivot zayıf (sorgu dili ≠ vektör dili). Asıl Arapça metin
+    // korpusta mevcut → kelime örtüşmesiyle doğrudan ara ve adayların başına ekle.
+    if (dil === 'ar') adaylar = [...arapcaAra(metin, 10), ...sem].filter((h, i, a) => a.findIndex(x => x.id === h.id) === i).slice(0, 24);
+    else adaylar = sem;
+  } else {
+    adaylar = hadisMotor(dil).ara(metin, 8);
+  }
   if (!adaylar.length) return { bulundu: false, yakin: null, benzerler: [] };
   const { eslesenId, yakinId, yakinGuven, guven } = await eslestir(metin, adaylar, dil);
   const es = eslesenId && guven >= 0.45 ? adaylar.find(a => a.id === eslesenId) : null;
@@ -139,7 +260,7 @@ async function dogrula(metin, dil = 'tr') {
 // Sorgu genişletme (sadece TR lexical hadis konu araması için): kavram terimini
 // sade Türkçe çeviride geçebilecek eş anlamlılara açar. SADECE arama terimi.
 async function genislet(konu, dil) {
-  if (!anthropic || dil === 'en') return konu; // EN'de kelime çeviride zaten geçer
+  if (!anthropic || dil !== 'tr') return konu; // genişletme sadece TR lexical fallback için
   try {
     const r = await anthropic.messages.create({
       model: MODEL, max_tokens: 80,
@@ -155,7 +276,7 @@ async function konu(sorgu, dil = 'tr') {
   // Semantik (vektör varsa): kavramın adını değil anlamını yazınca da bulur.
   if (hadisVek) {
     const qv = await embedOne(sorgu);
-    const vek = hadisVek[dil] || hadisVek.tr;
+    const vek = vekAl(hadisVek, dil);
     const puan = [];
     for (let i = 0; i < corpus.length; i++) {
       const d = corpus[i].derece;
@@ -175,7 +296,7 @@ async function konu(sorgu, dil = 'tr') {
 // Meal + Arapça + okunuş yerleşik veriden GETİRİLİR, LLM üretmez.
 async function kuranKonu(sorgu, dil = 'tr') {
   const qv = await embedOne(sorgu);
-  const vek = kuranVek[dil] || kuranVek.tr;
+  const vek = vekAl(kuranVek, dil);
   const puan = new Array(ayat.length);
   for (let i = 0; i < ayat.length; i++) puan[i] = [i, cos(vek, i * DIM, qv)];
   puan.sort((a, b) => b[1] - a[1]);
@@ -183,10 +304,9 @@ async function kuranKonu(sorgu, dil = 'tr') {
     konu: sorgu,
     sonuclar: puan.slice(0, 10).map(([i, s]) => {
       const a = ayat[i];
-      const meal = dil === 'en' ? (a.en || a.tr) : a.tr;
-      return { id: a.id, sure: a.sure, sureAd: dil === 'en' ? a.sureAdEn : a.sureAd, ayet: a.ayet,
-        sayfa: a.sayfa, cuz: a.cuz, kaynak: dil === 'en' ? a.kaynakEn : a.kaynak,
-        ar: a.ar, okunus: a.okunus, tr: meal, skor: +s.toFixed(3) };
+      return { id: a.id, sure: a.sure, sureAd: dil === 'tr' ? a.sureAd : a.sureAdEn, ayet: a.ayet,
+        sayfa: a.sayfa, cuz: a.cuz, kaynak: dil === 'tr' ? a.kaynak : a.kaynakEn,
+        ar: a.ar, okunus: dil === 'tr' ? a.okunus : '', tr: metinAl(a, dil), skor: +s.toFixed(3) };
     }),
   };
 }
@@ -202,8 +322,8 @@ function gunun(dil = 'tr') {
   const ay = ayat.find(x => x.sure === s && x.ayet === a);
   const hd = gununHadisHavuz.length ? gununHadisHavuz[(gi * 7) % gununHadisHavuz.length] : null;
   return {
-    ayet: ay ? { kaynak: dil === 'en' ? ay.kaynakEn : ay.kaynak, ar: ay.ar, okunus: ay.okunus, tr: dil === 'en' ? (ay.en || ay.tr) : ay.tr } : null,
-    hadis: hd ? { kaynak: hd.kaynak, tr: dil === 'en' ? (hd.en || hd.tr) : hd.tr, ar: hd.ar, dereceEtiket: dil === 'en' ? 'Sahih (Authentic)' : 'Sahih' } : null,
+    ayet: ay ? { kaynak: dil === 'tr' ? ay.kaynak : ay.kaynakEn, ar: ay.ar, okunus: dil === 'tr' ? ay.okunus : '', tr: metinAl(ay, dil) } : null,
+    hadis: hd ? { kaynak: hd.kaynak, tr: metinAl(hd, dil), ar: hd.ar, dereceEtiket: dil === 'en' ? 'Sahih (Authentic)' : 'Sahih' } : null,
   };
 }
 
@@ -307,7 +427,7 @@ http.createServer(async (req, res) => {
       const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || 'x';
       if (limitAsildi(ip)) { res.writeHead(429); return res.end(JSON.stringify({ hata: 'çok fazla istek, biraz bekleyin' })); }
       const body = JSON.parse(await govde(req) || '{}');
-      const dil = body.dil === 'en' ? 'en' : 'tr';
+      const dil = dilAl(body.dil);
       const cihaz = (body.cihaz || '').toString().slice(0, 64) || 'anon';
       const yerli = !!body.yerli; // limit sadece native (iOS) isteklerde; web ücretsiz demo
       // Lisans body'de geldiyse premium'u aktive et

@@ -10,3 +10,9 @@ ios/DerivedData/
 **/*.xcuserstate
 build/
 ExportOptions.plist
+pazarlama/
+pazarlama-v2/
+magaza/
+corpus.json
+diller/
+magaza-gorseller/

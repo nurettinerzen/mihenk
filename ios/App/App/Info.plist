@@ -3,7 +3,16 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>tr</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>tr</string>
+		<string>en</string>
+		<string>fr</string>
+		<string>ar</string>
+		<string>ur</string>
+		<string>id</string>
+	</array>
 	<key>CFBundleDisplayName</key>
         <string>Mihenk</string>
 	<key>CFBundleExecutable</key>
@@ -48,6 +57,10 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Namaz vakitleri ve kıble yönünü hesaplamak için konumun kullanılır.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Namaz vakitleri ve kıble yönünü hesaplamak için konumun kullanılır.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
 	<string>Namaz vakitleri ve kıble yönünü hesaplamak için konumun kullanılır.</string>
 </dict>
 </plist>
