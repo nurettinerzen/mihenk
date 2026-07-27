@@ -700,6 +700,12 @@ http.createServer(async (req, res) => {
     return res.end(JSON.stringify({ ok: true, surum: SURUM, hadis: corpus.length, ayet: ayat.length, model: MODEL, llm: !!anthropic }));
   }
 
+  // AdMob, uygulamanın reklam envanterini bu dosyadan doğrular (IAB app-ads.txt).
+  if (url.pathname === '/app-ads.txt') {
+    res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' });
+    return res.end('google.com, pub-9418694951655513, DIRECT, f08c47fec0942fa0\n');
+  }
+
   // Statik sunum: uygulama HTML'i + fontlar (tek servis olsun diye).
   if (req.method === 'GET') {
     const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
