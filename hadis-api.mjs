@@ -303,6 +303,17 @@ async function genislet(konu, dil) {
 }
 
 async function konu(sorgu, dil = 'tr') {
+  // Alaka kapısı: konu hadis metinlerinde hiç geçmiyorsa dürüstçe boş dön.
+  // (Saf semantik "bilgisayar"a da 10 hadis buluyordu.)
+  const qwK = [...new Set(trNorm(sorgu).split(' '))].filter(w => w.length > 2);
+  if (qwK.length) {
+    let sinyal = false;
+    for (const h of hadisAll) {
+      const m = trNorm(metinAl(h, dil) || '');
+      if (qwK.some(w => m.includes(w))) { sinyal = true; break; }
+    }
+    if (!sinyal) return { konu: sorgu, sonuclar: [], alakasiz: true };
+  }
   // Semantik (vektör varsa): kavramın adını değil anlamını yazınca da bulur.
   if (hadisVek) {
     const qv = await embedOne(sorgu);
@@ -381,7 +392,11 @@ async function kuranKonu(sorgu, dil = 'tr') {
   const qwLex = [...new Set(trNorm(aramaMetni).split(' '))].filter(w => w.length > 2);
   const lexArr = qwLex.length ? lexPuan(dil, qwLex) : null;
   let lexMax = 0; if (lexArr) for (const v of lexArr) if (v > lexMax) lexMax = v;
-  const wLex = qwLex.length <= 2 ? 0.62 : 0.52;   // tek terim → lexical, cümle → anlam ağırlıklı
+  // Konu Kur'an'da geçmiyorsa DÜRÜSTÇE boş dön. Saf semantik her sorguya bir şey
+  // buluyordu: "sigara"→duman ayetleri, "bilgisayar"/"abla"→alakasız. Sorgunun
+  // hiçbir kelimesi (kavram karşılığı dahil) meâlde geçmiyorsa konu yok demektir.
+  if (qwLex.length && lexMax === 0) return { konu: sorgu, sonuclar: [], alakasiz: true };
+  const tekTerim = qwLex.length === 1;   // tek terim → lexical, cümle → anlam ağırlıklı
   // DESTEK: semantik — kelime geçmese de anlamca yakın ayetleri yakalar
   const qv = await embedOne(aramaMetni);
   const vek = vekAl(kuranVek, dil);
@@ -400,6 +415,10 @@ async function kuranKonu(sorgu, dil = 'tr') {
     // lexical yetiyordu ve çokanlamlılık sızıyordu ("huzur bulmak" ↔ "huzurumuza
     // getirilecekler"); anlam düşükse artık lexical tek başına yukarı taşımıyor.
     // Taban (0.35) sayesinde kelimesi geçmeyen ama anlamca doğru ayet de kalabiliyor.
+    // Tek kelimelik sorgu belirli bir terimdir ("abla", "namaz") → o kelimenin
+    // geçtiği ayetler dışına çıkma. Cümlede ise taban katsayı, kelimesi geçmeyen
+    // ama anlamca doğru ayetin de listede kalmasını sağlar.
+    if (tekTerim && lx === 0) { puan[i] = [i, -1]; continue; }
     let s = (0.35 + 0.65 * lx) * Math.max(0, sem);
     if (qw.length) {                                        // lexical katkı
       const mn = trNorm(metin);
@@ -434,10 +453,10 @@ async function kuranKonu(sorgu, dil = 'tr') {
       if (metin.length < 90) {
         const nx = ayat[i + 1], pv = ayat[i - 1];
         if (nx && nx.sure === a.sure) {
-          metin += ' ' + metinAl(nx, dil); arapca += ' ' + (nx.ar || '');
+          metin = metin.replace(/[\s.;,]+$/, '') + '. ' + metinAl(nx, dil); arapca += ' ' + (nx.ar || '');
           okunusEt += ' ' + (nx.okunus || ''); ayetEt = `${a.ayet}-${nx.ayet}`;
         } else if (pv && pv.sure === a.sure) {
-          metin = metinAl(pv, dil) + ' ' + metin; arapca = (pv.ar || '') + ' ' + arapca;
+          metin = metinAl(pv, dil).replace(/[\s.;,]+$/, '') + '. ' + metin; arapca = (pv.ar || '') + ' ' + arapca;
           okunusEt = (pv.okunus || '') + ' ' + okunusEt; ayetEt = `${pv.ayet}-${a.ayet}`;
         }
       }

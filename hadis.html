@@ -383,6 +383,13 @@
       <button class="btn" id="paywallSatinAl" data-i18n="pw_devam" style="margin-top:14px">Devam et</button>
       <div class="paywall-mesaj" id="lisansMesaj" style="text-align:center"></div>
       <button class="restore-link" id="restoreBtn" data-i18n="pw_restore">Satın almaları geri yükle</button>
+      <div class="paywall-lisans">
+        <span data-i18n="pw_lisans_soru">Lisans anahtarın var mı?</span>
+        <div class="paywall-lisans-giris">
+          <input class="metin" id="lisansInput" placeholder="MIHENK-…" autocapitalize="characters" spellcheck="false">
+          <button class="btn" id="lisansBtn" data-i18n="pw_etkinlestir" style="margin-top:0;width:auto;padding:11px 16px">Etkinleştir</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1101,6 +1108,24 @@ document.addEventListener('click', (e)=>{
   if(b) ayetiSuredeAc(b.dataset.sure, b.dataset.ayet);
 });
 
+// Lisans anahtarı (test/erken erişim): sınırsız kullanım açar
+async function lisansEtkinlestir(){
+  const inp=document.getElementById('lisansInput'), msj=document.getElementById('lisansMesaj');
+  const anahtar=(inp.value||'').trim(); if(!anahtar) return;
+  try{
+    const r=await fetch(API+'/api/lisans',{method:'POST',
+      headers:{'content-type':'application/json','x-app-key':APP_KEY},
+      body:JSON.stringify({anahtar,cihaz,yerli:YERLI})});
+    const j=await r.json();
+    if(j.premium){
+      lisans=anahtar; localStorage.setItem('lisans',anahtar);
+      premium=true; localStorage.setItem('premium','1'); hakGoster();
+      msj.textContent=T.pw_basarili; msj.style.color='var(--zumrut)';
+      setTimeout(()=>paywallGizle(),900);
+    } else { msj.textContent=T.pw_gecersiz; msj.style.color='#e0a35a'; }
+  }catch(e){ msj.textContent=T.err_body; }
+}
+
 async function okuModuAc(){
   const ok=await kuranVeriYukle();
   if(ok) sureListesiCiz(document.getElementById('sureAra').value);
@@ -1142,6 +1167,7 @@ document.getElementById('sureGeri').onclick=()=>{
   kaldigimYeriCiz();
 };
 document.getElementById('sureAra').oninput=e=>sureListesiCiz(e.target.value);
+document.getElementById('lisansBtn').onclick=lisansEtkinlestir;
 document.getElementById('ornekler').onclick=e=>{const t=(dil==='tr'?e.target.dataset.t:e.target.dataset.tEn)||e.target.dataset.t;if(t){document.getElementById('metin').value=t;}};
 document.getElementById('btnDogrula').onclick=calistirDogrula;
 document.getElementById('btnKonu').onclick=calistirKonu;
