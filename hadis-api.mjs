@@ -396,10 +396,11 @@ async function kuranKonu(sorgu, dil = 'tr') {
     // nadir/tuhaf ayetleri aşırı yükseltiyordu; çıkarma daha dengeli.)
     const sem = cos(vek, i * DIM, qv) - 0.45 * hubSkor[i];        // merkezîlik düzeltmeli semantik
     const lx = lexMax ? lexArr[i] / lexMax : 0;                      // 0..1 normalize lexical
-    // Ağırlık sorgunun türüne göre: tek terim ("adalet") lexical ister —
-    // kelimenin kendisi meâlde geçer. Cümle ("kalbin huzur bulması") anlam ister;
-    // orada lexical çokanlamlılığa takılıyor ("huzurumuza getirilecekler").
-    let s = wLex * lx + (1 - wLex) * Math.max(0, sem);
+    // ÇARPIM: ikisinin de yüksek olmasını ister. Toplamada tek başına güçlü
+    // lexical yetiyordu ve çokanlamlılık sızıyordu ("huzur bulmak" ↔ "huzurumuza
+    // getirilecekler"); anlam düşükse artık lexical tek başına yukarı taşımıyor.
+    // Taban (0.35) sayesinde kelimesi geçmeyen ama anlamca doğru ayet de kalabiliyor.
+    let s = (0.35 + 0.65 * lx) * Math.max(0, sem);
     if (qw.length) {                                        // lexical katkı
       const mn = trNorm(metin);
       let hit = 0; for (const w of qw) if (mn.includes(w)) hit++;
