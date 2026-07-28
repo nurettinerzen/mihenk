@@ -964,8 +964,16 @@ function ezanCiz(){
 }
 
 // --- Freemium / Mihenk Plus ---
+// Bu ekranda AI sorgusu harcanıyor mu? (namaz, günün ayeti ve okuma ücretsiz)
+function sorguluEkranMi(){
+  const bol = document.querySelector('.unav.aktif')?.dataset.bol;
+  if (bol === 'hadis') return true;
+  if (bol === 'kuran') return document.querySelector('.ksekme.aktif')?.dataset.kmod === 'ara';
+  return false;
+}
 function hakGoster(){
   const b=document.getElementById('plusBtn'); if(!b) return;
+  b.style.display = (premium || sorguluEkranMi()) ? '' : 'none';
   if(premium){ b.textContent='✦ '+T.pw_aktif; b.classList.add('premium'); }
   else if(kalan!==null && kalan>=0){ b.textContent='✦ '+T.pw_kalan(kalan); b.classList.remove('premium'); }
   else { b.textContent='✦ Plus'; b.classList.remove('premium'); }
@@ -1315,6 +1323,7 @@ document.querySelectorAll('.unav').forEach(b=>b.onclick=()=>{
   // Bölüm değişince tilavet DEVAM eder (arka plan sesi amaçlı); kontrol kilit
   // ekranından ve mini oynatıcıdan yapılabiliyor.
   if(b.dataset.bol==='bugun' && !gununVeri) gununYukle();
+  hakGoster();   // sayaç yalnız sorgu harcanan ekranlarda görünsün
 });
 // Ayarlar
 document.getElementById('ayarBtn').onclick=()=>document.getElementById('ayarlar').classList.add('acik');
@@ -1337,6 +1346,7 @@ document.querySelectorAll('.ksekme').forEach(b=>b.onclick=()=>{
   document.getElementById('kmod-ara').style.display=m==='ara'?'':'none';
   document.getElementById('kmod-oku').style.display=m==='oku'?'':'none';
   if(m==='oku') okuModuAc(); else sesDurdur();
+  hakGoster();   // Oku&Dinle'de sorgu harcanmıyor, sayaç görünmesin
 });
 function yuzenGeriGuncelle(){
   const b=document.getElementById('sureGeriYuzen'); if(!b) return;
