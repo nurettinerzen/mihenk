@@ -131,6 +131,7 @@
   .geri-yuzen{position:fixed;left:14px;bottom:22px;z-index:60;width:50px;height:50px;border-radius:50%;
     background:linear-gradient(180deg,#1b2c25,#12201b);border:1px solid var(--zumrut-koyu);color:var(--zumrut);
     font-size:27px;line-height:1;cursor:pointer;display:none;box-shadow:0 10px 26px rgba(0,0,0,.55)}
+  body.calar-acik .geri-yuzen{bottom:96px}   /* mini oynatıcı açıkken üstüne binmesin */
   html[dir="rtl"] .geri-yuzen{left:auto;right:14px;transform:scaleX(-1)}
   .geri-yuzen.gorunur{display:block}
   .oku-baslik{flex:1;min-width:0}
@@ -738,7 +739,10 @@ const RTL = (d)=> d==='ar'||d==='ur';
 function hadisKarti(h, tam){
   const alim = (h.alimler||[]).map(a=>`${esc(a.alim)}: ${esc(a.derece)}`).join(' · ');
   // Arapça arayüzde ana metin zaten Arapça → ayrıca .arapca bloğu gösterme (tekrar olur)
-  const arapca = tam && h.ar && dil!=='ar' ? `<div class="arapca">${esc(h.ar)}</div>` : '';
+  // Arapça metin de şerh/tahric bloğu içerebiliyor ("رواه إماما المحدثين…") ve
+  // kartı dolduruyordu; ilk tahric işaretinden sonrasını kes.
+  const arTemiz = (t) => { const m = String(t||'').match(/(رواه|أخرجه|متفق عليه|\[رقم)/); return (m && m.index > 60) ? t.slice(0, m.index).trim() : t; };
+  const arapca = tam && h.ar && dil!=='ar' ? `<div class="arapca">${esc(arTemiz(h.ar))}</div>` : '';
   const ref = h.mevzuat && h.referans ? `<div class="alimler"><b>${lbl('kaynak')}:</b> ${esc(h.referans)}</div>` : '';
   // Kaynak edisyonda o dilde metin yoksa hangi dile düşüldüğünü açıkça söyle
   const DIL_ADI = {tr:'Türkçe',en:'English',fr:'Français',id:'Indonesia',ar:'العربية',ur:'اردو'};
@@ -1231,10 +1235,10 @@ function miniCalarCiz(id){
   const su=SURELER&&SURELER.find(x=>x.no===a.sure);
   document.getElementById('miniAd').textContent=`${su?sureAdi(su):''} · ${a.ayet}`;
   document.getElementById('miniKari').textContent=kariAdi(KARILER.find(k=>k.id===kari)||KARILER[0]);
-  el.classList.add('acik');
+  el.classList.add('acik'); document.body.classList.add('calar-acik');
 }
 function sesDurdur(){
-  document.getElementById('miniCalar')?.classList.remove('acik');
+  document.getElementById('miniCalar')?.classList.remove('acik'); document.body.classList.remove('calar-acik');
   if(calanSes){ calanSes.pause(); calanSes=null; }
   if(calanId!=null){
     document.getElementById('ay-'+calanId)?.classList.remove('calan');
