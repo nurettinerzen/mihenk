@@ -32,8 +32,11 @@ async function rcPremiumMi(cihaz) {
       { headers: { Authorization: `Bearer ${RC_SECRET}` } });
     if (!r.ok) return false;
     const j = await r.json();
-    const ent = j?.subscriber?.entitlements || {};
-    return Object.values(ent).some(e => !e.expires_date || new Date(e.expires_date) > new Date());
+    const gecerli = (o) => Object.values(o || {}).some(x => !x.expires_date || new Date(x.expires_date) > new Date());
+    // ÖNCE entitlement (doğru yapılandırma). Ama RevenueCat'te ürün/entitlement
+    // tanımlı değilse burası BOŞ gelir ve gerçekten ödeyen kullanıcı premium alamaz
+    // — yani parayı alıp hizmeti vermemiş oluruz. Abonelik kaydına da bakarız.
+    return gecerli(j?.subscriber?.entitlements) || gecerli(j?.subscriber?.subscriptions);
   } catch { return false; }
 }
 console.log('Korpus yükleniyor...');
