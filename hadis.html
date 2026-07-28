@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Mihenk — Hadis Doğrulama</title>
 <link rel="stylesheet" href="fonts.css?v=3"><!-- yerel woff2 (offline, CDN yok); woff2 adları içerik-hash'li, v= eski cache'i kırar -->
+<script src="adhan.min.js"></script><!-- namaz vakti CİHAZDA hesaplanır: bildirimler uygulama kapalıyken planlanır, sunucuya sorulamaz -->
+<script src="tz.js"></script><!-- konumun saat dilimi (offline); cihazın dilimiyle karıştırma -->
 <style>
   :root{
     --bg:#0d1512; --bg2:#0a100e; --yuzey:#15201c; --yuzey2:#1b2823;
@@ -79,6 +81,12 @@
   .paywall-mesaj.ok{color:var(--zumrut)} .paywall-mesaj.hata{color:var(--kirmizi)}
 
   /* --- Dil seçici --- */
+  .anahtar{width:50px;height:30px;border-radius:15px;border:1px solid var(--cizgi);
+    background:var(--yuzey);position:relative;cursor:pointer;padding:0;transition:background .18s,border-color .18s}
+  .anahtar>span{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+    background:var(--daha-soluk);transition:transform .18s,background .18s}
+  .anahtar[aria-checked="true"]{background:var(--zumrut-koyu);border-color:var(--zumrut)}
+  .anahtar[aria-checked="true"]>span{transform:translateX(20px);background:var(--zumrut)}
   .dil-sec{max-width:none;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;margin:0;max-width:230px}
   .dil{padding:5px 12px;border:1px solid var(--cizgi);background:transparent;color:var(--daha-soluk);
     font-family:inherit;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;letter-spacing:.5px}
@@ -405,11 +413,14 @@
       <div class="planlar">
         <button class="plan-btn secili" id="planYillik" data-urun="mihenk_plus_yillik">
           <span class="plan-sol"><span class="plan-ad" data-i18n="pw_yillik">Yıllık</span><span class="plan-rozet" data-i18n="pw_avantaj">%58 avantajlı</span></span>
-          <span class="plan-fiyat" id="fiyatYillik">₺249,99</span>
+          <!-- Fiyat StoreKit'ten gelir (mağazaya göre para birimi değişir). Sabit ₺ değeri
+               yazılıydı: ürünler yüklenemezse ABD'li kullanıcıya Türk Lirası fiyat
+               gösteriliyordu = yanlış fiyat beyanı. Gelene kadar tire gösterilir. -->
+          <span class="plan-fiyat" id="fiyatYillik">—</span>
         </button>
         <button class="plan-btn" id="planAylik" data-urun="mihenk_plus_aylik">
           <span class="plan-sol"><span class="plan-ad" data-i18n="pw_aylik">Aylık</span></span>
-          <span class="plan-fiyat" id="fiyatAylik">₺49,99</span>
+          <span class="plan-fiyat" id="fiyatAylik">—</span>
         </button>
       </div>
       <button class="btn" id="paywallSatinAl" data-i18n="pw_devam" style="margin-top:14px">Devam et</button>
@@ -445,6 +456,13 @@
           <button class="dil" data-dil="ur">اردو</button>
         </div>
       </div>
+      <div class="ayar-satir" id="bildirimSatir">
+        <span class="sol">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="var(--zumrut)" stroke-width="1.7"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span data-i18n="ayar_bildirim">Ezan bildirimi</span>
+        </span>
+        <button class="anahtar" id="bildirimAnahtar" role="switch" aria-checked="false"><span></span></button>
+      </div>
       <a class="ayar-satir" href="https://mihenk-api.onrender.com/gizlilik" target="_blank" rel="noopener">
         <span class="sol" data-i18n="ayar_gizlilik">Gizlilik Politikası</span><span class="ok">›</span>
       </a>
@@ -452,7 +470,8 @@
         <span class="sol" data-i18n="ayar_kullanim">Kullanım Koşulları</span><span class="ok">›</span>
       </a>
       <div class="ayar-not" data-i18n="ayar_hakkinda">Mihenk; hadis metnini, âlim derecesini ve Kur'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.</div>
-      <div class="ayar-surum">Mihenk 1.1</div>
+      <div class="ayar-surum">Mihenk 1.2</div><!-- MARKETING_VERSION ile aynı olmalı -->
+
     </div>
   </div>
 
@@ -496,6 +515,7 @@ const KKONULAR = {
 };
 const L = {
   tr: {
+    ayar_bildirim:'Ezan bildirimi',bildirim_govde:'{v} vakti girdi.',bildirim_izin:'Bildirim izni verilmedi. iPhone Ayarlar > Mihenk > Bildirimler bölümünden açabilirsin.',
     ceviri_yok:'Bu rivayetin Türkçe çevirisi kaynakta yok; {dil} metni gösteriliyor.',
     yogun_baslik:'Şu an çok yoğunuz',
     ses_hata:'Tilavet indirilemedi. İnternet bağlantını kontrol et.',fark_title:'Metnin kaynaktakinden farklı',fark_body:'Aşağıdaki kayıt bu hadisin kaynaktaki hâlidir. Derecelendirme kaynak metne aittir, senin yazdığın metne değil.',pw_yenileme:'Abonelik, dönem bitiminden en az 24 saat önce iptal edilmedikçe kendini yeniler. Yönetim ve iptal App Store hesap ayarlarından yapılır.',
@@ -533,6 +553,7 @@ const L = {
     pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
   },
   en: {
+    ayar_bildirim:'Adhan notifications',bildirim_govde:'It is time for {v}.',bildirim_izin:'Notification permission was not granted. You can enable it in Settings > Mihenk > Notifications.',
     ceviri_yok:'This narration has no translation in the source; showing the {dil} text.',
     yogun_baslik:'We are busy right now',
     ses_hata:'Could not load the recitation. Check your connection.',fark_title:'Your text differs from the source',fark_body:'The record below is how this hadith appears in the source. The grading belongs to the source text, not to the text you entered.',pw_yenileme:'Subscription renews automatically unless cancelled at least 24 hours before the end of the period. Manage or cancel in your App Store account settings.',
@@ -570,6 +591,7 @@ const L = {
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
   },
   fr: {
+    ayar_bildirim:'Notifications d\'adhan',bildirim_govde:'C\'est l\'heure de {v}.',bildirim_izin:'Permission refusée. Active-la dans Réglages > Mihenk > Notifications.',
     ceviri_yok:'Cette narration n\'a pas de traduction dans la source ; texte en {dil} affiché.',
     yogun_baslik:'Service très sollicité',
     ses_hata:'Récitation indisponible. Vérifie ta connexion.',fark_title:'Ton texte diffère de la source',fark_body:'La fiche ci-dessous correspond au hadith tel qu\'il figure dans la source. Le degré d\'authenticité concerne le texte source, pas celui que tu as saisi.',pw_yenileme:'L\'abonnement se renouvelle automatiquement sauf résiliation au moins 24 heures avant la fin de la période. Gestion et résiliation dans les réglages de ton compte App Store.',
@@ -607,6 +629,7 @@ const L = {
     pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
   },
   id: {
+    ayar_bildirim:'Notifikasi azan',bildirim_govde:'Waktu {v} telah masuk.',bildirim_izin:'Izin notifikasi belum diberikan. Aktifkan di Pengaturan > Mihenk > Notifikasi.',
     ceviri_yok:'Riwayat ini tidak memiliki terjemahan di sumber; menampilkan teks {dil}.',
     yogun_baslik:'Sedang sibuk',
     ses_hata:'Rekaman tidak dapat dimuat. Periksa koneksi internetmu.',fark_title:'Teksmu berbeda dari sumber',fark_body:'Catatan di bawah adalah bunyi hadis ini dalam sumbernya. Derajat keabsahan berlaku untuk teks sumber, bukan teks yang kamu masukkan.',pw_yenileme:'Langganan diperpanjang otomatis kecuali dibatalkan minimal 24 jam sebelum periode berakhir. Kelola atau batalkan di pengaturan akun App Store.',
@@ -644,6 +667,7 @@ const L = {
     pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
   },
   ar: {
+    ayar_bildirim:'تنبيهات الأذان',bildirim_govde:'حان وقت {v}.',bildirim_izin:'لم يُمنح إذن الإشعارات. يمكنك تفعيله من الإعدادات > مِحَنك > الإشعارات.',
     ceviri_yok:'لا تتوفر ترجمة لهذه الرواية في المصدر؛ يُعرض النص بلغة {dil}.',
     yogun_baslik:'الخدمة مزدحمة الآن',
     ses_hata:'تعذّر تحميل التلاوة. تحقّق من اتصالك بالإنترنت.',fark_title:'نصّك يختلف عن المصدر',fark_body:'السجل أدناه هو نصّ الحديث كما ورد في المصدر. الحكم يخصّ نصّ المصدر لا النصّ الذي أدخلته.',pw_yenileme:'يتجدّد الاشتراك تلقائيًا ما لم يُلغَ قبل نهاية المدة بأربع وعشرين ساعة على الأقل. الإدارة والإلغاء من إعدادات حساب App Store.',
@@ -681,6 +705,7 @@ const L = {
     pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
   },
   ur: {
+    ayar_bildirim:'اذان کی اطلاعات',bildirim_govde:'{v} کا وقت ہو گیا۔',bildirim_izin:'اطلاعات کی اجازت نہیں ملی۔ سیٹنگز > مِحنک > اطلاعات سے فعال کریں۔',
     ceviri_yok:'اس روایت کا ترجمہ ماخذ میں موجود نہیں؛ {dil} متن دکھایا جا رہا ہے۔',
     yogun_baslik:'ابھی رش ہے',
     ses_hata:'تلاوت لوڈ نہیں ہو سکی۔ اپنا انٹرنیٹ کنکشن دیکھیں۔',fark_title:'آپ کا متن ماخذ سے مختلف ہے',fark_body:'نیچے دیا گیا اندراج اس حدیث کی ماخذ میں موجود صورت ہے۔ درجہ ماخذ کے متن کا ہے، آپ کے لکھے متن کا نہیں۔',pw_yenileme:'رکنیت خود بخود تجدید ہوتی ہے جب تک مدت ختم ہونے سے کم از کم 24 گھنٹے قبل منسوخ نہ کی جائے۔ انتظام اور منسوخی App Store اکاؤنٹ کی ترتیبات سے۔',
@@ -879,12 +904,84 @@ async function konumAl(){
     navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),rej,{timeout:12000});
   });
 }
+// Vakitleri CİHAZDA hesapla (adhan, Türkiye yöntemi). Sunucuyla aynı sonucu
+// verir ama internet gerektirmez ve bildirim planlaması için şarttır.
+function vakitleriHesapla(lat, lng, gun = new Date()){
+  if(!window.adhan) return null;
+  const c = new adhan.Coordinates(lat, lng);
+  const p = adhan.CalculationMethod.Turkey();
+  const t = new adhan.PrayerTimes(c, gun, p);
+  const ms = (d) => (d instanceof Date && !isNaN(d)) ? d.getTime() : null;
+  return {
+    vakitler: { imsak:ms(t.fajr), gunes:ms(t.sunrise), ogle:ms(t.dhuhr),
+                ikindi:ms(t.asr), aksam:ms(t.maghrib), yatsi:ms(t.isha) },
+    kible: Math.round(adhan.Qibla(c) * 10) / 10,
+    // Konumun saat dilimi — cihazınki DEĞİL. Seyahatteyken ikisi ayrışır ve
+    // vakitler saatlerce kayar (simülatör testinde 10 saat kayma görüldü).
+    tz: (window.tzlookup ? (()=>{ try{ return tzlookup(lat, lng); }catch(e){ return null; } })() : null)
+        || Intl.DateTimeFormat().resolvedOptions().timeZone,
+    yerel: true,
+  };
+}
+
+// --- Ezan bildirimleri (yerel; uygulama kapalıyken de çalışır) ---
+const BILDIRIM_VAKIT = ['imsak','ogle','ikindi','aksam','yatsi'];   // güneş vakit değil, bildirim yok
+let bildirimAcik = localStorage.getItem('bildirim') === '1';
+const LN = () => window.Capacitor?.Plugins?.LocalNotifications;
+
+async function bildirimleriPlanla(lat, lng){
+  const ln = LN(); if(!ln || !bildirimAcik) return 0;
+  try{
+    // Eski planı temizle (her açılışta yeniden kurulur; iOS'ta 64 bekleyen sınırı var)
+    const bekleyen = await ln.getPending();
+    if(bekleyen?.notifications?.length) await ln.cancel({ notifications: bekleyen.notifications });
+    const liste = [];
+    const simdi = Date.now();
+    for(let g = 0; g < 7 && liste.length < 60; g++){
+      const gun = new Date(); gun.setDate(gun.getDate() + g);
+      const h = vakitleriHesapla(lat, lng, gun); if(!h) break;
+      for(const k of BILDIRIM_VAKIT){
+        const ts = h.vakitler[k];
+        if(!ts || ts <= simdi + 60000) continue;
+        liste.push({
+          id: g * 10 + BILDIRIM_VAKIT.indexOf(k) + 1,
+          title: T.vakit[k],
+          body: (T.bildirim_govde || '{v} vakti girdi.').replace('{v}', T.vakit[k]),
+          schedule: { at: new Date(ts), allowWhileIdle: true },
+          sound: 'ezan.caf',            // 4 tekbir, 28 sn (iOS sınırı 30); kamu malı kayıt
+        });
+      }
+    }
+    if(liste.length) await ln.schedule({ notifications: liste });
+    return liste.length;
+  }catch(e){ console.error('bildirim planlanamadı', e); return 0; }
+}
+
+async function bildirimAcKapa(ac){
+  const ln = LN();
+  if(ac){
+    if(!ln) return false;                       // web'de bildirim yok
+    const izin = await ln.requestPermissions();
+    if(izin?.display !== 'granted') return false;
+  }
+  bildirimAcik = !!ac; localStorage.setItem('bildirim', ac ? '1' : '0');
+  if(!ac && ln){
+    const b = await ln.getPending();
+    if(b?.notifications?.length) await ln.cancel({ notifications: b.notifications });
+  }
+  return true;
+}
+
 async function ezanBaslat(){
   const btn=document.getElementById('btnEzan'), intro=document.querySelector('#ezanBaslangic .anlam');
   btn.disabled=true;
   try{
     let k; try{ k=await konumAl(); }catch(ke){ ke.konum=true; throw ke; }
-    ezanVeri=await istek('/api/namaz',k); ezanCiz(); pusulaBaslat();
+    // Önce cihazda hesapla (offline çalışsın); adhan yüklenemediyse sunucuya düş.
+    ezanVeri = vakitleriHesapla(k.lat, k.lng) || await istek('/api/namaz', k);
+    localStorage.setItem('konum', JSON.stringify({lat:k.lat, lng:k.lng}));
+    ezanCiz(); pusulaBaslat();
+    bildirimleriPlanla(k.lat, k.lng);
   }
   catch(e){
     if(e && e.paywall) { /* paywall kendi ekranını açar */ }
@@ -997,17 +1094,25 @@ async function iapBaslat(){
     await iapPremiumKontrol();
   }catch(e){ console.warn('IAP başlatılamadı', e); }
 }
-async function iapPremiumKontrol(){
-  try{
-    const { Purchases } = CapEklenti();
-    const { customerInfo } = await Purchases.getCustomerInfo();
-    const aktif = customerInfo && (Object.keys((customerInfo.entitlements&&customerInfo.entitlements.active)||{}).length>0 || (customerInfo.activeSubscriptions||[]).length>0);
-    if(aktif){ await premiumYap(); return true; }
-  }catch(e){}
+const iapAktifMi = (ci) => !!ci && (Object.keys((ci.entitlements&&ci.entitlements.active)||{}).length>0 || (ci.activeSubscriptions||[]).length>0);
+// customerInfo elde varsa (satın alma yanıtı) tekrar ağa çıkma.
+async function iapPremiumKontrol(hazirCi){
+  let ci = hazirCi;
+  if(!ci){
+    // DİKKAT: ağ/eklenti hatasını "abonelik yok" saymak, ödeyen kullanıcının
+    // premium'unu uçurur. Hata yolunda mevcut durumu OLDUĞU GİBİ bırakırız.
+    try{ ci = (await CapEklenti().Purchases.getCustomerInfo()).customerInfo; }
+    catch(e){ return false; }
+  }
+  if(iapAktifMi(ci)){ await premiumYap(); return true; }
+  // Sorgu BAŞARILI ve aktif abonelik YOK → iptal/süre dolumu/iade. Yerel premium
+  // bayrağı hiç temizlenmediği için eski abone "Plus aktif" görmeye devam ediyordu.
+  iapDogrulandi=false; premium=false; localStorage.removeItem('premium'); hakGoster();
   return false;
 }
+let iapDogrulandi=false;   // mağaza tarafında doğrulanmış abonelik var mı
 async function premiumYap(){
-  premium=true; localStorage.setItem('premium','1'); hakGoster();
+  iapDogrulandi=true; premium=true; localStorage.setItem('premium','1'); hakGoster();
   try{ await fetch(API+'/api/iap-onay',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz})}); }catch(e){}
 }
 function planSec(urun){
@@ -1020,8 +1125,13 @@ async function satinAl(){
   if(!YERLI || !rcUrunler || !rcUrunler[seciliUrun]){ m.textContent=T.pw_yakinda; m.className='paywall-mesaj'; return; }
   try{
     const { Purchases } = CapEklenti(); m.textContent='';
-    await Purchases.purchaseStoreProduct({ product: rcUrunler[seciliUrun] });
-    if(await iapPremiumKontrol()){ m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
+    // Satın alma yanıtı zaten customerInfo taşır; onu kullan. Ayrıca getCustomerInfo'ya
+    // gitmek yarış yaratıyordu: ödeme geçtiği hâlde kontrol henüz güncellenmemiş
+    // customerInfo görüp false dönüyor, aşağıdaki if sessizce atlanıyor ve kullanıcı
+    // parasını ödemiş olduğu hâlde EKRANDA HİÇBİR ŞEY GÖRMÜYORDU.
+    const { customerInfo } = await Purchases.purchaseStoreProduct({ product: rcUrunler[seciliUrun] });
+    if(await iapPremiumKontrol(customerInfo)){ m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
+    else { await premiumYap(); m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
   }catch(e){ if(!(e && (e.userCancelled || e.code==='1' || /cancel/i.test(e.message||'')))){ m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; } }
 }
 async function restore(){
@@ -1037,7 +1147,13 @@ async function restore(){
 async function durumYukle(){
   try{
     const r=await fetch(API+'/api/durum',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz})});
-    const j=await r.json(); premium=!!j.premium; kalan=j.premium?null:j.kalan; checkoutUrl=j.checkout||''; hakGoster();
+    const j=await r.json();
+    // Sunucunun premium kaydı BELLEKTE tutuluyor ve her redeploy'da sıfırlanıyor.
+    // durumYukle() ile iapBaslat() paralel koşuyor; sunucudan geç gelen "premium:false"
+    // yanıtı, mağaza tarafında doğrulanmış aboneyi ekranda ücretsiz kullanıcıya
+    // çeviriyordu. Mağaza doğrulaması varsa sunucunun hayır'ı onu geçersiz kılmaz.
+    premium = !!j.premium || iapDogrulandi;
+    kalan = premium ? null : j.kalan; checkoutUrl=j.checkout||''; hakGoster();
   }catch(e){}
 }
 
@@ -1329,6 +1445,23 @@ document.querySelectorAll('.unav').forEach(b=>b.onclick=()=>{
 document.getElementById('ayarBtn').onclick=()=>document.getElementById('ayarlar').classList.add('acik');
 document.getElementById('ayarKapat').onclick=()=>document.getElementById('ayarlar').classList.remove('acik');
 document.getElementById('ayarlar').onclick=e=>{ if(e.target.id==='ayarlar') e.currentTarget.classList.remove('acik'); };
+// Ezan bildirimi anahtarı
+const bildirimAnahtarCiz=()=>{
+  const b=document.getElementById('bildirimAnahtar'); if(!b) return;
+  b.setAttribute('aria-checked', bildirimAcik ? 'true' : 'false');
+  document.getElementById('bildirimSatir').style.display = LN() ? '' : 'none';  // web'de gizle
+};
+document.getElementById('bildirimAnahtar').onclick=async()=>{
+  const yeni=!bildirimAcik;
+  const oldu=await bildirimAcKapa(yeni);
+  bildirimAnahtarCiz();
+  if(yeni && !oldu){ alert(T.bildirim_izin||'Bildirim izni verilmedi. Ayarlar > Bildirimler bölümünden açabilirsin.'); return; }
+  if(yeni){
+    let k=null; try{ k=JSON.parse(localStorage.getItem('konum')||'null'); }catch(e){}
+    if(k) { const s=await bildirimleriPlanla(k.lat,k.lng); if(s) console.log('planlanan bildirim:',s); }
+  }
+};
+bildirimAnahtarCiz();
 document.getElementById('miniDurdur').onclick=sesDurdur;
 document.getElementById('btnEzan').onclick=ezanBaslat;
 document.querySelectorAll('.sekme').forEach(b=>b.onclick=()=>{

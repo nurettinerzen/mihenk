@@ -15,6 +15,13 @@ await copyFile(new URL('./fonts.css', kok), new URL('./fonts.css', www));
 for (const f of ['ayat.json', 'sure.json']) {
   await copyFile(new URL(`./${f}`, kok), new URL(`./${f}`, www));
 }
+// Namaz vakitleri CİHAZDA hesaplanır: bildirimler uygulama kapalıyken planlanacağı
+// için sunucuya sorulamaz. Yan fayda: vakitler internetsiz de çalışır.
+await copyFile(new URL('./node_modules/adhan/lib/bundles/adhan.umd.min.js', kok),
+               new URL('./adhan.min.js', www));
+// Konumun saat dilimi de cihazda bulunmalı: kullanıcı başka saat dilimindeyken
+// (seyahat) vakitler cihazın dilimiyle gösterilirse saatlerce kayıyor.
+await copyFile(new URL('./node_modules/tz-lookup/tz.js', kok), new URL('./tz.js', www));
 for (const f of await readdir(new URL('./fonts/', kok))) {
   await copyFile(new URL(`./fonts/${f}`, kok), new URL(`./fonts/${f}`, www));
 }

@@ -32,7 +32,13 @@ async function rcPremiumMi(cihaz) {
       { headers: { Authorization: `Bearer ${RC_SECRET}` } });
     if (!r.ok) return false;
     const j = await r.json();
-    const gecerli = (o) => Object.values(o || {}).some(x => !x.expires_date || new Date(x.expires_date) > new Date());
+    // refunded_at: Apple para iadesi verdiğinde RevenueCat bu alanı doldurur ama
+    // abonelik kaydındaki expires_date GELECEKTE kalabiliyor. Sadece expires_date'e
+    // bakmak, parası iade edilmiş kullanıcıya dönem sonuna kadar premium vermek demek.
+    // (unsubscribe_detected_at / billing_issues_detected_at premium'u KAPATMAZ:
+    //  iptal eden kullanıcı ödediği dönemin sonuna kadar hizmeti hak eder.)
+    const gecerli = (o) => Object.values(o || {}).some(x =>
+      !x.refunded_at && (!x.expires_date || new Date(x.expires_date) > new Date()));
     // ÖNCE entitlement (doğru yapılandırma). Ama RevenueCat'te ürün/entitlement
     // tanımlı değilse burası BOŞ gelir ve gerçekten ödeyen kullanıcı premium alamaz
     // — yani parayı alıp hizmeti vermemiş oluruz. Abonelik kaydına da bakarız.
@@ -475,7 +481,16 @@ async function konu(sorgu, dil = 'tr') {
 // "namaz" sorgusunda 1. çıkıyordu). Bunu iki şekilde kırıyoruz:
 //   1) her ayetin ortalama benzerliğini (hub skoru) çıkar  → merkezîlik cezası
 //   2) semantiği lexical eşleşmeyle harmanla (kelime geçiyorsa öne çıksın)
-let hubSkor = null;                       // dil → Float32Array(ayat)
+// Yorumu "dil → Float32Array" diyordu ama TEK bir dizi tutuluyordu: hangi dil
+// sunucu açıldıktan sonra ilk sorguyu yaparsa hub cezası O DİLİN vektöründen
+// hesaplanıp diğer dillerin skorlarından da çıkarılıyordu. TR ilk sorulursa
+// EN/AR sıralaması (ve tersi) yanlış cezayla bozuluyordu. Vektör başına önbellek.
+const hubOnbellek = new Map();            // vektör → Float32Array(ayat)
+const hubAl = (vek) => {
+  let h = hubOnbellek.get(vek);
+  if (!h) { h = hubHesapla(vek); hubOnbellek.set(vek, h); }
+  return h;
+};
 function hubHesapla(vek) {
   const n = ayat.length, h = new Float32Array(n);
   const ORNEK = 160, adim = Math.max(1, Math.floor(n / ORNEK));
@@ -503,9 +518,14 @@ const UNLU_DUSMESI = {
 const arKok = (w) => w.replace(/^(وال|فال|بال|كال|لل|ال)/, '');
 // Osmanî imlada uzun elif ya hiç yazılmaz ya vav ile yazılır
 // (وَٰلِدَيۡنِ = "ولدين", صَلَوٰة = "صلوه"); üç varyantı da ara.
+// TÜRETİLEN varyant en az 3 harf olmalı. Elif düşünce 2 harfe inen parça
+// on binlerce yerde geçip aramayı ele geçiriyordu: "الربا" → "رب" (= Rab)
+// 1062 ayet kelimesiyle eşleşiyor ve "الربا" sorgusu faiz yerine
+// "رَبُّ ٱلۡمَشۡرِقَيۡنِ" döndürüyordu (ölçüm: 1062 → 67). "المال" → "مل" 854 → 127.
+// KÖK kendisi kısa olsa da korunur, yoksa "الحج" → "حج" tamamen kaybolurdu.
 const arVaryant = (w) => {
   const k = arKok(w), v = [k];
-  if (k.includes('ا')) { v.push(k.replace(/ا/g, '')); v.push(k.replace(/ا/g, 'و')); }
+  if (k.includes('ا')) for (const t of [k.replace(/ا/g, ''), k.replace(/ا/g, 'و')]) if (t.length >= 3) v.push(t);
   return [...new Set(v)].filter(x => x.length >= 2);
 };
 const kokVaryant = (w, kati = false) => {
@@ -593,7 +613,7 @@ async function kuranKonu(sorgu, dil = 'tr') {
   // DESTEK: semantik — kelime geçmese de anlamca yakın ayetleri yakalar
   const qv = await embedOne(aramaMetni);
   const vek = vekAl(kuranVek, dil);
-  if (!hubSkor) hubSkor = hubHesapla(vek);
+  const hubSkor = hubAl(vek);
   // sorgu kelimeleri (lexical destek)
   const qw = [...new Set(trNorm(aramaMetni).split(' '))].filter(w => w.length > 2);
   const puan = new Array(ayat.length);
