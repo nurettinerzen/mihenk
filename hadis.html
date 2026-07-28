@@ -71,10 +71,6 @@
   .plan-fiyat{font-family:'Sora',sans-serif;font-weight:700;font-size:17px;color:var(--pirinc)}
   .restore-link{background:none;border:none;color:var(--daha-soluk);font-family:inherit;font-size:12.5px;
     cursor:pointer;display:block;margin:14px auto 0;text-decoration:underline}
-  .paywall-lisans{margin-top:16px;padding-top:16px;border-top:1px solid var(--cizgi);text-align:center}
-  .paywall-lisans>span{font-size:12.5px;color:var(--daha-soluk)}
-  .paywall-lisans-giris{display:flex;gap:8px;margin-top:9px}
-  .paywall-lisans-giris input{font-size:14px;padding:11px}
   .btn-ince{background:var(--yuzey2);border:1px solid var(--zumrut-koyu);color:var(--metin);font-family:inherit;
     font-size:13px;font-weight:600;padding:0 15px;border-radius:12px;cursor:pointer;white-space:nowrap}
   .paywall-mesaj{font-size:12.5px;margin-top:8px;min-height:16px}
@@ -237,6 +233,18 @@
   .dil-not{margin-top:7px;font-size:11.5px;color:var(--daha-soluk);font-style:italic}
   .uyari-kart{border-color:#4a3a1f;background:linear-gradient(180deg,#1f1a10,#161109)}
   .ayet.hedef{box-shadow:0 0 0 2px var(--zumrut-koyu) inset;transition:box-shadow .4s}
+  .indir-serit{display:none;align-items:center;gap:10px;margin:0 0 12px;padding:11px 14px;
+    border:1px solid var(--cizgi);border-radius:12px;background:var(--yuzey)}
+  .indir-serit.acik{display:flex}
+  .indir-serit>span{flex:1;min-width:0;font-size:12.5px;color:var(--soluk);line-height:1.4}
+  .indir-eylem{flex:none;padding:9px 14px;min-height:38px;border-radius:10px;cursor:pointer;
+    border:1px solid var(--zumrut-koyu);background:transparent;color:var(--zumrut);font-size:13px;font-weight:600}
+  .indir-eylem.tehlike{border-color:#4a3a1f;color:var(--turuncu)}
+  .indir-btn{min-width:38px;height:38px;border-radius:10px;border:1px solid var(--cizgi);
+    background:transparent;color:var(--soluk);font-size:15px;cursor:pointer;flex:none;
+    display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s}
+  .indir-btn.inik{color:var(--zumrut);border-color:var(--zumrut-koyu)}
+  .indir-btn.iniyor{font-size:11px;color:var(--pirinc);border-color:var(--pirinc)}
   .ses-uyari{position:fixed;left:50%;bottom:88px;transform:translate(-50%,14px);z-index:60;
     max-width:86vw;padding:11px 16px;border-radius:12px;border:1px solid #4a3a1f;
     background:#1f1a10;color:var(--turuncu);font-size:13.5px;text-align:center;
@@ -382,6 +390,10 @@
           <span class="kari-etk" data-i18n="kari">Kâri</span>
           <select id="kariSec"></select>
         </div>
+        <div class="indir-serit" id="indirSerit">
+          <span id="indirDurum"></span>
+          <button class="indir-eylem" id="indirEylem"></button>
+        </div>
         <div id="ayetler"></div>
       </div>
     </div>
@@ -408,11 +420,11 @@
       <ul class="paywall-liste">
         <li data-i18n="pw_m1">Sınırsız hadis doğrulama</li>
         <li data-i18n="pw_m2">Sınırsız Kur'an ve konu araması</li>
-        <li data-i18n="pw_m3">Reklamsız, öncelikli erişim</li>
+        <li data-i18n="pw_m3">Aynı Apple Kimliğindeki tüm cihazlarında geçerli</li>
       </ul>
       <div class="planlar">
         <button class="plan-btn secili" id="planYillik" data-urun="mihenk_plus_yillik">
-          <span class="plan-sol"><span class="plan-ad" data-i18n="pw_yillik">Yıllık</span><span class="plan-rozet" data-i18n="pw_avantaj">%58 avantajlı</span></span>
+          <span class="plan-sol"><span class="plan-ad" data-i18n="pw_yillik">Yıllık</span><span class="plan-rozet" id="planRozet" style="display:none"></span></span>
           <!-- Fiyat StoreKit'ten gelir (mağazaya göre para birimi değişir). Sabit ₺ değeri
                yazılıydı: ürünler yüklenemezse ABD'li kullanıcıya Türk Lirası fiyat
                gösteriliyordu = yanlış fiyat beyanı. Gelene kadar tire gösterilir. -->
@@ -489,11 +501,17 @@ const API = (location.hostname === 'localhost' && location.protocol.startsWith('
           : BACKEND;                                                  // iOS/Capacitor (capacitor:// / file:) → uzak backend
 const APP_KEY = "mihenk_dd4e1cc82891921d3fa559e8";
 let dil = localStorage.getItem('dil') || 'tr';
-// Freemium: cihaz kimliği + premium durumu
-let cihaz = localStorage.getItem('cihaz');
-if(!cihaz){ cihaz = (self.crypto&&crypto.randomUUID)?crypto.randomUUID():('c'+Date.now()+Math.random().toString(16).slice(2)); localStorage.setItem('cihaz',cihaz); }
-let lisans = localStorage.getItem('lisans') || '';
+// --- Cihaz kimliği ---
+// Kimlik SADECE localStorage'daki UUID'ydi. WKWebView, iOS depolama baskısında
+// (ya da "Website Data" temizliğinde) localStorage'ı silebiliyor; silinince ödeyen
+// kullanıcı yeni bir kimlikle sunucuya gidiyor ve sessizce ücretsize düşüyordu.
+// RevenueCat kendi kullanıcı kimliğini uygulama depolamasında (WebView dışında)
+// tutar ve bu silinmeye dayanıklıdır → asıl kimlik ondan gelir, localStorage
+// yalnızca hızlı yol / web yedeği olarak kalır. Çözüm tamamlanana kadar hiçbir
+// istek atılmaz (bkz. cihazAl).
+let cihaz = localStorage.getItem('cihaz') || '';
 let premium = false, kalan = null, checkoutUrl = '';
+const yeniUuid = () => (self.crypto && crypto.randomUUID) ? crypto.randomUUID() : ('c'+Date.now()+Math.random().toString(16).slice(2));
 // Native (iOS/Capacitor) mı? Limit sadece native'de uygulanır; web ücretsiz demo.
 const YERLI = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 
@@ -515,6 +533,8 @@ const KKONULAR = {
 };
 const L = {
   tr: {
+    indir_teklif:'Tilaveti internetsiz dinlemek için bu kâriyi indir (≈800 MB).',indir_et:'İndir',indir_iptal:'İptal',indir_kaldir:'Kaldır',indir_hazir:'{k} çevrimdışı dinlenebilir.',indir_basliyor:'Hazırlanıyor…',indir_bitti:'Tilavet indirildi. Artık internetsiz dinleyebilirsin.',indir_iptal_oldu:'İndirme durduruldu. Kaldığın yerden devam edebilirsin.',indir_kaldir_onay:'İndirilen tilavet cihazdan silinsin mi?',
+    indir_sil:'Bu sûrenin sesi cihazdan silinsin mi?',indir_hata:'Sûre indirilemedi. Bağlantını kontrol et.',
     ayar_bildirim:'Ezan bildirimi',bildirim_govde:'{v} vakti girdi.',bildirim_izin:'Bildirim izni verilmedi. iPhone Ayarlar > Mihenk > Bildirimler bölümünden açabilirsin.',
     ceviri_yok:'Bu rivayetin Türkçe çevirisi kaynakta yok; {dil} metni gösteriliyor.',
     yogun_baslik:'Şu an çok yoğunuz',
@@ -541,18 +561,21 @@ const L = {
     konu_bul:(n)=>`${n} sahih/hasen hadis`, kuran_bul:(n)=>`${n} ayet`,
     nav_ezan:'Ezan', ezan_intro:'Namaz vakitleri ve kıble için konumuna ihtiyacım var.', ezan_btn:'Konumumu kullan',
     ezan_sonraki:'Sonraki vakit', ezan_kaldi:'kaldı', ezan_konum_hata:'Konum alınamadı. Tarayıcı izni gerekli.',
+    ezan_kutup_baslik:'Bu konumda bazı vakitler oluşmuyor', ezan_kutup:'Bulunduğun enlemde güneş, imsak ve yatsı için gereken açıya bu mevsimde hiç inmiyor; bu yüzden o vakitler astronomik olarak oluşmuyor. Vakit uydurmuyoruz — hesaplanamayan vakitler “—” gösterilir. Bölgendeki uygulamayı yetkili bir müftülüğe/İslam merkezine danışman en doğrusu.',
     vakit:{imsak:'İmsak',gunes:'Güneş',ogle:'Öğle',ikindi:'İkindi',aksam:'Akşam',yatsi:'Yatsı'},
     kible_etk:'Kıble yönü', yon:['Kuzey','Kuzeydoğu','Doğu','Güneydoğu','Güney','Güneybatı','Batı','Kuzeybatı'],
-    pw_alt:'Sınırsız hadis doğrulama ve Kur\'an araması', pw_m1:'Sınırsız hadis doğrulama', pw_m2:'Sınırsız Kur\'an ve konu araması', pw_m3:'Reklamsız, öncelikli erişim',
-    pw_satinal:'Mihenk Plus\'a geç', pw_lisans_soru:'Lisans anahtarın var mı?', pw_etkinlestir:'Etkinleştir',
+    pw_alt:'Sınırsız hadis doğrulama ve Kur\'an araması', pw_m1:'Sınırsız hadis doğrulama', pw_m2:'Sınırsız Kur\'an ve konu araması', pw_m3:'Aynı Apple Kimliğindeki tüm cihazlarında geçerli',
+    pw_satinal:'Mihenk Plus\'a geç',
     pw_kalan:(n)=>`${n} ücretsiz sorgu kaldı`, pw_aktif:'Plus aktif', pw_basarili:'Etkinleştirildi! Sınırsız erişim açık.', pw_gecersiz:'Anahtar geçersiz.', pw_yakinda:'Satın alma yakında (App Store).',
     nav_bugun:'Bugün', ayar_baslik:'Ayarlar', ayar_dil:'Dil', ayar_gizlilik:'Gizlilik Politikası', ayar_kullanim:'Kullanım Koşulları',
     ayar_hakkinda:'Mihenk; hadis metnini, âlim derecesini ve Kur\'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.',
     selam:'Selâmün aleyküm', gun_ayet:'Günün Ayeti', gun_hadis:'Günün Hadisi',
-    pw_yillik:'Yıllık', pw_aylik:'Aylık', pw_avantaj:'%58 avantajlı', pw_devam:'Devam et', pw_restore:'Satın almaları geri yükle',
+    pw_yillik:'Yıllık', pw_aylik:'Aylık', pw_avantaj:(p)=>`%${p} avantajlı`, pw_devam:'Devam et', pw_restore:'Satın almaları geri yükle',
     pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
   },
   en: {
+    indir_teklif:'Download this reciter to listen offline (~800 MB).',indir_et:'Download',indir_iptal:'Cancel',indir_kaldir:'Remove',indir_hazir:'{k} is available offline.',indir_basliyor:'Preparing…',indir_bitti:'Recitation downloaded. You can now listen offline.',indir_iptal_oldu:'Download stopped. You can resume where you left off.',indir_kaldir_onay:'Delete the downloaded recitation from your device?',
+    indir_sil:'Delete this surah\'s audio from your device?',indir_hata:'Could not download the surah. Check your connection.',
     ayar_bildirim:'Adhan notifications',bildirim_govde:'It is time for {v}.',bildirim_izin:'Notification permission was not granted. You can enable it in Settings > Mihenk > Notifications.',
     ceviri_yok:'This narration has no translation in the source; showing the {dil} text.',
     yogun_baslik:'We are busy right now',
@@ -579,18 +602,21 @@ const L = {
     konu_bul:(n)=>`${n} authentic hadiths`, kuran_bul:(n)=>`${n} verses`,
     nav_ezan:'Prayer', ezan_intro:'I need your location for prayer times and qibla.', ezan_btn:'Use my location',
     ezan_sonraki:'Next prayer', ezan_kaldi:'left', ezan_konum_hata:'Could not get location. Browser permission needed.',
+    ezan_kutup_baslik:'Some prayer times do not occur here', ezan_kutup:'At your latitude the sun does not reach the angle required for Fajr and Isha in this season, so those times do not occur astronomically. We do not invent times — what cannot be calculated is shown as “—”. Please consult a local mosque or Islamic centre for the ruling that applies in your region.',
     vakit:{imsak:'Fajr',gunes:'Sunrise',ogle:'Dhuhr',ikindi:'Asr',aksam:'Maghrib',yatsi:'Isha'},
     kible_etk:'Qibla direction', yon:['North','Northeast','East','Southeast','South','Southwest','West','Northwest'],
-    pw_alt:'Unlimited hadith verification and Quran search', pw_m1:'Unlimited hadith verification', pw_m2:'Unlimited Quran & topic search', pw_m3:'Ad-free, priority access',
-    pw_satinal:'Get Mihenk Plus', pw_lisans_soru:'Have a license key?', pw_etkinlestir:'Activate',
+    pw_alt:'Unlimited hadith verification and Quran search', pw_m1:'Unlimited hadith verification', pw_m2:'Unlimited Quran & topic search', pw_m3:'Works on all your devices with the same Apple ID',
+    pw_satinal:'Get Mihenk Plus',
     pw_kalan:(n)=>`${n} free left`, pw_aktif:'Plus active', pw_basarili:'Activated! Unlimited access unlocked.', pw_gecersiz:'Invalid key.', pw_yakinda:'Purchase coming soon (App Store).',
     nav_bugun:'Today', ayar_baslik:'Settings', ayar_dil:'Language', ayar_gizlilik:'Privacy Policy', ayar_kullanim:'Terms of Use',
     ayar_hakkinda:'Mihenk brings the hadith text, scholars\' grading and Quran translation from verified sources — it does not generate them. Consult a scholar on disputed matters.',
     selam:'As-salamu alaykum', gun_ayet:'Verse of the Day', gun_hadis:'Hadith of the Day',
-    pw_yillik:'Yearly', pw_aylik:'Monthly', pw_avantaj:'Save 58%', pw_devam:'Continue', pw_restore:'Restore purchases',
+    pw_yillik:'Yearly', pw_aylik:'Monthly', pw_avantaj:(p)=>`Save ${p}%`, pw_devam:'Continue', pw_restore:'Restore purchases',
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
   },
   fr: {
+    indir_teklif:'Télécharge ce récitateur pour écouter hors ligne (~800 Mo).',indir_et:'Télécharger',indir_iptal:'Annuler',indir_kaldir:'Supprimer',indir_hazir:'{k} est disponible hors ligne.',indir_basliyor:'Préparation…',indir_bitti:'Récitation téléchargée. Tu peux écouter hors ligne.',indir_iptal_oldu:'Téléchargement arrêté. Tu peux reprendre plus tard.',indir_kaldir_onay:'Supprimer la récitation téléchargée de l\'appareil ?',
+    indir_sil:'Supprimer l\'audio de cette sourate de l\'appareil ?',indir_hata:'Téléchargement impossible. Vérifie ta connexion.',
     ayar_bildirim:'Notifications d\'adhan',bildirim_govde:'C\'est l\'heure de {v}.',bildirim_izin:'Permission refusée. Active-la dans Réglages > Mihenk > Notifications.',
     ceviri_yok:'Cette narration n\'a pas de traduction dans la source ; texte en {dil} affiché.',
     yogun_baslik:'Service très sollicité',
@@ -617,18 +643,21 @@ const L = {
     konu_bul:(n)=>`${n} hadiths authentiques`, kuran_bul:(n)=>`${n} versets`,
     nav_ezan:'Prière', ezan_intro:'J\'ai besoin de votre position pour les horaires de prière et la qibla.', ezan_btn:'Utiliser ma position',
     ezan_sonraki:'Prochaine prière', ezan_kaldi:'restant', ezan_konum_hata:'Position indisponible. Autorisation requise.',
+    ezan_kutup_baslik:'Certaines prières n\'ont pas lieu ici', ezan_kutup:'À votre latitude, le soleil n\'atteint pas l\'angle requis pour le Fajr et l\'Isha en cette saison ; ces horaires n\'existent donc pas astronomiquement. Nous n\'inventons pas d\'horaires — ce qui n\'est pas calculable est affiché « — ». Consultez une mosquée ou un centre islamique local pour la règle applicable.',
     vakit:{imsak:'Fajr',gunes:'Lever du soleil',ogle:'Dhuhr',ikindi:'Asr',aksam:'Maghrib',yatsi:'Isha'},
     kible_etk:'Direction de la qibla', yon:['Nord','Nord-est','Est','Sud-est','Sud','Sud-ouest','Ouest','Nord-ouest'],
-    pw_alt:'Vérification de hadiths et recherche coranique illimitées', pw_m1:'Vérification de hadiths illimitée', pw_m2:'Recherche coranique et thématique illimitée', pw_m3:'Sans publicité, accès prioritaire',
-    pw_satinal:'Passer à Mihenk Plus', pw_lisans_soru:'Vous avez une clé de licence ?', pw_etkinlestir:'Activer',
+    pw_alt:'Vérification de hadiths et recherche coranique illimitées', pw_m1:'Vérification de hadiths illimitée', pw_m2:'Recherche coranique et thématique illimitée', pw_m3:'Valable sur tous vos appareils avec le même identifiant Apple',
+    pw_satinal:'Passer à Mihenk Plus',
     pw_kalan:(n)=>`${n} requêtes gratuites restantes`, pw_aktif:'Plus actif', pw_basarili:'Activé ! Accès illimité débloqué.', pw_gecersiz:'Clé invalide.', pw_yakinda:'Achat bientôt disponible (App Store).',
     nav_bugun:'Aujourd\'hui', ayar_baslik:'Réglages', ayar_dil:'Langue', ayar_gizlilik:'Politique de confidentialité', ayar_kullanim:'Conditions d\'utilisation',
     ayar_hakkinda:'Mihenk rapporte le texte du hadith, le degré des savants et la traduction du Coran depuis des sources vérifiées — il ne les génère pas. Consultez un savant pour les questions litigieuses.',
     selam:'As-salâmu alaykum', gun_ayet:'Verset du jour', gun_hadis:'Hadith du jour',
-    pw_yillik:'Annuel', pw_aylik:'Mensuel', pw_avantaj:'-58 %', pw_devam:'Continuer', pw_restore:'Restaurer les achats',
+    pw_yillik:'Annuel', pw_aylik:'Mensuel', pw_avantaj:(p)=>`-${p} %`, pw_devam:'Continuer', pw_restore:'Restaurer les achats',
     pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
   },
   id: {
+    indir_teklif:'Unduh qari ini untuk mendengarkan tanpa internet (~800 MB).',indir_et:'Unduh',indir_iptal:'Batal',indir_kaldir:'Hapus',indir_hazir:'{k} tersedia offline.',indir_basliyor:'Menyiapkan…',indir_bitti:'Tilawah terunduh. Kini bisa didengarkan tanpa internet.',indir_iptal_oldu:'Unduhan dihentikan. Bisa dilanjutkan nanti.',indir_kaldir_onay:'Hapus tilawah yang diunduh dari perangkat?',
+    indir_sil:'Hapus audio surah ini dari perangkat?',indir_hata:'Surah tidak dapat diunduh. Periksa koneksimu.',
     ayar_bildirim:'Notifikasi azan',bildirim_govde:'Waktu {v} telah masuk.',bildirim_izin:'Izin notifikasi belum diberikan. Aktifkan di Pengaturan > Mihenk > Notifikasi.',
     ceviri_yok:'Riwayat ini tidak memiliki terjemahan di sumber; menampilkan teks {dil}.',
     yogun_baslik:'Sedang sibuk',
@@ -655,18 +684,21 @@ const L = {
     konu_bul:(n)=>`${n} hadis sahih/hasan`, kuran_bul:(n)=>`${n} ayat`,
     nav_ezan:'Salat', ezan_intro:'Saya butuh lokasi Anda untuk waktu salat dan kiblat.', ezan_btn:'Gunakan lokasi saya',
     ezan_sonraki:'Salat berikutnya', ezan_kaldi:'lagi', ezan_konum_hata:'Lokasi tidak tersedia. Izin diperlukan.',
+    ezan_kutup_baslik:'Sebagian waktu salat tidak terjadi di sini', ezan_kutup:'Pada lintang ini matahari tidak mencapai sudut yang diperlukan untuk Subuh dan Isya pada musim ini, sehingga waktu tersebut tidak terjadi secara astronomis. Kami tidak mengarang waktu — yang tidak dapat dihitung ditampilkan “—”. Silakan tanyakan kepada masjid atau lembaga Islam setempat.',
     vakit:{imsak:'Subuh',gunes:'Terbit',ogle:'Zuhur',ikindi:'Asar',aksam:'Magrib',yatsi:'Isya'},
     kible_etk:'Arah kiblat', yon:['Utara','Timur laut','Timur','Tenggara','Selatan','Barat daya','Barat','Barat laut'],
-    pw_alt:'Verifikasi hadis dan pencarian Al-Qur\'an tanpa batas', pw_m1:'Verifikasi hadis tanpa batas', pw_m2:'Pencarian Al-Qur\'an & topik tanpa batas', pw_m3:'Tanpa iklan, akses prioritas',
-    pw_satinal:'Dapatkan Mihenk Plus', pw_lisans_soru:'Punya kunci lisensi?', pw_etkinlestir:'Aktifkan',
+    pw_alt:'Verifikasi hadis dan pencarian Al-Qur\'an tanpa batas', pw_m1:'Verifikasi hadis tanpa batas', pw_m2:'Pencarian Al-Qur\'an & topik tanpa batas', pw_m3:'Berlaku di semua perangkat dengan Apple ID yang sama',
+    pw_satinal:'Dapatkan Mihenk Plus',
     pw_kalan:(n)=>`${n} kueri gratis tersisa`, pw_aktif:'Plus aktif', pw_basarili:'Aktif! Akses tanpa batas terbuka.', pw_gecersiz:'Kunci tidak valid.', pw_yakinda:'Pembelian segera hadir (App Store).',
     nav_bugun:'Hari Ini', ayar_baslik:'Pengaturan', ayar_dil:'Bahasa', ayar_gizlilik:'Kebijakan Privasi', ayar_kullanim:'Ketentuan Penggunaan',
     ayar_hakkinda:'Mihenk menyajikan teks hadis, penilaian ulama, dan terjemahan Al-Qur\'an dari sumber terverifikasi — bukan mengarangnya. Rujuklah kepada ulama untuk masalah yang diperselisihkan.',
     selam:'Assalamu\'alaikum', gun_ayet:'Ayat Hari Ini', gun_hadis:'Hadis Hari Ini',
-    pw_yillik:'Tahunan', pw_aylik:'Bulanan', pw_avantaj:'Hemat 58%', pw_devam:'Lanjutkan', pw_restore:'Pulihkan pembelian',
+    pw_yillik:'Tahunan', pw_aylik:'Bulanan', pw_avantaj:(p)=>`Hemat ${p}%`, pw_devam:'Lanjutkan', pw_restore:'Pulihkan pembelian',
     pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
   },
   ar: {
+    indir_teklif:'نزّل هذا القارئ للاستماع دون إنترنت (≈800 ميغابايت).',indir_et:'تنزيل',indir_iptal:'إلغاء',indir_kaldir:'إزالة',indir_hazir:'{k} متاح دون إنترنت.',indir_basliyor:'جارٍ التحضير…',indir_bitti:'تم تنزيل التلاوة. يمكنك الاستماع دون إنترنت.',indir_iptal_oldu:'تم إيقاف التنزيل. يمكنك المتابعة لاحقًا.',indir_kaldir_onay:'هل تريد حذف التلاوة المنزَّلة من جهازك؟',
+    indir_sil:'هل تريد حذف تلاوة هذه السورة من جهازك؟',indir_hata:'تعذّر تنزيل السورة. تحقّق من اتصالك.',
     ayar_bildirim:'تنبيهات الأذان',bildirim_govde:'حان وقت {v}.',bildirim_izin:'لم يُمنح إذن الإشعارات. يمكنك تفعيله من الإعدادات > مِحَنك > الإشعارات.',
     ceviri_yok:'لا تتوفر ترجمة لهذه الرواية في المصدر؛ يُعرض النص بلغة {dil}.',
     yogun_baslik:'الخدمة مزدحمة الآن',
@@ -693,18 +725,21 @@ const L = {
     konu_bul:(n)=>`${n} حديثًا صحيحًا/حسنًا`, kuran_bul:(n)=>`${n} آية`,
     nav_ezan:'الصلاة', ezan_intro:'أحتاج موقعك لأوقات الصلاة والقبلة.', ezan_btn:'استخدم موقعي',
     ezan_sonraki:'الصلاة التالية', ezan_kaldi:'متبقٍّ', ezan_konum_hata:'تعذّر تحديد الموقع. يلزم الإذن.',
+    ezan_kutup_baslik:'بعض الأوقات لا تتحقّق في هذا الموقع', ezan_kutup:'في خط العرض الذي أنت فيه لا تبلغ الشمس الزاوية اللازمة للفجر والعشاء في هذا الفصل، فلا تتحقّق هذه الأوقات فلكيًّا. نحن لا نختلق الأوقات — وما يتعذّر حسابه يُعرض بعلامة «—». يُستحسن سؤال مسجد أو مركز إسلامي في منطقتك عن الحكم المعمول به.',
     vakit:{imsak:'الفجر',gunes:'الشروق',ogle:'الظهر',ikindi:'العصر',aksam:'المغرب',yatsi:'العشاء'},
     kible_etk:'اتجاه القبلة', yon:['شمال','شمال شرقي','شرق','جنوب شرقي','جنوب','جنوب غربي','غرب','شمال غربي'],
-    pw_alt:'تحقّق غير محدود من الأحاديث وبحث في القرآن', pw_m1:'تحقّق غير محدود من الأحاديث', pw_m2:'بحث غير محدود في القرآن والمواضيع', pw_m3:'بلا إعلانات، ووصول ذو أولوية',
-    pw_satinal:'اشترك في مِحَنك بلس', pw_lisans_soru:'لديك مفتاح ترخيص؟', pw_etkinlestir:'تفعيل',
+    pw_alt:'تحقّق غير محدود من الأحاديث وبحث في القرآن', pw_m1:'تحقّق غير محدود من الأحاديث', pw_m2:'بحث غير محدود في القرآن والمواضيع', pw_m3:'يعمل على جميع أجهزتك بمعرّف Apple نفسه',
+    pw_satinal:'اشترك في مِحَنك بلس',
     pw_kalan:(n)=>`بقي ${n} استعلامات مجانية`, pw_aktif:'بلس مُفعّل', pw_basarili:'تم التفعيل! وصول غير محدود.', pw_gecersiz:'مفتاح غير صالح.', pw_yakinda:'الشراء قريبًا (App Store).',
     nav_bugun:'اليوم', ayar_baslik:'الإعدادات', ayar_dil:'اللغة', ayar_gizlilik:'سياسة الخصوصية', ayar_kullanim:'شروط الاستخدام',
     ayar_hakkinda:'يُحضِر مِحَنك نصّ الحديث وحُكم العلماء وترجمة القرآن من مصادر موثّقة — لا يُنشئها. اسأل عالمًا في المسائل الخلافية.',
     selam:'السلام عليكم', gun_ayet:'آية اليوم', gun_hadis:'حديث اليوم',
-    pw_yillik:'سنوي', pw_aylik:'شهري', pw_avantaj:'توفير 58%', pw_devam:'متابعة', pw_restore:'استعادة المشتريات',
+    pw_yillik:'سنوي', pw_aylik:'شهري', pw_avantaj:(p)=>`توفير ${p}%`, pw_devam:'متابعة', pw_restore:'استعادة المشتريات',
     pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
   },
   ur: {
+    indir_teklif:'انٹرنیٹ کے بغیر سننے کے لیے یہ قاری ڈاؤن لوڈ کریں (≈800 MB)۔',indir_et:'ڈاؤن لوڈ',indir_iptal:'منسوخ',indir_kaldir:'ہٹائیں',indir_hazir:'{k} آف لائن دستیاب ہے۔',indir_basliyor:'تیاری جاری…',indir_bitti:'تلاوت ڈاؤن لوڈ ہو گئی۔ اب آف لائن سن سکتے ہیں۔',indir_iptal_oldu:'ڈاؤن لوڈ رک گیا۔ بعد میں جاری رکھ سکتے ہیں۔',indir_kaldir_onay:'کیا ڈاؤن لوڈ شدہ تلاوت آلے سے حذف کریں؟',
+    indir_sil:'کیا اس سورت کی تلاوت آلے سے حذف کر دیں؟',indir_hata:'سورت ڈاؤن لوڈ نہیں ہو سکی۔ کنکشن دیکھیں۔',
     ayar_bildirim:'اذان کی اطلاعات',bildirim_govde:'{v} کا وقت ہو گیا۔',bildirim_izin:'اطلاعات کی اجازت نہیں ملی۔ سیٹنگز > مِحنک > اطلاعات سے فعال کریں۔',
     ceviri_yok:'اس روایت کا ترجمہ ماخذ میں موجود نہیں؛ {dil} متن دکھایا جا رہا ہے۔',
     yogun_baslik:'ابھی رش ہے',
@@ -731,15 +766,16 @@ const L = {
     konu_bul:(n)=>`${n} صحیح/حسن احادیث`, kuran_bul:(n)=>`${n} آیات`,
     nav_ezan:'نماز', ezan_intro:'نماز کے اوقات اور قبلہ کے لیے مجھے آپ کا محلِ وقوع درکار ہے۔', ezan_btn:'میرا محلِ وقوع استعمال کریں',
     ezan_sonraki:'اگلی نماز', ezan_kaldi:'باقی', ezan_konum_hata:'محلِ وقوع دستیاب نہیں۔ اجازت درکار ہے۔',
+    ezan_kutup_baslik:'یہاں بعض اوقات پیدا نہیں ہوتے', ezan_kutup:'آپ کے عرضِ بلد پر اس موسم میں سورج فجر اور عشاء کے لیے مطلوبہ زاویے تک نہیں پہنچتا، اس لیے یہ اوقات فلکی طور پر وجود میں نہیں آتے۔ ہم اوقات گھڑتے نہیں — جو شمار نہیں ہو سکتا وہ «—» دکھایا جاتا ہے۔ اپنے علاقے کی مسجد یا اسلامی مرکز سے رہنمائی لیں۔',
     vakit:{imsak:'فجر',gunes:'طلوعِ آفتاب',ogle:'ظہر',ikindi:'عصر',aksam:'مغرب',yatsi:'عشاء'},
     kible_etk:'قبلہ کی سمت', yon:['شمال','شمال مشرق','مشرق','جنوب مشرق','جنوب','جنوب مغرب','مغرب','شمال مغرب'],
-    pw_alt:'لامحدود حدیث تصدیق اور قرآن تلاش', pw_m1:'لامحدود حدیث تصدیق', pw_m2:'لامحدود قرآن و موضوع تلاش', pw_m3:'بغیر اشتہار، ترجیحی رسائی',
-    pw_satinal:'مِحنک پلس حاصل کریں', pw_lisans_soru:'لائسنس کلید ہے؟', pw_etkinlestir:'فعال کریں',
+    pw_alt:'لامحدود حدیث تصدیق اور قرآن تلاش', pw_m1:'لامحدود حدیث تصدیق', pw_m2:'لامحدود قرآن و موضوع تلاش', pw_m3:'ایک ہی Apple ID والے تمام آلات پر کارآمد',
+    pw_satinal:'مِحنک پلس حاصل کریں',
     pw_kalan:(n)=>`${n} مفت سوالات باقی`, pw_aktif:'پلس فعال', pw_basarili:'فعال! لامحدود رسائی کھل گئی۔', pw_gecersiz:'کلید غلط ہے۔', pw_yakinda:'خریداری جلد (App Store)۔',
     nav_bugun:'آج', ayar_baslik:'ترتیبات', ayar_dil:'زبان', ayar_gizlilik:'رازداری پالیسی', ayar_kullanim:'شرائطِ استعمال',
     ayar_hakkinda:'مِحنک حدیث کا متن، علما کا درجہ اور قرآن کا ترجمہ مستند مآخذ سے پیش کرتا ہے — خود نہیں گھڑتا۔ اختلافی مسائل میں عالم سے رجوع کریں۔',
     selam:'السلام علیکم', gun_ayet:'آج کی آیت', gun_hadis:'آج کی حدیث',
-    pw_yillik:'سالانہ', pw_aylik:'ماہانہ', pw_avantaj:'58% بچت', pw_devam:'جاری رکھیں', pw_restore:'خریداری بحال کریں',
+    pw_yillik:'سالانہ', pw_aylik:'ماہانہ', pw_avantaj:(p)=>`${p}% بچت`, pw_devam:'جاری رکھیں', pw_restore:'خریداری بحال کریں',
     pw_hata:'مکمل نہ ہوسکا۔ دوبارہ کوشش کریں۔', pw_restore_yok:'بحال کرنے کو کوئی سبسکرپشن نہیں۔',
   },
 };
@@ -803,16 +839,25 @@ function ayetKarti(a){
 // harcıyor ve sunucuya iki kat yük bindiriyordu. Aynı sorgu 6 sn içinde
 // tekrarlanırsa önceki yanıtı kullan.
 const _sonIstek = new Map();
+// Önbellek hiç budanmıyordu: her farklı sorgu (metin gövdesiyle birlikte) kalıcı
+// bir kayıt bırakıyor, uzun oturumda tüm yanıtlar bellekte birikiyordu. 6 sn'lik
+// pencere dışındaki kayıtların hiçbir işlevi yok — ekleme sırasında temizle.
+const _sonIstekBuda = () => {
+  const now = Date.now();
+  for (const [k, v] of _sonIstek) if (now - v.t >= 6000) _sonIstek.delete(k);
+};
 async function istek(yol, govde){
   const imza = yol + '|' + dil + '|' + JSON.stringify(govde);
   const onceki = _sonIstek.get(imza);
   if (onceki && Date.now() - onceki.t < 6000) return onceki.veri;
+  const cihaz = await cihazAl();   // kalıcı kimlik hazır olmadan istek atma
   const r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil, cihaz})});
   if(r.status===429){ const e=new Error('limit'); e.yogun=true; throw e; }   // 'bağlanamadım' demek yanıltıcıydı
   if(r.status===402){ const j=await r.json(); if(j.checkout) checkoutUrl=j.checkout; paywallGoster(); throw {paywall:true}; }
   if(!r.ok) throw new Error('sunucu '+r.status);
   const j = await r.json();
   if(j.kalan!==undefined){ kalan=j.kalan; premium=!!j.premium; if(j.checkout) checkoutUrl=j.checkout; hakGoster(); }
+  _sonIstekBuda();
   _sonIstek.set(imza, { t: Date.now(), veri: j });
   return j;
 }
@@ -1027,12 +1072,27 @@ function ezanCiz(){
     while(nextTs <= now) nextTs += 864e5;
   }
   const deg=ezanVeri.kible, yon=T.yon[Math.round(deg/45)%8];
-  document.getElementById('ezanIcerik').innerHTML=`
-    <div class="ezan-sonraki">
+  // Yüksek enlemlerde (yaz ortası Longyearbyen gibi) güneş ufkun altına imsak/yatsı
+  // açısı kadar hiç inmiyor → adhan bu vakitleri hesaplayamıyor ve null dönüyor.
+  // Eskiden ekran "Sonraki vakit: İmsak" yazıp geri sayımı BOŞ bırakıyor, dört
+  // vakit "—" görünüyordu; kullanıcı bunu uygulamanın bozukluğu sanıyordu. Artık
+  // sebebini dürüstçe söyleriz — vakti uydurmayız.
+  const eksikVar = sira.some(([,ts])=>ts==null || !isFinite(ts));
+  // nextTs yoksa (hiç vakit hesaplanamadı ya da bugünkü vakitlerin hepsi geçti ve
+  // yarının imsakı elimizde değil) "Sonraki vakit: İmsak" yazıp geri sayımı BOŞ
+  // bırakmak bilmediğimiz bir şeyi biliyormuş gibi göstermekti. Bilmiyorsak "—".
+  const ustBlok = nextTs
+    ? `<div class="ezan-sonraki">
       <div class="etk">${T.ezan_sonraki}</div>
-      <div class="ad">${T.vakit[nextKey||'imsak']}</div>
+      <div class="ad">${T.vakit[nextKey]}</div>
       <div class="geri" id="ezanGeri"></div>
-    </div>
+    </div>`
+    : `<div class="ezan-sonraki"><div class="etk">${T.ezan_sonraki}</div><div class="ad">—</div></div>`;
+  const enlemUyari = eksikVar
+    ? `<div class="kart uyari-kart" style="margin:0 0 12px"><div class="uyari-baslik">${T.ezan_kutup_baslik}</div><div class="anlam">${T.ezan_kutup}</div></div>`
+    : '';
+  document.getElementById('ezanIcerik').innerHTML=`
+    ${enlemUyari}${ustBlok}
     ${sira.map(([k,ts])=>`<div class="vakit ${k===nextKey?'simdi':''}"><span class="isim">${T.vakit[k]}</span><span class="saat">${fmtSaat(ts)}</span></div>`).join('')}
     <div class="kible">
       <svg class="pusula" viewBox="0 0 100 100">
@@ -1082,17 +1142,66 @@ const RC_KEY = 'appl_VJAIwVAqpNCfirEgFSXFZSAIvKt'; // RevenueCat > Mihenk > publ
 const URUNLER = { yillik:'mihenk_plus_yillik', aylik:'mihenk_plus_aylik' };
 let seciliUrun = URUNLER.yillik, rcUrunler = null;
 const CapEklenti = () => (window.Capacitor && window.Capacitor.Plugins) || {};
+
+// --- Kalıcı cihaz kimliği (RevenueCat kaynaklı) ---
+// Sıra ÖNEMLİ: Purchases.configure() appUserID VERİLMEDEN çağrılır; RevenueCat
+// o zaman kendi sakladığı kimliği (daha önce kurulmuş özel kimlik ya da anonim
+// kimlik) geri verir. Bu kimlik WebView localStorage'ında DEĞİL, uygulamanın
+// kendi depolamasında durur → localStorage silinse de ödeyen kullanıcı aynı
+// kimlikle döner ve premium'u kaybetmez.
+// GEÇİŞ: elinde eski localStorage UUID'si olan mevcut kullanıcının satın alması
+// o UUID'ye bağlı. RC farklı bir kimlik döndürürse logIn ile eskisine bağlarız
+// (alias) — böylece hem eski hem yeni kimlik aynı aboneyi gösterir ve sunucunun
+// RevenueCat sorgusu iki kimlikle de doğru yanıt verir.
+let rcKuruldu = false;
+let _cihazSoz = null;
+const cihazAl = () => _cihazSoz || (_cihazSoz = cihazCoz());
+async function cihazCoz(){
+  if(YERLI && RC_KEY){
+    try{
+      const { Purchases } = CapEklenti();
+      await Purchases.configure({ apiKey: RC_KEY });
+      rcKuruldu = true;
+      let rcId = (await Purchases.getAppUserID() || {}).appUserID || '';
+      if(cihaz && rcId && rcId !== cihaz){
+        try{ await Purchases.logIn({ appUserID: cihaz }); rcId = cihaz; }
+        catch(e){ console.warn('eski kimlik bağlanamadı', e); }
+      }
+      if(rcId) cihaz = rcId;
+    }catch(e){ console.warn('RC kimliği alınamadı', e); }
+  }
+  if(!cihaz) cihaz = yeniUuid();
+  try{ localStorage.setItem('cihaz', cihaz); }catch(e){}   // hızlı yol yedeği
+  return cihaz;
+}
+
 async function iapBaslat(){
   if(!YERLI || !RC_KEY) return;
   try{
     const { Purchases } = CapEklenti();
-    await Purchases.configure({ apiKey: RC_KEY, appUserID: cihaz });
+    await cihazAl();                    // configure + kalıcı kimlik burada yapılır
+    if(!rcKuruldu) return;
     const { products } = await Purchases.getProducts({ productIdentifiers: Object.values(URUNLER) });
     rcUrunler = {}; (products||[]).forEach(p=>{ rcUrunler[p.identifier]=p; });
     if(rcUrunler[URUNLER.yillik]) document.getElementById('fiyatYillik').textContent = rcUrunler[URUNLER.yillik].priceString;
     if(rcUrunler[URUNLER.aylik]) document.getElementById('fiyatAylik').textContent = rcUrunler[URUNLER.aylik].priceString;
+    avantajCiz();
     await iapPremiumKontrol();
   }catch(e){ console.warn('IAP başlatılamadı', e); }
+}
+// Yıllık plandaki tasarruf rozeti. "%58" KODA GÖMÜLÜYDÜ: fiyatlar mağazadan gelir
+// (ülke, para birimi, fiyat güncellemesi) ve sabit yüzde ilk değişiklikte yalan
+// olur — üstelik ürünler hiç yüklenemediğinde de ekranda kalıyordu.
+// Artık gerçek StoreKit fiyatlarından hesaplanır; hesaplanamıyorsa rozet GİZLENİR.
+function avantajCiz(){
+  const el=document.getElementById('planRozet'); if(!el) return;
+  const y=rcUrunler&&rcUrunler[URUNLER.yillik], a=rcUrunler&&rcUrunler[URUNLER.aylik];
+  const yf=y?Number(y.price):NaN, af=a?Number(a.price):NaN;
+  if(!isFinite(yf)||!isFinite(af)||yf<=0||af<=0){ el.style.display='none'; return; }
+  const yuzde=Math.round((1-yf/(af*12))*100);
+  if(yuzde<5){ el.style.display='none'; return; }   // anlamsız/negatif tasarruf → hiç gösterme
+  el.textContent=(typeof T.pw_avantaj==='function')?T.pw_avantaj(yuzde):('%'+yuzde);
+  el.style.display='';
 }
 const iapAktifMi = (ci) => !!ci && (Object.keys((ci.entitlements&&ci.entitlements.active)||{}).length>0 || (ci.activeSubscriptions||[]).length>0);
 // customerInfo elde varsa (satın alma yanıtı) tekrar ağa çıkma.
@@ -1113,7 +1222,10 @@ async function iapPremiumKontrol(hazirCi){
 let iapDogrulandi=false;   // mağaza tarafında doğrulanmış abonelik var mı
 async function premiumYap(){
   iapDogrulandi=true; premium=true; localStorage.setItem('premium','1'); hakGoster();
-  try{ await fetch(API+'/api/iap-onay',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz})}); }catch(e){}
+  try{
+    const c = await cihazAl();
+    await fetch(API+'/api/iap-onay',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz:c})});
+  }catch(e){}
 }
 function planSec(urun){
   seciliUrun=urun;
@@ -1139,6 +1251,9 @@ async function restore(){
   if(!YERLI){ m.textContent=T.pw_yakinda; m.className='paywall-mesaj'; return; }
   try{
     const { Purchases } = CapEklenti();
+    // configure() artık cihazAl() içinde yapılıyor; kullanıcı iapBaslat bitmeden
+    // paywall'ı açıp "geri yükle"ye basarsa RC henüz kurulmamış olabilirdi.
+    await cihazAl();
     await Purchases.restorePurchases();
     if(await iapPremiumKontrol()){ m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
     else { m.textContent=T.pw_restore_yok; m.className='paywall-mesaj'; }
@@ -1146,12 +1261,13 @@ async function restore(){
 }
 async function durumYukle(){
   try{
-    const r=await fetch(API+'/api/durum',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz})});
+    const c = await cihazAl();
+    const r=await fetch(API+'/api/durum',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz:c})});
     const j=await r.json();
-    // Sunucunun premium kaydı BELLEKTE tutuluyor ve her redeploy'da sıfırlanıyor.
-    // durumYukle() ile iapBaslat() paralel koşuyor; sunucudan geç gelen "premium:false"
-    // yanıtı, mağaza tarafında doğrulanmış aboneyi ekranda ücretsiz kullanıcıya
-    // çeviriyordu. Mağaza doğrulaması varsa sunucunun hayır'ı onu geçersiz kılmaz.
+    // Sunucu premium'u artık RevenueCat'ten doğruluyor (restart'ta kaybolmuyor),
+    // ama durumYukle() ile iapBaslat() hâlâ paralel koşabiliyor ve RC'nin sunucuya
+    // yansıması birkaç saniye gecikebiliyor. Mağaza tarafında doğrulanmış abonelik
+    // varsa sunucunun geç gelen "premium:false" yanıtı onu geçersiz kılmaz.
     premium = !!j.premium || iapDogrulandi;
     kalan = premium ? null : j.kalan; checkoutUrl=j.checkout||''; hakGoster();
   }catch(e){}
@@ -1206,6 +1322,105 @@ const KARILER=[
 let kari=localStorage.getItem('kari')||'ar.alafasy';
 if(!KARILER.some(k=>k.id===kari)) kari='ar.alafasy';
 const sesUrl=(id)=>`https://cdn.islamic.network/quran/audio/64/${kari}/${id}.mp3`;
+
+// --- Sûre indirme: tilavet çevrimdışı dinlenebilsin ---
+// Sesi pakete gömmek mümkün değil (tek kâri ≈ 0,8 GB, App Store hücresel sınırı
+// 200 MB); kullanıcı istediği sûreyi indirir, sonra uçak modunda da çalar.
+const FS = () => window.Capacitor?.Plugins?.Filesystem;
+const yerelYol = (k, id) => `kuran/${k}/${id}.mp3`;
+let inikSureler = {};
+try{ inikSureler = JSON.parse(localStorage.getItem('inikSureler')||'{}'); }catch(e){}
+const inikMi = (no) => !!inikSureler[`${kari}|${no}`];
+const yerelSes = new Map();
+
+async function sesKaynagi(id){
+  const fs = FS(); if(!fs) return sesUrl(id);
+  const anahtar = `${kari}|${id}`;
+  if(yerelSes.has(anahtar)) return yerelSes.get(anahtar);
+  try{
+    await fs.stat({ directory:'DATA', path: yerelYol(kari, id) });
+    const r = await fs.getUri({ directory:'DATA', path: yerelYol(kari, id) });
+    const u = window.Capacitor.convertFileSrc(r.uri);
+    yerelSes.set(anahtar, u); return u;
+  }catch(e){ return sesUrl(id); }
+}
+
+async function sureIndir(no, ilerle){
+  const fs = FS(); if(!fs) return false;
+  const ayetler = (KURAN||[]).filter(a => a.sure === no);
+  let i = 0;
+  for(const a of ayetler){
+    try{
+      const yol = yerelYol(kari, a.id);
+      let varMi = false;
+      try{ await fs.stat({ directory:'DATA', path: yol }); varMi = true; }catch(e){}
+      if(!varMi){
+        const yanit = await fetch(sesUrl(a.id));
+        if(!yanit.ok) throw new Error('indirilemedi ' + a.id);
+        const bayt = new Uint8Array(await yanit.arrayBuffer());
+        let ikili = '';
+        for(let k=0;k<bayt.length;k+=8192) ikili += String.fromCharCode.apply(null, bayt.subarray(k,k+8192));
+        await fs.writeFile({ directory:'DATA', path: yol, data: btoa(ikili), recursive: true });
+      }
+    }catch(e){ console.error('ayet indirilemedi', a.id, e); return false; }
+    ilerle && ilerle(++i, ayetler.length);
+  }
+  inikSureler[`${kari}|${no}`] = true;
+  localStorage.setItem('inikSureler', JSON.stringify(inikSureler));
+  return true;
+}
+
+// Kârinin tamamını indir. 6236 ayet ≈ 800 MB; kesilirse kaldığı yerden devam
+// eder (var olan dosyalar atlanır). İptal edilebilir.
+let indirmeIptal = false;
+async function kariIndir(ilerle){
+  const fs = FS(); if(!fs) return false;
+  indirmeIptal = false;
+  const hepsi = (KURAN||[]);
+  let i = 0, bayt = 0;
+  for(const a of hepsi){
+    if(indirmeIptal) return 'iptal';
+    try{
+      const yol = yerelYol(kari, a.id);
+      let varMi = false;
+      try{ await fs.stat({ directory:'DATA', path: yol }); varMi = true; }catch(e){}
+      if(!varMi){
+        const yanit = await fetch(sesUrl(a.id));
+        if(!yanit.ok) throw new Error('indirilemedi ' + a.id);
+        const b = new Uint8Array(await yanit.arrayBuffer());
+        bayt += b.length;
+        let ikili = '';
+        for(let k=0;k<b.length;k+=8192) ikili += String.fromCharCode.apply(null, b.subarray(k,k+8192));
+        await fs.writeFile({ directory:'DATA', path: yol, data: btoa(ikili), recursive: true });
+      }
+    }catch(e){ console.error('ayet indirilemedi', a.id, e); return false; }
+    ilerle && ilerle(++i, hepsi.length, bayt);
+  }
+  // tüm sûreleri inik say
+  for(const su of (SURELER||[])) inikSureler[`${kari}|${su.no}`] = true;
+  inikSureler[`${kari}|TAM`] = true;
+  localStorage.setItem('inikSureler', JSON.stringify(inikSureler));
+  return true;
+}
+const kariTamMi = () => !!inikSureler[`${kari}|TAM`];
+
+async function kariSil(){
+  const fs = FS(); if(!fs) return;
+  try{ await fs.rmdir({ directory:'DATA', path:`kuran/${kari}`, recursive:true }); }catch(e){}
+  for(const k of Object.keys(inikSureler)) if(k.startsWith(kari+'|')) delete inikSureler[k];
+  localStorage.setItem('inikSureler', JSON.stringify(inikSureler));
+  yerelSes.clear();
+}
+
+async function sureSil(no){
+  const fs = FS(); if(!fs) return;
+  for(const a of (KURAN||[]).filter(x => x.sure === no)){
+    try{ await fs.deleteFile({ directory:'DATA', path: yerelYol(kari, a.id) }); }catch(e){}
+    yerelSes.delete(`${kari}|${a.id}`);
+  }
+  delete inikSureler[`${kari}|${no}`];
+  localStorage.setItem('inikSureler', JSON.stringify(inikSureler));
+}
 const kariAdi=(k)=> dil==='ar' ? k.adAr : dil==='tr' ? k.ad : (k.adLat||k.ad);
 let calanSes=null, calanId=null;
 
@@ -1252,8 +1467,25 @@ function sureListesiCiz(filtre=''){
       <div class="sure-no">${s.no}</div>
       <div class="sure-ad"><b>${esc(sureAdi(s))}</b><span>${s.ayetSayisi} ${T.ayet_sayisi||'ayet'} · ${esc((T.inis&&T.inis[s.inis])||s.inis||'')}</span></div>
       <div class="sure-ar">${dil==='ar'?'':esc(s.adAr||'')}</div>
+      ${FS()?`<button class="indir-btn${inikMi(s.no)?' inik':''}" data-indir="${s.no}" aria-label="indir">${inikMi(s.no)?'✓':'⤓'}</button>`:''}
     </div>`).join('');
-  el.querySelectorAll('.sure-sat').forEach(d=>d.onclick=()=>sureAc(+d.dataset.sure));
+  el.querySelectorAll('.sure-sat').forEach(d=>d.onclick=(e)=>{
+    if(e.target.closest('.indir-btn')) return;      // indirme düğmesi sûreyi açmasın
+    sureAc(+d.dataset.sure);
+  });
+  el.querySelectorAll('.indir-btn').forEach(b=>b.onclick=async(e)=>{
+    e.stopPropagation();
+    const no=+b.dataset.indir;
+    if(inikMi(no)){                                  // inmişse: sil
+      if(!confirm((T.indir_sil||'Bu sûrenin sesi cihazdan silinsin mi?'))) return;
+      await sureSil(no); sureListesiCiz(document.getElementById('sureAra')?.value||''); return;
+    }
+    b.disabled=true; b.classList.add('iniyor');
+    const ok=await sureIndir(no,(i,t)=>{ b.textContent=Math.round(i*100/t)+'%'; });
+    b.disabled=false; b.classList.remove('iniyor');
+    if(!ok){ b.textContent='⤓'; sesUyari(T.indir_hata||'Sûre indirilemedi. Bağlantını kontrol et.'); return; }
+    sureListesiCiz(document.getElementById('sureAra')?.value||'');
+  });
   kaldigimYeriCiz();
 }
 
@@ -1345,10 +1577,10 @@ function kilitEkraniKur(id){
 }
 
 // Tilavet indirilemedi uyarısı (kısa, kendiliğinden kaybolur)
-function sesUyari(){
+function sesUyari(metin){
   let el=document.getElementById('sesUyari');
   if(!el){ el=document.createElement('div'); el.id='sesUyari'; el.className='ses-uyari'; document.body.appendChild(el); }
-  el.textContent=T.ses_hata||'Tilavet indirilemedi. İnternet bağlantını kontrol et.';
+  el.textContent=metin||T.ses_hata||'Tilavet indirilemedi. İnternet bağlantını kontrol et.';
   el.classList.add('gorunur');
   clearTimeout(sesUyari._t); sesUyari._t=setTimeout(()=>el.classList.remove('gorunur'),3200);
 }
@@ -1370,13 +1602,13 @@ function sesDurdur(){
     calanId=null;
   }
 }
-function sesCal(id){
+async function sesCal(id){
   if(calanId===id){ sesDurdur(); return; }
   sesDurdur();
   const b=document.querySelector(`.ses-btn[data-ses="${id}"]`);
   const kart=document.getElementById('ay-'+id);
   calanId=id; kart?.classList.add('calan'); if(b) b.textContent='‖';
-  calanSes=new Audio(sesUrl(id));
+  calanSes=new Audio(await sesKaynagi(id));
   kilitEkraniKur(id);
   miniCalarCiz(id);
   // Ağ yoksa play() reddi gelmeyebiliyor; 'error' olayı da yakalanmalı, yoksa
@@ -1396,11 +1628,29 @@ function sesCal(id){
   if(a) localStorage.setItem('kuranYer', JSON.stringify({sure:a.sure, ayet:a.ayet}));
 }
 
+// Kârinin tamamını indirme şeridi: durum + eylem düğmesi
+let indirmeSuruyor = false;
+function indirSeridiCiz(durumMetni){
+  const serit=document.getElementById('indirSerit'); if(!serit) return;
+  if(!FS()){ serit.classList.remove('acik'); return; }      // web'de indirme yok
+  serit.classList.add('acik');
+  const d=document.getElementById('indirDurum'), e=document.getElementById('indirEylem');
+  if(indirmeSuruyor){ d.textContent=durumMetni||''; e.textContent=T.indir_iptal||'İptal'; e.classList.add('tehlike'); return; }
+  if(kariTamMi()){
+    d.textContent=(T.indir_hazir||'{k} çevrimdışı dinlenebilir.').replace('{k}', kariAdi(KARILER.find(k=>k.id===kari)||KARILER[0]));
+    e.textContent=T.indir_kaldir||'Kaldır'; e.classList.add('tehlike');
+  }else{
+    d.textContent=T.indir_teklif||'Tilaveti internetsiz dinlemek için bu kâriyi indir (≈800 MB).';
+    e.textContent=T.indir_et||'İndir'; e.classList.remove('tehlike');
+  }
+}
+
 function kariSeciciKur(){
   const el=document.getElementById('kariSec'); if(!el) return;
   el.innerHTML=KARILER.map(k=>`<option value="${k.id}"${k.id===kari?' selected':''}>${kariAdi(k)}</option>`).join('');
   el.onchange=()=>{
-    kari=el.value; localStorage.setItem('kari',kari);
+    kari=el.value; localStorage.setItem('kari',kari); yerelSes.clear(); indirSeridiCiz();
+    sureListesiCiz(document.getElementById('sureAra')?.value||'');
     if(calanId!=null){ const id=calanId; sesDurdur(); sesCal(id); }   // yeni kâriyle devam
   };
 }
@@ -1462,6 +1712,24 @@ document.getElementById('bildirimAnahtar').onclick=async()=>{
   }
 };
 bildirimAnahtarCiz();
+document.getElementById('indirEylem').onclick=async()=>{
+  if(indirmeSuruyor){ indirmeIptal=true; return; }
+  if(kariTamMi()){
+    if(!confirm(T.indir_kaldir_onay||'İndirilen tilavet cihazdan silinsin mi?')) return;
+    await kariSil(); indirSeridiCiz(); sureListesiCiz(document.getElementById('sureAra')?.value||''); return;
+  }
+  indirmeSuruyor=true; indirSeridiCiz(T.indir_basliyor||'Hazırlanıyor…');
+  const sonuc=await kariIndir((i,t,bayt)=>{
+    const yuzde=Math.round(i*100/t), mb=Math.round(bayt/1048576);
+    indirSeridiCiz(`%${yuzde} · ${i}/${t} ${T.ayet_sayisi||'ayet'} · ${mb} MB`);
+  });
+  indirmeSuruyor=false;
+  if(sonuc===true) sesUyari(T.indir_bitti||'Tilavet indirildi. Artık internetsiz dinleyebilirsin.');
+  else if(sonuc==='iptal') sesUyari(T.indir_iptal_oldu||'İndirme durduruldu. Kaldığın yerden devam edebilirsin.');
+  else sesUyari(T.indir_hata||'İndirilemedi. Bağlantını kontrol et.');
+  indirSeridiCiz();
+  sureListesiCiz(document.getElementById('sureAra')?.value||'');
+};
 document.getElementById('miniDurdur').onclick=sesDurdur;
 document.getElementById('btnEzan').onclick=ezanBaslat;
 document.querySelectorAll('.sekme').forEach(b=>b.onclick=()=>{
@@ -1478,7 +1746,7 @@ document.querySelectorAll('.ksekme').forEach(b=>b.onclick=()=>{
   const m=b.dataset.kmod;
   document.getElementById('kmod-ara').style.display=m==='ara'?'':'none';
   document.getElementById('kmod-oku').style.display=m==='oku'?'':'none';
-  if(m==='oku') okuModuAc(); else sesDurdur();
+  if(m==='oku'){ okuModuAc(); indirSeridiCiz(); } else sesDurdur();
   hakGoster();   // Oku&Dinle'de sorgu harcanmıyor, sayaç görünmesin
 });
 function yuzenGeriGuncelle(){
@@ -1528,7 +1796,9 @@ function dilUygula(yeni){
   dil=yeni; T=L[dil]; localStorage.setItem('dil',dil);
   document.documentElement.lang=dil;
   document.documentElement.dir = RTL(dil) ? 'rtl' : 'ltr'; // Arapça + Urduca sağdan sola
-  document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n; if(L[dil][k]!==undefined) el.innerHTML=L[dil][k];});
+  // Fonksiyon değerli anahtarlar (pw_avantaj, pw_kalan…) innerHTML'e basılamaz —
+  // basılırsa ekrana kaynak kodu yazılır. Yalnızca metinleri uygula.
+  document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n; const v=L[dil][k]; if(typeof v==='string') el.innerHTML=v;});
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{const k=el.dataset.i18nPh; if(L[dil][k]!==undefined) el.placeholder=L[dil][k];});
   document.querySelectorAll('.dil').forEach(b=>b.classList.toggle('aktif',b.dataset.dil===dil));
   cipleriKur();
@@ -1536,6 +1806,19 @@ function dilUygula(yeni){
   ['sonucDogrula','sonucKonu','sonucKuran'].forEach(id=>{const e=document.getElementById(id);e.innerHTML='';e.className='sonuc';});
   if(ezanVeri) ezanCiz(); // namaz açıksa yeni dilde yeniden çiz
   if(gununVeri) gununYukle(); // günün içeriğini yeni dilde çek
+  // Açık sûre listesi / okuma ekranı yeniden çizilmiyordu: dil değişince ekran
+  // eski dilde kalıyordu (Arapça'ya geçilse bile "Al-Baqara · 286 ayet · Mekke").
+  if(SURELER && document.getElementById('kmod-oku')?.style.display!=='none'){
+    const okuma=document.getElementById('sureOku');
+    if(!okuma || okuma.style.display==='none'){
+      sureListesiCiz(document.getElementById('sureAra').value);
+    }else if(calanId==null){
+      // Tilavet çalarken yeniden çizmeyiz: sureAc() sesi durdurur, dil değiştirdi
+      // diye kullanıcının dinlediği okumayı kesmek doğru olmaz.
+      const y=kuranYer(); if(y && y.sure) sureAc(y.sure, y.ayet);
+    }
+  }
+  avantajCiz();   // rozet metni dile bağlı
   hakGoster();
 }
 document.querySelectorAll('.dil').forEach(b=>b.onclick=()=>dilUygula(b.dataset.dil));

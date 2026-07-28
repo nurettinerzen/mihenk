@@ -26,11 +26,19 @@ const SURUM = 1;
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
 // RevenueCat sunucu doğrulaması (IAP sahteciliğini engeller). Yoksa uyarı verilir.
 const RC_SECRET = process.env.RC_SECRET || '';
+// Uç adresi test için değiştirilebilir olmalı (yerel sahte RC ile sunucu-yeniden-
+// başlatma senaryosu denenebilsin). Tanımlanmazsa gerçek RevenueCat.
+const RC_API = process.env.RC_API || 'https://api.revenuecat.com/v1';
+// DÖNÜŞ: true = abone, false = KESİN abone değil, null = DOĞRULANAMADI.
+// null ile false'u ayırmak şart: ağ/RC kesintisinde "false" dönmek ödeyen
+// kullanıcıyı anında paywall'a düşürürdü.
 async function rcPremiumMi(cihaz) {
+  if (!RC_SECRET) return null;
   try {
-    const r = await fetch(`https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(cihaz)}`,
-      { headers: { Authorization: `Bearer ${RC_SECRET}` } });
-    if (!r.ok) return false;
+    const r = await fetch(`${RC_API}/subscribers/${encodeURIComponent(cihaz)}`,
+      { headers: { Authorization: `Bearer ${RC_SECRET}` }, signal: AbortSignal.timeout(8000) });
+    if (r.status === 404) return false;               // RC'de böyle bir abone yok
+    if (!r.ok) return null;                            // 401/429/5xx → bilinmiyor
     const j = await r.json();
     // refunded_at: Apple para iadesi verdiğinde RevenueCat bu alanı doldurur ama
     // abonelik kaydındaki expires_date GELECEKTE kalabiliyor. Sadece expires_date'e
@@ -43,7 +51,7 @@ async function rcPremiumMi(cihaz) {
     // tanımlı değilse burası BOŞ gelir ve gerçekten ödeyen kullanıcı premium alamaz
     // — yani parayı alıp hizmeti vermemiş oluruz. Abonelik kaydına da bakarız.
     return gecerli(j?.subscriber?.entitlements) || gecerli(j?.subscriber?.subscriptions);
-  } catch { return false; }
+  } catch { return null; }
 }
 console.log('Korpus yükleniyor...');
 const yol = (f) => new URL(`./${f}`, import.meta.url).pathname;
@@ -68,6 +76,22 @@ const motorEn = new Motor(hadisAll, 'en');
 const hadisMotor = (dil) => (dil === 'en' ? motorEn : motorTr);
 // Kur'an: ayet korpusu (TR + EN meal + Arapça). Meal getirilir, üretilmez.
 const ayat = JSON.parse(readFileSync(yol('ayat.json'), 'utf8'));
+// Sûre adları: ayat.json'da yalnız TR ve Latin transliterasyon var. Arapça/Urduca
+// arayüzde ayet kaynağı "Al-Baqara 255" diye Latin harflerle çıkıyordu (RTL bir
+// ekranda okunmuyor). sure.json Arapça adı taşıyor → sûre no ile eşleyip kullan.
+const SURE_AD_AR = (() => {
+  const m = new Map();
+  try {
+    for (const s of JSON.parse(readFileSync(yol('sure.json'), 'utf8'))) {
+      if (s && s.no && s.adAr) m.set(s.no, String(s.adAr).replace(/^سُوْرَةُ\s*/, '').trim());
+    }
+  } catch { /* sure.json yoksa Latin ada düşülür */ }
+  return m;
+})();
+// Urduca yazı da Arap alfabesi tabanlı; sûre adı Urduca'da da Arapça yazımıyla
+// bilinir. Latin transliterasyon yerine onu veririz.
+const sureAdiDil = (a, dil) => (dil === 'tr' ? a.sureAd
+  : ((dil === 'ar' || dil === 'ur') && SURE_AD_AR.get(a.sure)) || a.sureAdEn);
 // Kur'an semantik indeksi — dile göre ayrı vektör (yerel embedding).
 const vekYukle = (f) => { const b = readFileSync(yol(f)); return new Float32Array(b.buffer, b.byteOffset, b.length / 4); };
 const kuranVek = { tr: vekYukle('vektor-kuran-tr.f32'), en: vekYukle('vektor-kuran-en.f32') };
@@ -85,8 +109,7 @@ const SERH_KALIP = /(Diğer tahric|Fethu'?l-?Bari|Fethul Bari|İZAH|IZAH|ŞERH|�
 // kayıttan 3.800'ü düzeliyor, aşırı kırpılan 0.
 const MATN_KOK = '(?:tahd[îi]s|riv[âa]yet|haber\\s+ver|naklet|nakled|ded|dedi|demiş|buyur|anlat|söyle|bersabda|a dit|said)';
 const MATN_KALIP = new RegExp(MATN_KOK + "[\\wçğıöşüÇĞİÖŞÜ]*(?:\\s+[\\wçğıöşüÇĞİÖŞÜ'’]+){0,2}\\s*(?::|ki\\s*,)", 'gi');
-function hadisMatn(t) {
-  const x = hadisMetni(t);
+function latinMatn(x) {
   const re = new RegExp(MATN_KALIP.source, 'gi');
   let son = null, m;
   while ((m = re.exec(x))) { if (m.index < x.length * 0.7) son = m; else break; }
@@ -95,6 +118,55 @@ function hadisMatn(t) {
   // Kesme sağlıklı mı: cümle harfle başlamalı, bağlaç artığıyla açılmamalı.
   if (kalan.length < 40 || !/^[\p{L}"“]/u.test(kalan) || /^(ki|ve|de|da)\b/i.test(kalan)) return x;
   return kalan;
+}
+
+// --- Arapça / Urduca / Endonezce isnad ayıklama ---
+// Bu üç dilde MATN_KALIP hiç eşleşmiyordu (kökleri TR/EN/FR) → kartlarda hadis
+// yerine üç satır râvi zinciri görünüyordu.
+// YÖNTEM: metnin ORTASINDAN kesmek yerine SOLDAN soyma. Ortadan kesme (ilk denenen
+// "son rivayet fiili" yöntemi) ölçümde hadisin baş tarafını yiyip parça cümle
+// bırakıyordu ("…رسول الله صلى الله عليه وسلم بمخضب" gibi) — dinî içerikte parça
+// metin göstermek yanlış bilgidir. Soyma, baştaki halka isnad kalıbına uymadığı
+// anda DURUR; en kötü ihtimalle metin olduğu gibi kalır (bugünkü davranış).
+// Ölçüm (30.483 kayıt): AR 25.598 kayıt kırpıldı (%84,6), ortalama %72'si korundu,
+// 60 harften kısa kalan 0. UR %34,6. ID %90,5.
+const HRK = '[\\u064B-\\u0652\\u0670\\u0640\\u06D6-\\u06ED\\u200f]*';   // hareke/tatweel/RLM toleransı
+const arEsnek = (w) => w.split('').map(ch => ch === ' ' ? '\\s+' : (/[اأإآ]/.test(ch) ? '[اأإآ]' : ch) + HRK).join('');
+// isnad halkası: (قال/فقال…) + rivayet fiili + râvi adı + ',' ya da ':'
+const AR_HALKA = ['حدثنا', 'حدثني', 'حدثنيه', 'حدثهم', 'اخبرنا', 'اخبرني', 'اخبرهم', 'انبانا', 'انباني', 'ثنا', 'سمعت', 'عن'].map(w => '(?:' + arEsnek('و') + ')?' + arEsnek(w)).join('|');
+const AR_ONEK = ['قال', 'قالت', 'قالا', 'قالوا', 'وقال', 'فقال', 'يقول', 'ح'].map(arEsnek).join('|');
+// Baştaki artıklar: (a) ortak râvi — "…، وَإِسْحَاقُ بْنُ إِبْرَاهِيمَ، قَالاَ حَدَّثَنَا"
+// ikinci râvi adıyla açılıyor; (b) "- يَعْنِي ابْنَ بِلاَلٍ -" gibi araya sıkışmış
+// kimlik notu. İkisi de halka değil ama halkadan ÖNCE geliyor, temizlenmezse
+// soyma ilk adımda duruyordu.
+const AR_ARTIK = '(?:' + arEsnek('و') + '[^،:]{0,90}[،:][\\s\\u200f]*)?(?:[-ـ][^-ـ]{0,60}[-ـ][\\s،\\u200f]*)?';
+const AR_PEEL = new RegExp('^[\\s\\u200f]*' + AR_ARTIK + '(?:(?:' + AR_ONEK + ')' + HRK + '[\\s:،.]*)*(?:' + AR_HALKA + ')' + HRK + '(?![\\u0621-\\u064A])[^،:]{0,120}[،:]' + HRK + '\\s*');
+// Urduca: halkalar '،' / '۔' ile ayrılır ve rivayet fiiliyle biter.
+const UR_PEEL = /^\s*(?:\(.{0,50}?\)\s*)?(?:ہم\s+سے|ہم\s+کو|ہمیں|مجھ\s+سے|مجھ\s+کو|مجھے|ان\s+سے|ان\s+کو|انہیں|انہوں\s+نے|وہ|اور|پھر|کہا|کہ)?[^،۔]{0,110}?(?:بیان\s+کی(?:ا)?|خبر\s+دی|روایت\s+(?:کی|کرتے\s+ہیں)|نقل\s+ک(?:ی|رتے\s+ہیں)|حدیث\s+سنی|نے|سے)\s*[،۔]\s*/;
+// Endonezce: râvi adları köşeli parantez içinde → halka sınırı net.
+const ID_PEEL = /^\s*(?:[Tt]elah\s+)?(?:menceritakan|mengabarkan|memberitakan|mengkhabarkan|diceritakan|dikabarkan|meriwayatkan)\s+kepada\s*(?:kami|ku|nya|saya)?[^[]{0,40}\[[^\]]{0,140}\][\s,;]*(?:-[^-]{0,60}-[\s,;]*)?(?:(?:yang|dia|ia|beliau|dan)\s+)?(?:berkata|katanya|mengatakan)?[\s,;:]*|^\s*(?:dan\s+)?[Dd]ari\s+\[[^\]]{0,140}\][\s,;]*(?:-[^-]{0,60}-[\s,;]*)?(?:(?:yang|dia|ia|beliau)\s+)?(?:berkata|katanya|mengatakan)?[\s,;:]*|^\s*(?:aku|saya)\s+mendengar\s+\[[^\]]{0,140}\][\s,;]*(?:berkata|katanya)?[\s,;:]*/;
+// Urduca'yı Arapça'dan ayıran harfler (Arapça metinde bulunmaz).
+const URDU_HARF = /[ٹڈڑںھہےۃپچژگ]/;
+function soyIsnad(x, re) {
+  const bas = x;
+  for (let i = 0; i < 14; i++) {
+    const m = x.match(re);
+    if (!m || !m[0]) break;
+    const kalan = x.slice(m[0].length).trim();
+    // Aşırı soyma koruması: kalan çok kısaysa ya da metnin dörtte birinden azına
+    // indiyse soymayı bırak — eksik hadis göstermektense isnadlı tam metin daha iyi.
+    if (kalan.length < 60 || kalan.length < bas.length * 0.25) break;
+    x = kalan;
+  }
+  return x;
+}
+function hadisMatn(t) {
+  const x = hadisMetni(t);
+  // Dil parametresine değil METNİN KENDİSİNE bakarız: metinAl() istenen dil boşsa
+  // en→tr'ye düşüyor, yani 'ar' istenen kayıt İngilizce metin taşıyabiliyor.
+  if (/[؀-ۿ]/.test(x)) return soyIsnad(x, URDU_HARF.test(x) ? UR_PEEL : AR_PEEL);
+  if (/\[[^\]]+\]|kepada kami|shallallahu/.test(x)) return latinMatn(soyIsnad(x, ID_PEEL));
+  return latinMatn(x);
 }
 function hadisMetni(t) {
   let x = (t || '').trim();
@@ -107,13 +179,21 @@ function hadisMetni(t) {
   return x;
 }
 
-// Hadis metinlerinin normalize kopyası (önek eşleşmeli lexical için, tek sefer).
-let hadisNorm = null;
+// Hadis metinlerinin normalize kopyası (önek eşleşmeli lexical + alaka kapısı için).
+// ÖNCEDEN tek slotluk önbellek vardı: `hadisNorm` yalnız SON dili tutuyordu, dil
+// değişen her istek 30.483 kaydı yeniden normalize ediyordu (~700 ms tek çekirdeği
+// bloke ederek). Node tek iş parçacıklı olduğu için sunucu çok dilli trafikte
+// ~1,2 istek/sn'e düşüyordu. Artık dil BAŞINA kalıcı önbellek + açılışta ısıtma.
+// Dizi hadisAll boyundadır (corpus + mevzuat); lexHadis yalnız ilk corpus.length
+// öğesini kullanır, alaka kapısı tamamını.
+const hadisNormOnbellek = new Map();      // dil → string[]
 function hadisNormAl(dil) {
-  if (hadisNorm && hadisNorm.dil === dil) return hadisNorm.arr;
+  let arr = hadisNormOnbellek.get(dil);
+  if (arr) return arr;
   const nf = dil === 'ar' ? arNorm : trNorm;
-  hadisNorm = { dil, arr: corpus.map(h => ' ' + nf(hadisMatn(metinAl(h, dil)))) };
-  return hadisNorm.arr;
+  arr = hadisAll.map(h => ' ' + nf(hadisMatn(metinAl(h, dil))));
+  hadisNormOnbellek.set(dil, arr);
+  return arr;
 }
 // sorgu kelimesi, metindeki bir kelimenin ÖNEKİ ise eşleşir (sabır→sabreden değil ama
 // sabır→sabırla evet; kelime başına boşluk şartı kısmi/ortadan eşleşmeyi engeller)
@@ -261,11 +341,46 @@ function alimAdi(ad, dil) {
 }
 const alimlerDil = (alimler, dil) => (alimler || []).map(a => ({ ...a, alim: alimAdi(a.alim, dil) }));
 
+// Kaynak etiketi ("Ebû Dâvûd 2201") korpusta TÜRKÇE üretilmişti ve her dilde
+// aynen gösteriliyordu: Arapça arayüzde sağdan sola bir kartın altında Türkçe
+// şapkalı harflerle "Ebû Dâvûd" yazıyordu (Urduca'da da öyle). Kaynak adı
+// veri değil sunum bilgisi → dile göre çevrilir. Numara aynı kalır.
+const KITAP_AD = {
+  bukhari:  { tr: 'Buhârî',     en: 'Bukhari',     fr: 'Bukhari',      ar: 'البخاري',            ur: 'بخاری',            id: 'Bukhari' },
+  muslim:   { tr: 'Müslim',     en: 'Muslim',      fr: 'Muslim',       ar: 'مسلم',               ur: 'مسلم',             id: 'Muslim' },
+  tirmidhi: { tr: 'Tirmizî',    en: 'Tirmidhi',    fr: 'Tirmidhi',     ar: 'الترمذي',            ur: 'ترمذی',            id: 'Tirmidzi' },
+  abudawud: { tr: 'Ebû Dâvûd',  en: 'Abu Dawud',   fr: 'Abou Dawoud',  ar: 'أبو داود',           ur: 'ابو داؤد',         id: 'Abu Dawud' },
+  nasai:    { tr: 'Nesâî',      en: "Nasa'i",      fr: "Nasa'i",       ar: 'النسائي',            ur: 'نسائی',            id: "Nasa'i" },
+  ibnmajah: { tr: 'İbn Mâce',   en: 'Ibn Majah',   fr: 'Ibn Majah',    ar: 'ابن ماجه',           ur: 'ابن ماجہ',         id: 'Ibnu Majah' },
+  malik:    { tr: 'Muvatta',    en: 'Muwatta',     fr: 'Muwatta',      ar: 'الموطأ',             ur: 'مؤطا',             id: 'Muwatha' },
+  nawawi:   { tr: 'Nevevî 40',  en: 'Nawawi 40',   fr: 'Nawawi 40',    ar: 'الأربعون النووية',   ur: 'اربعین نووی',      id: 'Arbain Nawawi' },
+};
+const KITAP_TAM = {
+  bukhari:  { tr: 'Sahîh-i Buhârî',        en: 'Sahih al-Bukhari',   fr: 'Sahih al-Bukhari',  ar: 'صحيح البخاري',       ur: 'صحیح بخاری',        id: 'Shahih Bukhari' },
+  muslim:   { tr: 'Sahîh-i Müslim',        en: 'Sahih Muslim',       fr: 'Sahih Muslim',      ar: 'صحيح مسلم',          ur: 'صحیح مسلم',         id: 'Shahih Muslim' },
+  tirmidhi: { tr: 'Sünen-i Tirmizî',       en: 'Jami at-Tirmidhi',   fr: 'Jami at-Tirmidhi',  ar: 'سنن الترمذي',        ur: 'سنن ترمذی',         id: 'Sunan Tirmidzi' },
+  abudawud: { tr: 'Sünen-i Ebû Dâvûd',     en: 'Sunan Abu Dawud',    fr: 'Sunan Abou Dawoud', ar: 'سنن أبي داود',       ur: 'سنن ابو داؤد',      id: 'Sunan Abu Dawud' },
+  nasai:    { tr: 'Sünen-i Nesâî',         en: "Sunan an-Nasa'i",    fr: "Sunan an-Nasa'i",   ar: 'سنن النسائي',        ur: 'سنن نسائی',         id: "Sunan Nasa'i" },
+  ibnmajah: { tr: 'Sünen-i İbn Mâce',      en: 'Sunan Ibn Majah',    fr: 'Sunan Ibn Majah',   ar: 'سنن ابن ماجه',       ur: 'سنن ابن ماجہ',      id: 'Sunan Ibnu Majah' },
+  malik:    { tr: "Muvatta' (İmam Mâlik)", en: 'Muwatta Malik',      fr: 'Muwatta Malik',     ar: 'موطأ مالك',          ur: 'مؤطا امام مالک',    id: 'Muwatha Malik' },
+  nawawi:   { tr: 'Nevevî Kırk Hadis',     en: 'Nawawi Forty Hadith', fr: 'Les Quarante Hadiths de Nawawi', ar: 'الأربعون النووية', ur: 'اربعین نووی', id: 'Arbain Nawawi' },
+};
+const MEVZUAT_AD = { tr: 'Halk arasında yaygın söz', en: 'Commonly circulated saying', fr: 'Parole largement répandue',
+  ar: 'قول شائع بين الناس', ur: 'عوام میں مشہور قول', id: 'Ucapan yang beredar luas' };
+function kaynakDil(h, dil) {
+  if (h.mevzuat || !KITAP_AD[h.kitap]) return MEVZUAT_AD[dil] || MEVZUAT_AD.en;
+  const ad = KITAP_AD[h.kitap][dil] || KITAP_AD[h.kitap].en;
+  return h.no == null ? ad : `${ad} ${h.no}`;
+}
+const kitapAdiDil = (h, dil) => (h.mevzuat || !KITAP_TAM[h.kitap])
+  ? (MEVZUAT_AD[dil] || MEVZUAT_AD.en)
+  : (KITAP_TAM[h.kitap][dil] || KITAP_TAM[h.kitap].en);
+
 function derecele(h, dil = 'tr') {
   const b = DERECE_BILGI[h.derece] || DERECE_BILGI.bilinmiyor;
   const metin = hadisMatn(metinAl(h, dil)); // şerh + isnad zinciri ayıklanmış; yoksa en→tr
   return {
-    id: h.id, tr: metin, ar: h.ar, kaynak: h.kaynak, kitapTr: h.kitapTr, no: h.no,
+    id: h.id, tr: metin, ar: h.ar, kaynak: kaynakDil(h, dil), kitapTr: kitapAdiDil(h, dil), no: h.no,
     metinDili: metinDili(h, dil),   // istenen dilden farklıysa istemci uyarı gösterir
     derece: h.derece, dereceEtiket: b.etiket[dil] || b.etiket.en || b.etiket.tr, dereceRenk: b.renk,
     // Grade açıklaması artık 6 dilde; eksikse en→tr'ye düşer.
@@ -430,10 +545,12 @@ async function konu(sorgu, dil = 'tr') {
   const norm = dil === 'ar' ? arNorm : trNorm;
   const qwK = [...new Set(norm(aramaK).split(' '))].filter(w => w.length > 2);
   if (qwK.length) {
+    // Kapı her istekte 30.483 kaydı YENİDEN normalize ediyordu (sorgu konusu
+    // metinlerde geçmiyorsa erken çıkış da olmuyor). Aynı önbelleği kullanır.
+    const norms = hadisNormAl(dil);
     let sinyal = false;
-    for (const h of hadisAll) {
-      const m = norm(hadisMatn(metinAl(h, dil)));
-      if (qwK.some(w => m.includes(w))) { sinyal = true; break; }
+    for (let i = 0; i < norms.length; i++) {
+      if (qwK.some(w => norms[i].includes(w))) { sinyal = true; break; }
     }
     if (!sinyal) return { konu: sorgu, sonuclar: [], alakasiz: true };
   }
@@ -614,8 +731,11 @@ async function kuranKonu(sorgu, dil = 'tr') {
   const qv = await embedOne(aramaMetni);
   const vek = vekAl(kuranVek, dil);
   const hubSkor = hubAl(vek);
-  // sorgu kelimeleri (lexical destek)
-  const qw = [...new Set(trNorm(aramaMetni).split(' '))].filter(w => w.length > 2);
+  // sorgu kelimeleri (+0.10 lexical katkı kanalı). trNorm sabitti: Arapça'da
+  // harekeler ve tecvid işaretleri "harf değil" sayılıp boşluğa çevriliyor,
+  // "الصَّبْرُ" → "ال ص ب ر" gibi parçalara bölünüyordu. Bu yüzden Arapça'da bu
+  // kanal ya hiç çalışmıyor ya da tek harflik parçalarla rastgele puan veriyordu.
+  const qw = [...new Set(nfQ(aramaMetni).split(' '))].filter(w => w.length > 2);
   const puan = new Array(ayat.length);
   for (let i = 0; i < ayat.length; i++) {
     const a = ayat[i];
@@ -674,7 +794,7 @@ async function kuranKonu(sorgu, dil = 'tr') {
           okunusEt = (pv.okunus || '') + ' ' + okunusEt; ayetEt = `${pv.ayet}-${a.ayet}`;
         }
       }
-      const ad = dil === 'tr' ? a.sureAd : a.sureAdEn;
+      const ad = sureAdiDil(a, dil);
       return { id: a.id, sure: a.sure, sureAd: ad, ayet: a.ayet, ayetEt,
         sayfa: a.sayfa, cuz: a.cuz, kaynak: `${ad} ${ayetEt}`,
         ar: arapca, okunus: dil === 'tr' ? okunusEt : '', tr: metin, skor: +s.toFixed(3) };
@@ -701,8 +821,8 @@ function gunun(dil = 'tr') {
   // bölümden, ardışık kayıtlar geliyordu. Büyük asal ile havuzun tamamına dağıt.
   const hd = gununHadisHavuz.length ? gununHadisHavuz[(gi * 7919) % gununHadisHavuz.length] : null;
   return {
-    ayet: ay ? { kaynak: dil === 'tr' ? ay.kaynak : ay.kaynakEn, ar: ay.ar, okunus: dil === 'tr' ? ay.okunus : '', tr: metinAl(ay, dil) } : null,
-    hadis: hd ? { kaynak: hd.kaynak, tr: hadisMatn(metinAl(hd, dil)), ar: hd.ar, dereceEtiket: (DERECE_BILGI.sahih.etiket[dil] || DERECE_BILGI.sahih.etiket.en) } : null,
+    ayet: ay ? { kaynak: `${sureAdiDil(ay, dil)} ${ay.ayet}`, ar: ay.ar, okunus: dil === 'tr' ? ay.okunus : '', tr: metinAl(ay, dil) } : null,
+    hadis: hd ? { kaynak: kaynakDil(hd, dil), tr: hadisMatn(metinAl(hd, dil)), ar: hd.ar, dereceEtiket: (DERECE_BILGI.sahih.etiket[dil] || DERECE_BILGI.sahih.etiket.en) } : null,
   };
 }
 
@@ -767,32 +887,83 @@ const bosKaydet = (yol, dil, sorgu) => {
   if (olcum.bosSorgu.length > 300) olcum.bosSorgu.shift();
 };
 
-const LIMIT = Number(process.env.RATE_LIMIT || 120);
+// --- Hız sınırı: asıl fren CİHAZ, IP yalnızca kaba emniyet supabı ---
+// IP başına 120/saat vardı ve bu MEŞRU kullanıcıyı kilitliyordu: TR ve Endonezya'da
+// mobil operatörler CGNAT kullanıyor, yüzlerce abone tek genel IP'nin arkasından
+// çıkıyor. Aynı kovaya düşen kullanıcılar birbirini 429'a itiyordu — üstelik
+// Render'ın kenar proxy'si arkasında kova zaten kaba.
+//
+// Yeni eşikler ve gerekçesi:
+// • IP: 3000/saat. Tek bir cihaz zaten günde 5 AI sorgusuyla (premiumsa da ekran
+//   başına birkaç istekle) sınırlı; asıl akış /api/durum + /api/gunun + /api/namaz
+//   gibi ucuz uçlar. Ağır bir CGNAT havuzunda 300-500 aktif kullanıcı × saatte
+//   ~6 istek ≈ 3000. Eşik bunu geçirir, gerçek bir kötüye kullanımı (saniyede
+//   birden fazla istek süren tek IP) hâlâ keser.
+// • Cihaz: 300/saat. Tek kullanıcının insani üst sınırının çok üstünde; tek bir
+//   cihaz kimliğiyle döngüye giren istemci burada durur. Maliyeti asıl kesen
+//   FREE_LIMIT (günde 5 AI sorgusu) zaten yerinde.
+const LIMIT = Number(process.env.RATE_LIMIT || 3000);          // IP / saat
+const CIHAZ_LIMIT = Number(process.env.CIHAZ_RATE_LIMIT || 300); // cihaz / saat
+const cihazSayac = new Map();
 // Map'ler istemciden gelen anahtarlarla (IP, cihaz) büyüyor ve hiç temizlenmiyordu.
 // Saatte bir süresi geçmiş kayıtları at; premium kayıtları korunur.
 setInterval(() => {
   const now = Date.now(), g = bugun();
   for (const [k, v] of istekSayac) if (now > v.reset) istekSayac.delete(k);
+  for (const [k, v] of cihazSayac) if (now > v.reset) cihazSayac.delete(k);
   for (const [k, v] of kullanim) if (v.gun !== g) kullanim.delete(k);
+  // Premium önbelleği de sınırsız büyümesin. 7 gündür dokunulmamış kaydı at:
+  // silinse bile kayıp yok, cihaz döndüğünde RevenueCat'ten yeniden öğrenilir.
+  for (const [k, v] of premiumCihaz) if (now - v.guncel > 7 * 86400_000) premiumCihaz.delete(k);
 }, 3600_000).unref();
-function limitAsildi(ip) {
+function sayacAstiMi(harita, anahtar, limit) {
   const now = Date.now(), pencere = 3600_000;
-  let r = istekSayac.get(ip);
-  if (!r || now > r.reset) { r = { count: 0, reset: now + pencere }; istekSayac.set(ip, r); }
+  let r = harita.get(anahtar);
+  if (!r || now > r.reset) { r = { count: 0, reset: now + pencere }; harita.set(anahtar, r); }
   r.count++;
-  return r.count > LIMIT;
+  return r.count > limit;
 }
+const limitAsildi = (ip) => sayacAstiMi(istekSayac, ip, LIMIT);
+const cihazLimitAsildi = (c) => sayacAstiMi(cihazSayac, c, CIHAZ_LIMIT);
 
-// --- Freemium: cihaz başına GÜNLÜK ücretsiz AI-sorgu; premium (lisanslı) = sınırsız ---
+// --- Freemium: cihaz başına GÜNLÜK ücretsiz AI-sorgu; premium (abone) = sınırsız ---
 const FREE_LIMIT = Number(process.env.FREE_LIMIT || 5);
 const CHECKOUT_URL = process.env.CHECKOUT_URL || ''; // LemonSqueezy/Stripe ödeme linki (kurulunca)
 const AI_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu']; // limite tabi (namaz serbest)
 const kullanim = new Map();      // cihaz -> {gun, sayi}
-const premiumCihaz = new Map();  // cihaz -> {anahtar}
 const bugun = () => new Date().toISOString().slice(0, 10);
-const premiumMi = (c) => premiumCihaz.has(c);
-function kalanHak(c) {
-  if (premiumMi(c)) return Infinity;
+
+// --- Premium durumu: TEK DOĞRULUK KAYNAĞI RevenueCat ---
+// ESKİDEN premium kaydı sunucunun belleğinde bir Map'ti. Render her deploy/restart/
+// uyanmada süreci sıfırlıyor → o an uygulamada olan ABONE bir sonraki sorgusunda
+// 402 yiyip paywall görüyordu. Parası alınmış, hizmeti kesilmiş oluyordu.
+// Render'da kalıcı disk YOK (render.yaml'da disk tanımı yok, plan: standard) ve
+// disk eklemek tek örneğe bağlar. Bu yüzden kalıcılığı biz TUTMUYORUZ: her cihazın
+// premium'u RevenueCat'ten (zaten mağaza makbuzunun tek doğruluk kaynağı) sorulur,
+// yanıt kısa süreli bellek önbelleğine yazılır. Süreç ölse de kayıp yok — önbellek
+// boşalır, ilk istekte RevenueCat'ten yeniden öğrenilir.
+const PREMIUM_TTL = Number(process.env.PREMIUM_TTL_MS || 6 * 3600_000);   // "abone" yanıtı
+const PREMIUM_YOK_TTL = Number(process.env.PREMIUM_YOK_TTL_MS || 10 * 60_000); // "abone değil"
+const PREMIUM_HATA_TTL = 15 * 60_000;   // RC'ye ulaşılamadı → son bilinen durumu koru
+const premiumCihaz = new Map();  // cihaz -> { premium, gecerli, guncel }
+async function premiumMi(cihaz) {
+  if (!cihaz || cihaz === 'anon') return false;
+  const now = Date.now();
+  const kayit = premiumCihaz.get(cihaz);
+  if (kayit && now < kayit.gecerli) return kayit.premium;
+  const sonuc = await rcPremiumMi(cihaz);
+  if (sonuc === null) {
+    // Doğrulanamadı (RC kesintisi, ağ hatası ya da RC_SECRET yok). Ödeyen
+    // kullanıcıyı bu yüzden ücretsize düşürmeyiz: son BİLİNEN durumu koruruz.
+    if (kayit) { kayit.gecerli = now + PREMIUM_HATA_TTL; return kayit.premium; }
+    return false;   // hiç kaydımız yok → premium veremeyiz (bedava premium açığı olmasın)
+  }
+  premiumCihaz.set(cihaz, { premium: sonuc, guncel: now,
+    gecerli: now + (sonuc ? PREMIUM_TTL : PREMIUM_YOK_TTL) });
+  return sonuc;
+}
+function kalanHak(c, prem) {
+  if (prem) return Infinity;
   const r = kullanim.get(c);
   if (!r || r.gun !== bugun()) return FREE_LIMIT;
   return Math.max(0, FREE_LIMIT - r.sayi);
@@ -801,17 +972,6 @@ function hakKullan(c) {
   let r = kullanim.get(c);
   if (!r || r.gun !== bugun()) { r = { gun: bugun(), sayi: 0 }; kullanim.set(c, r); }
   r.sayi++;
-}
-// Lisans doğrulama — ŞİMDİLİK stub (test anahtarı). LemonSqueezy bağlanınca gerçek API ile değişecek.
-async function lisansGecerli(anahtar) {
-  if (!anahtar) return false;
-  // Sabit varsayılan vardı; anahtar herkese açık olduğu için üretimde bedava premium
-  // demekti (ve Apple 3.1.1 açısından IAP dışı kilit açma sayılır). Artık yalnızca
-  // ortam değişkeni tanımlıysa ve boş değilse geçerli.
-  const test = (process.env.TEST_LISANS || '').trim();
-  if (test && anahtar.trim() === test) return true;
-  // TODO(LemonSqueezy): POST https://api.lemonsqueezy.com/v1/licenses/validate {license_key} → .valid
-  return false;
 }
 
 // --- Basit HTTP sunucu (CORS + app-key + rate limit + gövde sınırı) ---
@@ -823,7 +983,7 @@ function govde(req) {
   });
 }
 
-http.createServer(async (req, res) => {
+const sunucu = http.createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'content-type,x-app-key');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
@@ -839,7 +999,9 @@ http.createServer(async (req, res) => {
       ...olcum,
       toplamIstek: Object.values(olcum.istek).reduce((a, b) => a + b, 0),
       aktifCihaz: kullanim.size,
-      premiumCihaz: premiumCihaz.size,
+      // Kalıcı bir premium kaydı yok; bu yalnızca RevenueCat yanıtlarının önbelleği.
+      premiumOnbellek: premiumCihaz.size,
+      premiumOnbellekAbone: [...premiumCihaz.values()].filter(v => v.premium).length,
     }, null, 1));
   }
 
@@ -848,11 +1010,9 @@ http.createServer(async (req, res) => {
     return res.end(JSON.stringify({ ok: true, surum: SURUM, hadis: corpus.length, ayet: ayat.length, model: MODEL, llm: !!anthropic }));
   }
 
-  // AdMob, uygulamanın reklam envanterini bu dosyadan doğrular (IAB app-ads.txt).
-  if (url.pathname === '/app-ads.txt') {
-    res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=3600' });
-    return res.end('google.com, pub-9418694951655513, DIRECT, f08c47fec0942fa0\n');
-  }
+  // /app-ads.txt KALDIRILDI: uygulamada hiç reklam yok (AdMob SDK'sı da yok).
+  // AdMob envanteri beyan eden bir dosya yayınlamak yanlış beyandı; paywall'daki
+  // "reklamsız" vaadiyle de çelişiyordu.
 
   // Statik sunum: uygulama HTML'i + fontlar (tek servis olsun diye).
   if (req.method === 'GET') {
@@ -873,7 +1033,9 @@ http.createServer(async (req, res) => {
   }
 
   try {
-    const POST_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu', '/api/namaz', '/api/lisans', '/api/durum', '/api/gunun', '/api/iap-onay'];
+    // /api/lisans KALDIRILDI: IAP dışı kilit açma App Store 3.1.1 ihlali. Uç kapalı
+    // durumdaydı ama TEST_LISANS bir gün Render panelinden girilirse yeniden açılırdı.
+    const POST_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu', '/api/namaz', '/api/durum', '/api/gunun', '/api/iap-onay'];
     if (req.method === 'POST' && POST_YOLLAR.includes(url.pathname)) {
       if (req.headers['x-app-key'] !== APP_KEY) { res.writeHead(401); return res.end(JSON.stringify({ hata: 'yetkisiz' })); }
       // X-Forwarded-For istemciden gelir ve taklit edilebilir; SADECE güvenilir proxy
@@ -881,22 +1043,25 @@ http.createServer(async (req, res) => {
       const xff = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
       const ip = (process.env.PROXY_GUVENILIR === '1' && xff) || req.socket.remoteAddress || 'x';
       if (limitAsildi(ip)) { say(olcum.hata, '429'); res.writeHead(429); return res.end(JSON.stringify({ hata: 'çok fazla istek, biraz bekleyin' })); }
-      const body = JSON.parse(await govde(req) || '{}');
+      // Bozuk gövde istemci hatasıdır; 500 dönmek hem yanıltıcı hem de log'u
+      // gerçek sunucu hatalarıyla dolduruyordu.
+      const ham = await govde(req);
+      let body;
+      try { body = JSON.parse(ham || '{}'); }
+      catch { say(olcum.hata, '400'); res.writeHead(400, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ hata: 'gecersiz-govde' })); }
+      if (!body || typeof body !== 'object' || Array.isArray(body)) body = {};
       const dil = dilAl(body.dil);
       say(olcum.istek, url.pathname); say(olcum.dil, dil);
       const cihaz = (body.cihaz || '').toString().slice(0, 64) || 'anon';
+      // Asıl fren burada: cihaz başına saatlik tavan. IP kovası CGNAT yüzünden
+      // meşru kullanıcıyı komşusuyla birlikte cezalandırıyordu.
+      if (cihaz !== 'anon' && cihazLimitAsildi(cihaz)) {
+        say(olcum.hata, '429'); res.writeHead(429);
+        return res.end(JSON.stringify({ hata: 'çok fazla istek, biraz bekleyin' }));
+      }
       // `yerli` istemciden geliyordu: gövdeye yerli:false yazan herkes kotayı tamamen
       // atlatıyordu (sınırsız ücretsiz AI çağrısı). Kota artık herkese uygulanır.
-      // Lisans body'de geldiyse premium'u aktive et
-      if (body.lisans && await lisansGecerli(body.lisans)) premiumCihaz.set(cihaz, { anahtar: body.lisans });
 
-      // Lisans etkinleştirme
-      if (url.pathname === '/api/lisans') {
-        const ok = await lisansGecerli(body.anahtar);
-        if (ok) premiumCihaz.set(cihaz, { anahtar: body.anahtar });
-        res.writeHead(ok ? 200 : 400, { 'content-type': 'application/json' });
-        return res.end(JSON.stringify({ premium: ok }));
-      }
       // IAP onayı — satın alma SUNUCUDA RevenueCat'e sorulur; istemcinin sözüne güvenilmez.
       if (url.pathname === '/api/iap-onay') {
         // Doğrulama anahtarı yoksa premium VERİLMEZ. Önceden bu durumda kontrol
@@ -905,14 +1070,12 @@ http.createServer(async (req, res) => {
           res.writeHead(503, { 'content-type': 'application/json' });
           return res.end(JSON.stringify({ premium: false, hata: 'dogrulama-yapilandirilmadi' }));
         }
-        // RevenueCat'ten sunucu tarafında doğrula: istemcinin sözüne güvenmek
-        // tek curl ile ücretsiz premium demekti. Anahtar yoksa (yerel geliştirme)
-        // eski davranış korunur.
-        if (RC_SECRET) {
-          const ok = await rcPremiumMi(cihaz);
-          if (!ok) { res.writeHead(402, { 'content-type': 'application/json' }); return res.end(JSON.stringify({ premium: false, hata: 'dogrulanamadi' })); }
+        const ok = await rcPremiumMi(cihaz);   // true / false / null(doğrulanamadı)
+        if (ok !== true) {
+          res.writeHead(ok === null ? 503 : 402, { 'content-type': 'application/json' });
+          return res.end(JSON.stringify({ premium: false, hata: ok === null ? 'dogrulanamadi-gecici' : 'dogrulanamadi' }));
         }
-        premiumCihaz.set(cihaz, { kaynak: 'iap' });
+        premiumCihaz.set(cihaz, { premium: true, guncel: Date.now(), gecerli: Date.now() + PREMIUM_TTL });
         res.writeHead(200, { 'content-type': 'application/json' });
         return res.end(JSON.stringify({ premium: true }));
       }
@@ -921,13 +1084,17 @@ http.createServer(async (req, res) => {
         res.writeHead(200, { 'content-type': 'application/json' });
         return res.end(JSON.stringify(gunun(dil)));
       }
+      // Premium durumu RevenueCat'ten (kısa ömürlü önbellekle) gelir — sunucunun
+      // belleğinde kalıcı bir kayıt YOK, restart premium'u uçurmaz.
+      const prem = (url.pathname === '/api/durum' || AI_YOLLAR.includes(url.pathname))
+        ? await premiumMi(cihaz) : false;
       // Durum: premium mi + kalan hak
       if (url.pathname === '/api/durum') {
         res.writeHead(200, { 'content-type': 'application/json' });
-        return res.end(JSON.stringify({ premium: premiumMi(cihaz), kalan: premiumMi(cihaz) ? -1 : kalanHak(cihaz), limit: FREE_LIMIT, checkout: CHECKOUT_URL }));
+        return res.end(JSON.stringify({ premium: prem, kalan: prem ? -1 : kalanHak(cihaz, prem), limit: FREE_LIMIT, checkout: CHECKOUT_URL }));
       }
       // AI-sorgu limiti (namaz hariç, sadece native)
-      if (AI_YOLLAR.includes(url.pathname) && !premiumMi(cihaz) && kalanHak(cihaz) <= 0) {
+      if (AI_YOLLAR.includes(url.pathname) && !prem && kalanHak(cihaz, prem) <= 0) {
         res.writeHead(402, { 'content-type': 'application/json' });
         return res.end(JSON.stringify({ hata: 'limit', premium: false, limit: FREE_LIMIT, checkout: CHECKOUT_URL }));
       }
@@ -962,9 +1129,9 @@ http.createServer(async (req, res) => {
       }
       // AI sorgusu başarılı → hak düş + kalan bilgisini ekle
       if (AI_YOLLAR.includes(url.pathname)) {
-        if (!premiumMi(cihaz)) hakKullan(cihaz);
-        out.kalan = premiumMi(cihaz) ? -1 : kalanHak(cihaz);
-        out.premium = premiumMi(cihaz);
+        if (!prem) hakKullan(cihaz);
+        out.kalan = prem ? -1 : kalanHak(cihaz, prem);
+        out.premium = prem;
         out.limit = FREE_LIMIT;
       }
       res.writeHead(200, { 'content-type': 'application/json' });
@@ -975,4 +1142,31 @@ http.createServer(async (req, res) => {
     res.writeHead(500); return res.end(JSON.stringify({ hata: 'sunucu hatası' }));
   }
   res.writeHead(404); res.end(JSON.stringify({ hata: 'yok' }));
-}).listen(PORT, () => console.log(`\n▶ http://localhost:${PORT}  (/health, /api/dogrula, /api/konu)`));
+});
+
+// Normalize edilmiş hadis metinlerini AÇILIŞTA hesapla (dinlemeye başlamadan önce):
+// dil değiştiren her istek 30.483 kaydı yeniden normalize edip tek çekirdeği
+// ~700 ms bloke ediyordu. Bellek maliyeti log'a yazılır, sürpriz olmasın.
+// BELLEK: 6 dilin tamamı ~370 MB tutuyor (ölçüldü; toplam RSS ~1,2 GB, Render
+// standard planında 2 GB var). Bellek sıkışırsa NORM_DILLER ile ısıtılan dil
+// listesi kısaltılabilir; listede olmayan dil ilk sorgusunda (bir kereye mahsus
+// ~700 ms) hesaplanıp yine önbelleğe alınır — sonuç değişmez, yalnız ilk istek yavaşlar.
+{
+  const istenen = (process.env.NORM_DILLER || '').split(',').map(s => s.trim()).filter(d => DILLER.includes(d));
+  const isit = istenen.length ? istenen : DILLER;
+  const t0 = Date.now(), m0 = process.memoryUsage().heapUsed;
+  for (const d of isit) hadisNormAl(d);
+  console.log(`Normalize hadis indeksi: ${isit.length} dil (${isit.join(',')}), ${Date.now() - t0} ms, ` +
+    `+${Math.round((process.memoryUsage().heapUsed - m0) / 1048576)} MB | RSS ` +
+    `${Math.round(process.memoryUsage().rss / 1048576)} MB`);
+}
+
+// Port doluysa (eski süreç hâlâ ayakta, yanlış PORT) 'error' dinleyicisi olmadan
+// EADDRINUSE yakalanmamış istisna olarak süreci öldürüyordu — Render'da sebebi
+// belirsiz bir çökme olarak görünüyordu. Sebebi açıkça yaz, temiz çık.
+sunucu.on('error', (e) => {
+  if (e && e.code === 'EADDRINUSE') console.error(`HATA: ${PORT} portu kullanımda. Eski süreci kapat ya da PORT değiştir.`);
+  else console.error('Sunucu hatası:', e);
+  process.exit(1);
+});
+sunucu.listen(PORT, () => console.log(`\n▶ http://localhost:${PORT}  (/health, /api/dogrula, /api/konu)`));
