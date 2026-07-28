@@ -89,7 +89,7 @@
   .dil.aktif{background:var(--yuzey2);color:var(--pirinc);border-color:var(--zumrut-koyu)}
 
   /* --- Ayarlar butonu --- */
-  .ayar-btn{background:var(--yuzey);border:1px solid var(--cizgi);color:var(--soluk);width:34px;height:34px;
+  .ayar-btn{position:absolute;top:calc(12px + env(safe-area-inset-top));right:16px;z-index:20;background:var(--yuzey);border:1px solid var(--cizgi);color:var(--soluk);width:34px;height:34px;
     border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.15s}
   .ayar-btn:hover{color:var(--pirinc);border-color:var(--zumrut-koyu)}
   .ayar-satir{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 2px;
@@ -240,11 +240,6 @@
   .indir-eylem{flex:none;padding:9px 14px;min-height:38px;border-radius:10px;cursor:pointer;
     border:1px solid var(--zumrut-koyu);background:transparent;color:var(--zumrut);font-size:13px;font-weight:600}
   .indir-eylem.tehlike{border-color:#4a3a1f;color:var(--turuncu)}
-  .indir-btn{min-width:38px;height:38px;border-radius:10px;border:1px solid var(--cizgi);
-    background:transparent;color:var(--soluk);font-size:15px;cursor:pointer;flex:none;
-    display:flex;align-items:center;justify-content:center;transition:color .15s,border-color .15s}
-  .indir-btn.inik{color:var(--zumrut);border-color:var(--zumrut-koyu)}
-  .indir-btn.iniyor{font-size:11px;color:var(--pirinc);border-color:var(--pirinc)}
   .ses-uyari{position:fixed;left:50%;bottom:88px;transform:translate(-50%,14px);z-index:60;
     max-width:86vw;padding:11px 16px;border-radius:12px;border:1px solid #4a3a1f;
     background:#1f1a10;color:var(--turuncu);font-size:13.5px;text-align:center;
@@ -297,13 +292,14 @@
     <div class="divider">✦</div>
   </header>
 
+    <button class="ayar-btn" id="ayarBtn" aria-label="Ayarlar">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  </button>
+
   <div class="ust-bar">
     <button class="plus-rozet" id="plusBtn">✦ Plus</button>
-    <button class="ayar-btn" id="ayarBtn" aria-label="Ayarlar">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
-    </button>
   </div>
 
   <div class="ust-nav">
@@ -376,6 +372,10 @@
     <!-- OKU & DİNLE — veri uygulamada gömülü, internet gerekmez (ses hariç) -->
     <div id="kmod-oku" style="display:none">
       <div id="sureListeSar">
+        <div class="indir-serit" id="indirSerit">
+          <span id="indirDurum"></span>
+          <button class="indir-eylem" id="indirEylem"></button>
+        </div>
         <div id="kaldigimYer"></div>
         <input class="metin" id="sureAra" data-i18n-ph="ph_sure" placeholder="Sûre ara…" style="margin-bottom:12px">
         <div id="sureListe" class="sure-liste"></div>
@@ -389,10 +389,6 @@
         <div class="kari-sec">
           <span class="kari-etk" data-i18n="kari">Kâri</span>
           <select id="kariSec"></select>
-        </div>
-        <div class="indir-serit" id="indirSerit">
-          <span id="indirDurum"></span>
-          <button class="indir-eylem" id="indirEylem"></button>
         </div>
         <div id="ayetler"></div>
       </div>
@@ -1130,7 +1126,10 @@ function sorguluEkranMi(){
 }
 function hakGoster(){
   const b=document.getElementById('plusBtn'); if(!b) return;
-  b.style.display = (premium || sorguluEkranMi()) ? '' : 'none';
+  const gorunur = premium || sorguluEkranMi();
+  b.style.display = gorunur ? '' : 'none';
+  const serit = b.parentElement;                 // .ust-bar
+  if (serit) serit.style.display = gorunur ? '' : 'none';   // boş satır bırakma
   if(premium){ b.textContent='✦ '+T.pw_aktif; b.classList.add('premium'); }
   else if(kalan!==null && kalan>=0){ b.textContent='✦ '+T.pw_kalan(kalan); b.classList.remove('premium'); }
   else { b.textContent='✦ Plus'; b.classList.remove('premium'); }
@@ -1327,6 +1326,22 @@ const sesUrl=(id)=>`https://cdn.islamic.network/quran/audio/64/${kari}/${id}.mp3
 // Sesi pakete gömmek mümkün değil (tek kâri ≈ 0,8 GB, App Store hücresel sınırı
 // 200 MB); kullanıcı istediği sûreyi indirir, sonra uçak modunda da çalar.
 const FS = () => window.Capacitor?.Plugins?.Filesystem;
+// CDN CORS başlığı göndermiyor → tarayıcı fetch'i engelliyor. Native HTTP
+// katmanı CORS'a tabi değil ve base64'ü hazır veriyor.
+async function sesIndirBase64(ayetId){
+  const http = window.Capacitor?.Plugins?.CapacitorHttp;
+  if(http){
+    const r = await http.get({ url: sesUrl(ayetId), responseType: 'blob' });
+    if(r.status !== 200 || !r.data) throw new Error('http ' + r.status);
+    return r.data;                       // base64
+  }
+  const y = await fetch(sesUrl(ayetId));  // web yedeği
+  if(!y.ok) throw new Error('http ' + y.status);
+  const b = new Uint8Array(await y.arrayBuffer());
+  let ikili = '';
+  for(let k=0;k<b.length;k+=8192) ikili += String.fromCharCode.apply(null, b.subarray(k,k+8192));
+  return btoa(ikili);
+}
 const yerelYol = (k, id) => `kuran/${k}/${id}.mp3`;
 let inikSureler = {};
 try{ inikSureler = JSON.parse(localStorage.getItem('inikSureler')||'{}'); }catch(e){}
@@ -1355,12 +1370,8 @@ async function sureIndir(no, ilerle){
       let varMi = false;
       try{ await fs.stat({ directory:'DATA', path: yol }); varMi = true; }catch(e){}
       if(!varMi){
-        const yanit = await fetch(sesUrl(a.id));
-        if(!yanit.ok) throw new Error('indirilemedi ' + a.id);
-        const bayt = new Uint8Array(await yanit.arrayBuffer());
-        let ikili = '';
-        for(let k=0;k<bayt.length;k+=8192) ikili += String.fromCharCode.apply(null, bayt.subarray(k,k+8192));
-        await fs.writeFile({ directory:'DATA', path: yol, data: btoa(ikili), recursive: true });
+        const veri = await sesIndirBase64(a.id);
+        await fs.writeFile({ directory:'DATA', path: yol, data: veri, recursive: true });
       }
     }catch(e){ console.error('ayet indirilemedi', a.id, e); return false; }
     ilerle && ilerle(++i, ayetler.length);
@@ -1385,13 +1396,9 @@ async function kariIndir(ilerle){
       let varMi = false;
       try{ await fs.stat({ directory:'DATA', path: yol }); varMi = true; }catch(e){}
       if(!varMi){
-        const yanit = await fetch(sesUrl(a.id));
-        if(!yanit.ok) throw new Error('indirilemedi ' + a.id);
-        const b = new Uint8Array(await yanit.arrayBuffer());
-        bayt += b.length;
-        let ikili = '';
-        for(let k=0;k<b.length;k+=8192) ikili += String.fromCharCode.apply(null, b.subarray(k,k+8192));
-        await fs.writeFile({ directory:'DATA', path: yol, data: btoa(ikili), recursive: true });
+        const veri = await sesIndirBase64(a.id);
+        bayt += Math.round(veri.length * 3 / 4);
+        await fs.writeFile({ directory:'DATA', path: yol, data: veri, recursive: true });
       }
     }catch(e){ console.error('ayet indirilemedi', a.id, e); return false; }
     ilerle && ilerle(++i, hepsi.length, bayt);
@@ -1467,25 +1474,9 @@ function sureListesiCiz(filtre=''){
       <div class="sure-no">${s.no}</div>
       <div class="sure-ad"><b>${esc(sureAdi(s))}</b><span>${s.ayetSayisi} ${T.ayet_sayisi||'ayet'} · ${esc((T.inis&&T.inis[s.inis])||s.inis||'')}</span></div>
       <div class="sure-ar">${dil==='ar'?'':esc(s.adAr||'')}</div>
-      ${FS()?`<button class="indir-btn${inikMi(s.no)?' inik':''}" data-indir="${s.no}" aria-label="indir">${inikMi(s.no)?'✓':'⤓'}</button>`:''}
     </div>`).join('');
-  el.querySelectorAll('.sure-sat').forEach(d=>d.onclick=(e)=>{
-    if(e.target.closest('.indir-btn')) return;      // indirme düğmesi sûreyi açmasın
-    sureAc(+d.dataset.sure);
-  });
-  el.querySelectorAll('.indir-btn').forEach(b=>b.onclick=async(e)=>{
-    e.stopPropagation();
-    const no=+b.dataset.indir;
-    if(inikMi(no)){                                  // inmişse: sil
-      if(!confirm((T.indir_sil||'Bu sûrenin sesi cihazdan silinsin mi?'))) return;
-      await sureSil(no); sureListesiCiz(document.getElementById('sureAra')?.value||''); return;
-    }
-    b.disabled=true; b.classList.add('iniyor');
-    const ok=await sureIndir(no,(i,t)=>{ b.textContent=Math.round(i*100/t)+'%'; });
-    b.disabled=false; b.classList.remove('iniyor');
-    if(!ok){ b.textContent='⤓'; sesUyari(T.indir_hata||'Sûre indirilemedi. Bağlantını kontrol et.'); return; }
-    sureListesiCiz(document.getElementById('sureAra')?.value||'');
-  });
+  el.querySelectorAll('.sure-sat').forEach(d=>d.onclick=()=>sureAc(+d.dataset.sure));
+
   kaldigimYeriCiz();
 }
 
