@@ -187,12 +187,23 @@ function hadisMetni(t) {
 // Dizi hadisAll boyundadır (corpus + mevzuat); lexHadis yalnız ilk corpus.length
 // öğesini kullanır, alaka kapısı tamamını.
 const hadisNormOnbellek = new Map();      // dil → string[]
+// Dil başına normalize kopya ~60 MB. Altısını birden tutmak RSS'i 2 GB sınırına
+// dayayıp instance'ı öldürüyordu. En son kullanılan NORM_LIMIT dili tutarız;
+// düşen dil bir sonraki sorgusunda (~700 ms) yeniden hesaplanır — sonuç aynı.
+const NORM_LIMIT = Math.max(1, Number(process.env.NORM_LIMIT || 2));
 function hadisNormAl(dil) {
   let arr = hadisNormOnbellek.get(dil);
-  if (arr) return arr;
+  if (arr) {                                  // LRU: kullanılanı en sona al
+    hadisNormOnbellek.delete(dil); hadisNormOnbellek.set(dil, arr);
+    return arr;
+  }
   const nf = dil === 'ar' ? arNorm : trNorm;
   arr = hadisAll.map(h => ' ' + nf(hadisMatn(metinAl(h, dil))));
   hadisNormOnbellek.set(dil, arr);
+  while (hadisNormOnbellek.size > NORM_LIMIT) {
+    const enEski = hadisNormOnbellek.keys().next().value;
+    hadisNormOnbellek.delete(enEski);          // v8 sonraki GC'de toplar
+  }
   return arr;
 }
 // sorgu kelimesi, metindeki bir kelimenin ÖNEKİ ise eşleşir (sabır→sabreden değil ama
@@ -870,6 +881,11 @@ const olcum = {
   anlamFarki: 0,    // metin kaynaktan farklı uyarısı
 };
 const say = (o, k) => { o[k] = (o[k] || 0) + 1; };
+// Bellek nöbeti: instance sessizce öldürülüyordu; sınıra yaklaşmayı görelim.
+setInterval(() => {
+  const rss = Math.round(process.memoryUsage().rss / 1048576);
+  if (rss > 1500) console.warn(`[BELLEK] RSS ${rss} MB — normalize önbellek: ${hadisNormOnbellek.size} dil`);
+}, 300_000).unref();
 // Sayaçlar bellekte tutulduğu için her deploy sıfırlıyordu. Yarım saatte bir
 // özeti log'a bas: Render logları kalıcı, böylece deploy sonrası da geçmiş kalır.
 setInterval(() => {
@@ -1152,8 +1168,10 @@ const sunucu = http.createServer(async (req, res) => {
 // listesi kısaltılabilir; listede olmayan dil ilk sorgusunda (bir kereye mahsus
 // ~700 ms) hesaplanıp yine önbelleğe alınır — sonuç değişmez, yalnız ilk istek yavaşlar.
 {
+  // Varsayılan artık TÜM diller değil: 6 dil ısıtmak +360 MB demekti ve bellek
+  // sınırını aşıyordu. tr+en ısınır, diğerleri ilk sorgularında hesaplanır.
   const istenen = (process.env.NORM_DILLER || '').split(',').map(s => s.trim()).filter(d => DILLER.includes(d));
-  const isit = istenen.length ? istenen : DILLER;
+  const isit = istenen.length ? istenen : ['tr', 'en'];
   const t0 = Date.now(), m0 = process.memoryUsage().heapUsed;
   for (const d of isit) hadisNormAl(d);
   console.log(`Normalize hadis indeksi: ${isit.length} dil (${isit.join(',')}), ${Date.now() - t0} ms, ` +

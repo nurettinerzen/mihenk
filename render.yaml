@@ -17,6 +17,10 @@ services:
       # Endonezya'da mobil operatörler CGNAT kullanıyor, yüzlerce abone tek genel
       # IP'nin arkasından çıkıp birbirini 429'a düşürüyordu. Asıl fren artık cihaz
       # başına (CIHAZ_RATE_LIMIT) + günlük ücretsiz sorgu kotası (FREE_LIMIT).
+      # Normalize hadis indeksi dil başına ~60 MB; kaç dil bellekte tutulsun.
+      # 2 GB'lık instance'ta 2 güvenli (6 dil tutulunca OOM restart oluyordu).
+      - key: NORM_LIMIT
+        value: "2"
       - key: RATE_LIMIT
         value: "3000"
       - key: CIHAZ_RATE_LIMIT
