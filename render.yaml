@@ -26,3 +26,6 @@ services:
       # Test lisansı — tanımlı DEĞİLSE lisans akışı tamamen kapalıdır (üretimde böyle olmalı).
       - key: TEST_LISANS
         sync: false
+      # Anonim kullanım özeti ucu (/olcum?k=...) — tanımlı değilse uç 404 döner.
+      - key: OLCUM_ANAHTAR
+        generateValue: true

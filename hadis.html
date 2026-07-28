@@ -1056,19 +1056,21 @@ function gununCiz(){
 // Ses opsiyonel: cdn.islamic.network'ten ayet ayet akış (id 1..6236 ile birebir).
 let KURAN=null, SURELER=null, kuranYukleniyor=false;
 // Kâriler — cdn.islamic.network (anahtarsız, ayet ayet). İsimler evrensel okunuşuyla.
+// Kâri adları: TR imlası (şapkalı/ı-i) diğer dillerde okunamıyordu → adLat = uluslararası
+// Latin yazım (en/fr/id/ur bunu kullanır), adAr = Arapça, ad = Türkçe.
 const KARILER=[
-  {id:'ar.alafasy',            ad:'Mishary Alafasy',      adAr:'مشاري راشد العفاسي'},
-  {id:'ar.abdulsamad',         ad:'Abdülbâsit Abdüssamed',adAr:'عبد الباسط عبد الصمد'},
-  {id:'ar.abdurrahmaansudais', ad:'Abdurrahman Sudeys',   adAr:'عبد الرحمن السديس'},
-  {id:'ar.saoodshuraym',       ad:'Suûd eş-Şüreym',       adAr:'سعود الشريم'},
-  {id:'ar.mahermuaiqly',       ad:'Mâhir el-Muaykılî',    adAr:'ماهر المعيقلي'},
-  {id:'ar.husary',             ad:'Mahmûd el-Husarî',     adAr:'محمود خليل الحصري'},
-  {id:'ar.hudhaify',           ad:'Ali el-Huzeyfî',       adAr:'علي الحذيفي'},
+  {id:'ar.alafasy',            ad:'Mishary Alafasy',      adLat:'Mishary Alafasy',        adAr:'مشاري راشد العفاسي'},
+  {id:'ar.abdulsamad',         ad:'Abdülbâsit Abdüssamed',adLat:'Abdul Basit Abdus Samad',adAr:'عبد الباسط عبد الصمد'},
+  {id:'ar.abdurrahmaansudais', ad:'Abdurrahman Sudeys',   adLat:'Abdurrahman As-Sudais',  adAr:'عبد الرحمن السديس'},
+  {id:'ar.saoodshuraym',       ad:'Suûd eş-Şüreym',       adLat:'Saud Al-Shuraim',        adAr:'سعود الشريم'},
+  {id:'ar.mahermuaiqly',       ad:'Mâhir el-Muaykılî',    adLat:'Maher Al-Muaiqly',       adAr:'ماهر المعيقلي'},
+  {id:'ar.husary',             ad:'Mahmûd el-Husarî',     adLat:'Mahmoud Al-Husary',      adAr:'محمود خليل الحصري'},
+  {id:'ar.hudhaify',           ad:'Ali el-Huzeyfî',       adLat:'Ali Al-Hudhaify',        adAr:'علي الحذيفي'},
 ];
 let kari=localStorage.getItem('kari')||'ar.alafasy';
 if(!KARILER.some(k=>k.id===kari)) kari='ar.alafasy';
 const sesUrl=(id)=>`https://cdn.islamic.network/quran/audio/64/${kari}/${id}.mp3`;
-const kariAdi=(k)=> dil==='ar' ? k.adAr : k.ad;
+const kariAdi=(k)=> dil==='ar' ? k.adAr : dil==='tr' ? k.ad : (k.adLat||k.ad);
 let calanSes=null, calanId=null;
 
 async function kuranVeriYukle(){

@@ -715,6 +715,23 @@ function namaz(lat, lng) {
 
 // Basit IP başına rate limit (saatte LIMIT istek) — LLM/embedding maliyetini korur.
 const istekSayac = new Map();
+// --- Anonim kullanım sayacı (kişi/cihaz eşleşmesi YOK, yalnız toplam) ---
+// Amaç: hangi aramaların BOŞ döndüğünü görüp korpus/algoritma eksiğini kapatmak.
+const olcum = {
+  baslangic: new Date().toISOString(),
+  istek: {},        // endpoint -> sayı
+  dil: {},          // dil -> sayı
+  hata: {},         // durum kodu -> sayı
+  bosSorgu: [],     // { yol, dil, sorgu } — son 300, cihaz bilgisi yok
+  bulunamadi: 0,    // hadis doğrulamada eşleşme yok
+  anlamFarki: 0,    // metin kaynaktan farklı uyarısı
+};
+const say = (o, k) => { o[k] = (o[k] || 0) + 1; };
+const bosKaydet = (yol, dil, sorgu) => {
+  olcum.bosSorgu.push({ yol, dil, sorgu: String(sorgu || '').slice(0, 80), t: new Date().toISOString() });
+  if (olcum.bosSorgu.length > 300) olcum.bosSorgu.shift();
+};
+
 const LIMIT = Number(process.env.RATE_LIMIT || 120);
 // Map'ler istemciden gelen anahtarlarla (IP, cihaz) büyüyor ve hiç temizlenmiyordu.
 // Saatte bir süresi geçmiş kayıtları at; premium kayıtları korunur.
@@ -778,6 +795,19 @@ http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }
 
   const url = new URL(req.url, 'http://x');
+  // Anonim kullanım özeti — yalnızca OLCUM_ANAHTAR tanımlıysa ve doğru anahtarla.
+  if (url.pathname === '/olcum') {
+    const anahtar = process.env.OLCUM_ANAHTAR || '';
+    if (!anahtar || url.searchParams.get('k') !== anahtar) { res.writeHead(404); return res.end(); }
+    res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+    return res.end(JSON.stringify({
+      ...olcum,
+      toplamIstek: Object.values(olcum.istek).reduce((a, b) => a + b, 0),
+      aktifCihaz: kullanim.size,
+      premiumCihaz: premiumCihaz.size,
+    }, null, 1));
+  }
+
   if (url.pathname === '/health') {
     res.writeHead(200, { 'content-type': 'application/json' });
     return res.end(JSON.stringify({ ok: true, surum: SURUM, hadis: corpus.length, ayet: ayat.length, model: MODEL, llm: !!anthropic }));
@@ -815,9 +845,10 @@ http.createServer(async (req, res) => {
       // arkasındayken (Render) kullan. Aksi halde soket adresi esas alınır.
       const xff = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
       const ip = (process.env.PROXY_GUVENILIR === '1' && xff) || req.socket.remoteAddress || 'x';
-      if (limitAsildi(ip)) { res.writeHead(429); return res.end(JSON.stringify({ hata: 'çok fazla istek, biraz bekleyin' })); }
+      if (limitAsildi(ip)) { say(olcum.hata, '429'); res.writeHead(429); return res.end(JSON.stringify({ hata: 'çok fazla istek, biraz bekleyin' })); }
       const body = JSON.parse(await govde(req) || '{}');
       const dil = dilAl(body.dil);
+      say(olcum.istek, url.pathname); say(olcum.dil, dil);
       const cihaz = (body.cihaz || '').toString().slice(0, 64) || 'anon';
       // `yerli` istemciden geliyordu: gövdeye yerli:false yazan herkes kotayı tamamen
       // atlatıyordu (sınırsız ücretsiz AI çağrısı). Kota artık herkese uygulanır.
@@ -881,14 +912,18 @@ http.createServer(async (req, res) => {
         const metin = (body.metin || '').trim();
         if (metin.length < 8) { res.writeHead(400); return res.end(JSON.stringify({ hata: 'metin çok kısa' })); }
         out = await dogrula(metin, dil);
+        if (!out.bulundu) { olcum.bulunamadi++; bosKaydet('dogrula', dil, metin); }
+        if (out.anlamFarki) olcum.anlamFarki++;
       } else if (url.pathname === '/api/kuran-konu') {
         const k = (body.konu || '').trim();
         if (k.length < 2) { res.writeHead(400); return res.end(JSON.stringify({ hata: 'konu boş' })); }
         out = await kuranKonu(k, dil);
+        if (!(out.sonuclar || []).length) bosKaydet('kuran-konu', dil, k);
       } else {
         const k = (body.konu || '').trim();
         if (k.length < 2) { res.writeHead(400); return res.end(JSON.stringify({ hata: 'konu boş' })); }
         out = await konu(k, dil);
+        if (!(out.sonuclar || []).length) bosKaydet('konu', dil, k);
       }
       // AI sorgusu başarılı → hak düş + kalan bilgisini ekle
       if (AI_YOLLAR.includes(url.pathname)) {
