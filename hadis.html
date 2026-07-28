@@ -770,13 +770,21 @@ function ayetKarti(a){
     <button class="surede-ac" data-sure="${a.sure}" data-ayet="${a.ayet}">${T.surede_oku||'Sûrede oku & dinle'} ›</button>`;
 }
 
+// Aynı isteğin kısa süre içinde tekrarı: kullanıcının ücretsiz hakkını boşa
+// harcıyor ve sunucuya iki kat yük bindiriyordu. Aynı sorgu 6 sn içinde
+// tekrarlanırsa önceki yanıtı kullan.
+const _sonIstek = new Map();
 async function istek(yol, govde){
+  const imza = yol + '|' + dil + '|' + JSON.stringify(govde);
+  const onceki = _sonIstek.get(imza);
+  if (onceki && Date.now() - onceki.t < 6000) return onceki.veri;
   const r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil, cihaz})});
   if(r.status===429){ const e=new Error('limit'); e.yogun=true; throw e; }   // 'bağlanamadım' demek yanıltıcıydı
   if(r.status===402){ const j=await r.json(); if(j.checkout) checkoutUrl=j.checkout; paywallGoster(); throw {paywall:true}; }
   if(!r.ok) throw new Error('sunucu '+r.status);
   const j = await r.json();
   if(j.kalan!==undefined){ kalan=j.kalan; premium=!!j.premium; if(j.checkout) checkoutUrl=j.checkout; hakGoster(); }
+  _sonIstek.set(imza, { t: Date.now(), veri: j });
   return j;
 }
 function yukleniyor(el){el.className='sonuc gorunur';el.innerHTML=`<div class="yukleniyor"><span class="spin"></span>${T.yukleniyor}</div>`;}

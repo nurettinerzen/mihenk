@@ -730,6 +730,18 @@ const olcum = {
   anlamFarki: 0,    // metin kaynaktan farklı uyarısı
 };
 const say = (o, k) => { o[k] = (o[k] || 0) + 1; };
+// Sayaçlar bellekte tutulduğu için her deploy sıfırlıyordu. Yarım saatte bir
+// özeti log'a bas: Render logları kalıcı, böylece deploy sonrası da geçmiş kalır.
+setInterval(() => {
+  const toplam = Object.values(olcum.istek).reduce((a, b) => a + b, 0);
+  if (!toplam) return;
+  console.log('[OLCUM]', JSON.stringify({
+    istek: olcum.istek, dil: olcum.dil, hata: olcum.hata,
+    bulunamadi: olcum.bulunamadi, anlamFarki: olcum.anlamFarki,
+    aktifCihaz: kullanim.size,
+    bosSorgu: olcum.bosSorgu.slice(-25).map(x => `${x.yol}/${x.dil}: ${x.sorgu}`),
+  }));
+}, 1800_000).unref();
 const bosKaydet = (yol, dil, sorgu) => {
   olcum.bosSorgu.push({ yol, dil, sorgu: String(sorgu || '').slice(0, 80), t: new Date().toISOString() });
   if (olcum.bosSorgu.length > 300) olcum.bosSorgu.shift();
