@@ -77,10 +77,14 @@
   .paywall-mesaj.ok{color:var(--zumrut)} .paywall-mesaj.hata{color:var(--kirmizi)}
 
   /* --- Dil seçici --- */
-  .hak-satir{min-height:18px;margin:0 0 8px;font-size:12px;color:var(--daha-soluk);
+  /* Çiplere ve butona yapışıktı; "Mihenk Plus'a geç" bağlantısı çipin hemen
+     dibinde kalınca yanlış dokunma ihtimali yüksekti. Üstte 14, altta 12 px
+     nefes payı ve bağlantının kendi dokunma alanı var. */
+  .hak-satir{min-height:18px;margin:14px 0 12px;font-size:12px;color:var(--daha-soluk);
     display:flex;align-items:center;gap:6px;justify-content:flex-end}
   .hak-satir b{color:var(--pirinc);font-weight:600}
-  .hak-satir .plus-bag{color:var(--zumrut);text-decoration:underline;cursor:pointer}
+  .hak-satir .plus-bag{color:var(--zumrut);text-decoration:underline;cursor:pointer;
+    padding:6px 2px;margin:-6px 0}
   .anahtar{width:50px;height:30px;border-radius:15px;border:1px solid var(--cizgi);
     background:var(--yuzey);position:relative;cursor:pointer;padding:0;transition:background .18s,border-color .18s}
   .anahtar>span{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
