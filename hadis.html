@@ -326,12 +326,14 @@
 
   <div id="bolum-hadis" style="display:none">
   <div class="sekmeler">
-    <button class="sekme aktif" data-mod="dogrula" data-i18n="tab_dogrula">Hadis Doğrula</button>
-    <button class="sekme" data-mod="konu" data-i18n="tab_konu">Konuya Göre</button>
+    <!-- Konuya Göre önce: hadis sekmesine girenlerin çoğu elinde metin olmadan
+         "şu konuda ne var" diye bakıyor; doğrulama yapıştıracak metni olanın işi. -->
+    <button class="sekme aktif" data-mod="konu" data-i18n="tab_konu">Konuya Göre</button>
+    <button class="sekme" data-mod="dogrula" data-i18n="tab_dogrula">Hadis Doğrula</button>
   </div>
 
   <!-- DOĞRULA -->
-  <div id="mod-dogrula">
+  <div id="mod-dogrula" style="display:none">
     <div class="kart">
       <label class="ust" data-i18n="lbl_dogrula">Bir hadis yapıştır — kaynağını ve derecesini göster</label>
       <textarea id="metin" data-i18n-ph="ph_dogrula" placeholder="Duyduğun ya da paylaşılan bir hadis metnini buraya yapıştır…"></textarea>
@@ -347,7 +349,7 @@
   </div>
 
   <!-- KONU -->
-  <div id="mod-konu" style="display:none">
+  <div id="mod-konu">
     <div class="kart">
       <label class="ust" data-i18n="lbl_konu">Bir konu yaz — sahih hadisleri getir</label>
       <input class="metin" id="konu" data-i18n-ph="ph_konu" placeholder="yalancılık, evlilik, ticaret, komşuluk…">
