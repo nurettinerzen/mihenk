@@ -77,6 +77,10 @@
   .paywall-mesaj.ok{color:var(--zumrut)} .paywall-mesaj.hata{color:var(--kirmizi)}
 
   /* --- Dil seçici --- */
+  .hak-satir{min-height:18px;margin:0 0 8px;font-size:12px;color:var(--daha-soluk);
+    display:flex;align-items:center;gap:6px;justify-content:flex-end}
+  .hak-satir b{color:var(--pirinc);font-weight:600}
+  .hak-satir .plus-bag{color:var(--zumrut);text-decoration:underline;cursor:pointer}
   .anahtar{width:50px;height:30px;border-radius:15px;border:1px solid var(--cizgi);
     background:var(--yuzey);position:relative;cursor:pointer;padding:0;transition:background .18s,border-color .18s}
   .anahtar>span{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
@@ -335,6 +339,7 @@
         <button class="cip" data-ornek="cennet" data-i18n="ex_cennet">Örnek: cennet-anne</button>
         <button class="cip" data-ornek="temizlik" data-i18n="ex_temizlik">Örnek: temizlik</button>
       </div>
+      <div class="hak-satir" data-hak></div>
       <button class="btn" id="btnDogrula" data-i18n="btn_dogrula">Doğrula</button>
     </div>
     <div class="sonuc" id="sonucDogrula"></div>
@@ -346,6 +351,7 @@
       <label class="ust" data-i18n="lbl_konu">Bir konu yaz — sahih hadisleri getir</label>
       <input class="metin" id="konu" data-i18n-ph="ph_konu" placeholder="yalancılık, evlilik, ticaret, komşuluk…">
       <div class="cipler" id="konuCipler"></div>
+      <div class="hak-satir" data-hak></div>
       <button class="btn" id="btnKonu" data-i18n="btn_konu">Getir</button>
     </div>
     <div class="sonuc" id="sonucKonu"></div>
@@ -364,6 +370,7 @@
         <label class="ust" data-i18n="lbl_kuran">Bir konu yaz — Kur'an ne diyor?</label>
         <input class="metin" id="kkonu" data-i18n-ph="ph_kuran" placeholder="sabır, anne-baba, faiz, tevekkül, adalet…">
         <div class="cipler" id="kkonuCipler"></div>
+        <div class="hak-satir" data-hak></div>
         <button class="btn" id="btnKuran" data-i18n="btn_kuran">Ayetleri getir</button>
       </div>
       <div class="sonuc" id="sonucKuran"></div>
@@ -1125,15 +1132,21 @@ function sorguluEkranMi(){
   return false;
 }
 function hakGoster(){
-  const b=document.getElementById('plusBtn'); if(!b) return;
-  const gorunur = premium || sorguluEkranMi();
-  b.style.display = gorunur ? '' : 'none';
-  const serit = b.parentElement;                 // .ust-bar
-  if (serit) serit.style.display = gorunur ? '' : 'none';   // boş satır bırakma
-  if(premium){ b.textContent='✦ '+T.pw_aktif; b.classList.add('premium'); }
-  else if(kalan!==null && kalan>=0){ b.textContent='✦ '+T.pw_kalan(kalan); b.classList.remove('premium'); }
-  else { b.textContent='✦ Plus'; b.classList.remove('premium'); }
+  // Sayaç artık üstte değil, sorgunun yapıldığı kartın içinde — üstte görünüp
+  // kaybolunca bütün sayfa aşağı yukarı kayıyordu.
+  const metin = premium
+    ? `<b>${T.pw_aktif}</b>`
+    : (kalan!==null && kalan>=0
+        ? `${T.pw_kalan(kalan)} · <span class="plus-bag" data-plus>${T.pw_satinal}</span>`
+        : `<span class="plus-bag" data-plus>${T.pw_satinal}</span>`);
+  document.querySelectorAll('[data-hak]').forEach(el=>{
+    el.innerHTML = metin;
+    el.querySelector('[data-plus]')?.addEventListener('click', paywallGoster);
+  });
+  const b=document.getElementById('plusBtn');
+  if(b){ const serit=b.parentElement; if(serit) serit.style.display='none'; }  // üstteki şerit kalktı
 }
+
 function paywallGoster(){ document.getElementById('paywall').classList.add('acik'); }
 function paywallGizle(){ document.getElementById('paywall').classList.remove('acik'); }
 // --- Mihenk Plus / Apple IAP (RevenueCat) ---
