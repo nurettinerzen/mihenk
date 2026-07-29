@@ -1260,10 +1260,9 @@ function paywallGoster(kaynak){ document.getElementById('paywall').classList.add
 function paywallGizle(){ document.getElementById('paywall').classList.remove('acik'); }
 // --- Mihenk Plus / mağaza IAP (RevenueCat) ---
 // Apple anahtarını Android'de kullanmak sessizce yanlış projeye bağlanmaktan da
-// kötüdür: ürünler yüklenmez ve satın alma bozuk görünür. Google Play uygulaması
-// RevenueCat'e eklendiğinde buraya o uygulamanın `goog_...` public SDK anahtarı
-// yazılacak. O zamana kadar Android'de IAP güvenli biçimde kapalı kalır.
-const RC_KEYS = { ios:'appl_VJAIwVAqpNCfirEgFSXFZSAIvKt', android:'' };
+// kötüdür: ürünler yüklenmez ve satın alma bozuk görünür. Her mağaza kendi
+// RevenueCat public SDK anahtarını kullanır.
+const RC_KEYS = { ios:'appl_VJAIwVAqpNCfirEgFSXFZSAIvKt', android:'goog_KicdumMPBoJZOqQDEsMQsTKiwWu' };
 const RC_KEY = RC_KEYS[window.Capacitor?.getPlatform?.()] || '';
 const URUNLER = { yillik:'mihenk_plus_yillik', aylik:'mihenk_plus_aylik' };
 let seciliUrun = URUNLER.yillik, rcUrunler = null;
