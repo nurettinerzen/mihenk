@@ -1370,8 +1370,7 @@ async function sureIndir(no, ilerle){
       let varMi = false;
       try{ await fs.stat({ directory:'DATA', path: yol }); varMi = true; }catch(e){}
       if(!varMi){
-        const veri = await sesIndirBase64(a.id);
-        await fs.writeFile({ directory:'DATA', path: yol, data: veri, recursive: true });
+        await fs.downloadFile({ url: sesUrl(a.id), path: yol, directory:'DATA', recursive: true });
       }
     }catch(e){ console.error('ayet indirilemedi', a.id, e); return false; }
     ilerle && ilerle(++i, ayetler.length);
@@ -1388,22 +1387,30 @@ async function kariIndir(ilerle){
   const fs = FS(); if(!fs) return false;
   indirmeIptal = false;
   const hepsi = (KURAN||[]);
-  let i = 0, bayt = 0;
-  for(const a of hepsi){
-    if(indirmeIptal) return 'iptal';
-    try{
+  const ESZAMAN = 8;                 // aynı anda kaç dosya; sıralı indirme saatler sürüyordu
+  const ORT_BAYT = 139 * 1024;       // ölçüm: ortalama ayet boyutu
+  let sira = 0, tamam = 0, hata = 0;
+
+  async function isci(){
+    while(sira < hepsi.length && !indirmeIptal){
+      const a = hepsi[sira++];
       const yol = yerelYol(kari, a.id);
-      let varMi = false;
-      try{ await fs.stat({ directory:'DATA', path: yol }); varMi = true; }catch(e){}
-      if(!varMi){
-        const veri = await sesIndirBase64(a.id);
-        bayt += Math.round(veri.length * 3 / 4);
-        await fs.writeFile({ directory:'DATA', path: yol, data: veri, recursive: true });
+      try{
+        let varMi = false;
+        try{ await fs.stat({ directory:'DATA', path: yol }); varMi = true; }catch(e){}
+        if(!varMi){
+          // Native indirme: base64'e çevirip JS üzerinden geçirmek yavaştı.
+          await fs.downloadFile({ url: sesUrl(a.id), path: yol, directory:'DATA', recursive: true });
+        }
+      }catch(e){
+        if(++hata > 25) { indirmeIptal = true; console.error('çok fazla hata', e); }
       }
-    }catch(e){ console.error('ayet indirilemedi', a.id, e); return false; }
-    ilerle && ilerle(++i, hepsi.length, bayt);
+      ilerle && ilerle(++tamam, hepsi.length, tamam * ORT_BAYT);
+    }
   }
-  // tüm sûreleri inik say
+  await Promise.all(Array.from({ length: ESZAMAN }, isci));
+  if(indirmeIptal) return hata > 25 ? false : 'iptal';
+
   for(const su of (SURELER||[])) inikSureler[`${kari}|${su.no}`] = true;
   inikSureler[`${kari}|TAM`] = true;
   localStorage.setItem('inikSureler', JSON.stringify(inikSureler));
