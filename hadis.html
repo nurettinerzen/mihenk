@@ -945,7 +945,7 @@ async function calistirDogrula(){
   const _t0=Date.now(); olay('sorgu',{tur:'dogrula',dil});
   try{
     const j=await istek('/api/dogrula',{metin});
-    olay('sonuc',{tur:'dogrula',bulundu:!!j.bulundu,ms:Date.now()-_t0});
+    olay('sonuc',{tur:'dogrula',bulundu:!!j.bulundu,ms:Date.now()-_t0,kalan:j.kalan});
     if(j.bulundu){
       // Kaynak sahih olsa bile kullanıcının metni manayı değiştiriyorsa yeşil rozeti
       // tek başına göstermek yanlış onaydır; farkı kartın ÜSTÜNDE açıkça bildiririz.
@@ -979,7 +979,7 @@ async function calistirKonu(){
   const _t0=Date.now(); olay('sorgu',{tur:'konu',dil});
   try{
     const j=await istek('/api/konu',{konu});
-    olay('sonuc',{tur:'konu',bulundu:!!(j.sonuclar&&j.sonuclar.length),ms:Date.now()-_t0});
+    olay('sonuc',{tur:'konu',bulundu:!!(j.sonuclar&&j.sonuclar.length),ms:Date.now()-_t0,kalan:j.kalan});
     if(!j.sonuclar.length){
       el.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.konu_bos}</div></div>`;
     }else{
@@ -997,8 +997,10 @@ async function calistirKuran(){
   if(konu.length<2){ const e=document.getElementById('sonucKuran'); e.className='sonuc gorunur'; e.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.girdi_bos||'Lütfen bir konu yaz.'}</div></div>`; return; }
   const el=document.getElementById('sonucKuran'); yukleniyor(el);
   document.getElementById('btnKuran').disabled=true;
+  const _t0=Date.now(); olay('sorgu',{tur:'kuran',dil});
   try{
     const j=await istek('/api/kuran-konu',{konu});
+    olay('sonuc',{tur:'kuran',bulundu:!!(j.sonuclar&&j.sonuclar.length),ms:Date.now()-_t0,kalan:j.kalan});
     if(!j.sonuclar.length){
       el.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.kuran_bos}</div></div>`;
     }else{
@@ -1256,8 +1258,13 @@ function hakGoster(){
 
 function paywallGoster(kaynak){ document.getElementById('paywall').classList.add('acik'); olay('paywall',{kaynak:kaynak||'sayac'}); }
 function paywallGizle(){ document.getElementById('paywall').classList.remove('acik'); }
-// --- Mihenk Plus / Apple IAP (RevenueCat) ---
-const RC_KEY = 'appl_VJAIwVAqpNCfirEgFSXFZSAIvKt'; // RevenueCat > Mihenk > public Apple SDK key
+// --- Mihenk Plus / mağaza IAP (RevenueCat) ---
+// Apple anahtarını Android'de kullanmak sessizce yanlış projeye bağlanmaktan da
+// kötüdür: ürünler yüklenmez ve satın alma bozuk görünür. Google Play uygulaması
+// RevenueCat'e eklendiğinde buraya o uygulamanın `goog_...` public SDK anahtarı
+// yazılacak. O zamana kadar Android'de IAP güvenli biçimde kapalı kalır.
+const RC_KEYS = { ios:'appl_VJAIwVAqpNCfirEgFSXFZSAIvKt', android:'' };
+const RC_KEY = RC_KEYS[window.Capacitor?.getPlatform?.()] || '';
 const URUNLER = { yillik:'mihenk_plus_yillik', aylik:'mihenk_plus_aylik' };
 let seciliUrun = URUNLER.yillik, rcUrunler = null;
 const CapEklenti = () => (window.Capacitor && window.Capacitor.Plugins) || {};
