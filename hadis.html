@@ -69,6 +69,7 @@
   .plan-ad{font-family:'Sora',sans-serif;font-weight:600;font-size:15.5px;color:var(--metin)}
   .plan-rozet{font-size:11px;color:var(--zumrut);font-weight:600}
   .plan-fiyat{font-family:'Sora',sans-serif;font-weight:700;font-size:17px;color:var(--pirinc)}
+  .plan-deneme{font-size:12.5px;color:var(--zumrut);text-align:center;margin:-2px 0 2px}
   .restore-link{background:none;border:none;color:var(--daha-soluk);font-family:inherit;font-size:12.5px;
     cursor:pointer;display:block;margin:14px auto 0;text-decoration:underline}
   .btn-ince{background:var(--yuzey2);border:1px solid var(--zumrut-koyu);color:var(--metin);font-family:inherit;
@@ -430,7 +431,8 @@
       <ul class="paywall-liste">
         <li data-i18n="pw_m1">Sınırsız hadis doğrulama</li>
         <li data-i18n="pw_m2">Sınırsız Kur'an ve konu araması</li>
-        <li data-i18n="pw_m3">Aynı Apple Kimliğindeki tüm cihazlarında geçerli</li>
+        <li data-i18n="pw_m3">Tilaveti indir, internetsiz dinle</li>
+        <li data-i18n="pw_m4">Aynı hesaptaki tüm cihazlarında geçerli</li>
       </ul>
       <div class="planlar">
         <button class="plan-btn secili" id="planYillik" data-urun="mihenk_plus_yillik">
@@ -440,6 +442,9 @@
                gösteriliyordu = yanlış fiyat beyanı. Gelene kadar tire gösterilir. -->
           <span class="plan-fiyat" id="fiyatYillik">—</span>
         </button>
+        <!-- Deneme metni StoreKit'ten okunur (introPrice). Koda "3 gün" yazmak,
+             Apple'da süre değişirse yanlış vaat olur; teklif hiç yoksa satır gizli. -->
+        <div class="plan-deneme" id="planDeneme" style="display:none"></div>
         <button class="plan-btn" id="planAylik" data-urun="mihenk_plus_aylik">
           <span class="plan-sol"><span class="plan-ad" data-i18n="pw_aylik">Aylık</span></span>
           <span class="plan-fiyat" id="fiyatAylik">—</span>
@@ -555,7 +560,7 @@ const KKONULAR = {
 };
 const L = {
   tr: {
-    indir_teklif:'Tilaveti internetsiz dinlemek için bu kâriyi indir (≈800 MB).',indir_et:'İndir',indir_iptal:'İptal',indir_kaldir:'Kaldır',indir_hazir:'{k} çevrimdışı dinlenebilir.',indir_basliyor:'Hazırlanıyor…',indir_bitti:'Tilavet indirildi. Artık internetsiz dinleyebilirsin.',indir_iptal_oldu:'İndirme durduruldu. Kaldığın yerden devam edebilirsin.',indir_kaldir_onay:'İndirilen tilavet cihazdan silinsin mi?',
+    indir_plus:'Çevrimdışı tilavet Mihenk Plus ile. Okumak ve çevrimiçi dinlemek ücretsiz.',indir_teklif:'Tilaveti internetsiz dinlemek için bu kâriyi indir (≈800 MB).',indir_et:'İndir',indir_iptal:'İptal',indir_kaldir:'Kaldır',indir_hazir:'{k} çevrimdışı dinlenebilir.',indir_basliyor:'Hazırlanıyor…',indir_bitti:'Tilavet indirildi. Artık internetsiz dinleyebilirsin.',indir_iptal_oldu:'İndirme durduruldu. Kaldığın yerden devam edebilirsin.',indir_kaldir_onay:'İndirilen tilavet cihazdan silinsin mi?',
     indir_sil:'Bu sûrenin sesi cihazdan silinsin mi?',indir_hata:'Sûre indirilemedi. Bağlantını kontrol et.',
     ayar_bildirim:'Ezan bildirimi',ayar_deneme:'Ezan sesini dene',ayar_deneme_btn:'Dene',deneme_bekle:'10 sn…',deneme_baslik:'Ezan sesi denemesi',deneme_govde:'Bu bildirim ezan sesiyle gelmeliydi.',deneme_not:'Uygulamadan çık ve bekle — bildirim 10 saniye içinde ezan sesiyle gelmeli. Telefonun sessizde olmadığından ve Odaklanma modunun kapalı olduğundan emin ol.',bildirim_govde:'{v} vakti girdi.',bildirim_izin:'Bildirim izni verilmedi. iPhone Ayarlar > Mihenk > Bildirimler bölümünden açabilirsin.',
     ceviri_yok:'Bu rivayetin Türkçe çevirisi kaynakta yok; {dil} metni gösteriliyor.',
@@ -586,17 +591,17 @@ const L = {
     ezan_kutup_baslik:'Bu konumda bazı vakitler oluşmuyor', ezan_kutup:'Bulunduğun enlemde güneş, imsak ve yatsı için gereken açıya bu mevsimde hiç inmiyor; bu yüzden o vakitler astronomik olarak oluşmuyor. Vakit uydurmuyoruz — hesaplanamayan vakitler “—” gösterilir. Bölgendeki uygulamayı yetkili bir müftülüğe/İslam merkezine danışman en doğrusu.',
     vakit:{imsak:'İmsak',gunes:'Güneş',ogle:'Öğle',ikindi:'İkindi',aksam:'Akşam',yatsi:'Yatsı'},
     kible_etk:'Kıble yönü', yon:['Kuzey','Kuzeydoğu','Doğu','Güneydoğu','Güney','Güneybatı','Batı','Kuzeybatı'],
-    pw_alt:'Sınırsız hadis doğrulama ve Kur\'an araması', pw_m1:'Sınırsız hadis doğrulama', pw_m2:'Sınırsız Kur\'an ve konu araması', pw_m3:'Aynı Apple Kimliğindeki tüm cihazlarında geçerli',
+    pw_alt:'Sınırsız hadis doğrulama ve Kur\'an araması', pw_m1:'Sınırsız hadis doğrulama', pw_m2:'Sınırsız Kur\'an ve konu araması', pw_m3:'Tilaveti indir, internetsiz dinle',pw_m4:'Aynı hesaptaki tüm cihazlarında geçerli',
     pw_satinal:'Mihenk Plus\'a geç',
     pw_kalan:(n)=>`${n} ücretsiz sorgu kaldı`, pw_aktif:'Plus aktif', pw_basarili:'Etkinleştirildi! Sınırsız erişim açık.', pw_gecersiz:'Anahtar geçersiz.', pw_yakinda:'Satın alma yakında (App Store).',
     nav_bugun:'Bugün', ayar_baslik:'Ayarlar', ayar_dil:'Dil', ayar_gizlilik:'Gizlilik Politikası', ayar_kullanim:'Kullanım Koşulları',
     ayar_hakkinda:'Mihenk; hadis metnini, âlim derecesini ve Kur\'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.',
     selam:'Selâmün aleyküm', gun_ayet:'Günün Ayeti', gun_hadis:'Günün Hadisi',
-    pw_yillik:'Yıllık', pw_aylik:'Aylık', pw_avantaj:(p)=>`%${p} avantajlı`, pw_devam:'Devam et', pw_restore:'Satın almaları geri yükle',
+    pw_yillik:'Yıllık', pw_aylik:'Aylık', pw_deneme:(s)=>`İlk ${s} ücretsiz`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'gün':'gün',WEEK:'hafta',MONTH:'ay',YEAR:'yıl'}[b]||''),pw_avantaj:(p)=>`%${p} avantajlı`, pw_devam:'Devam et', pw_restore:'Satın almaları geri yükle',
     pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
   },
   en: {
-    indir_teklif:'Download this reciter to listen offline (~800 MB).',indir_et:'Download',indir_iptal:'Cancel',indir_kaldir:'Remove',indir_hazir:'{k} is available offline.',indir_basliyor:'Preparing…',indir_bitti:'Recitation downloaded. You can now listen offline.',indir_iptal_oldu:'Download stopped. You can resume where you left off.',indir_kaldir_onay:'Delete the downloaded recitation from your device?',
+    indir_plus:'Offline recitation comes with Mihenk Plus. Reading and online listening stay free.',indir_teklif:'Download this reciter to listen offline (~800 MB).',indir_et:'Download',indir_iptal:'Cancel',indir_kaldir:'Remove',indir_hazir:'{k} is available offline.',indir_basliyor:'Preparing…',indir_bitti:'Recitation downloaded. You can now listen offline.',indir_iptal_oldu:'Download stopped. You can resume where you left off.',indir_kaldir_onay:'Delete the downloaded recitation from your device?',
     indir_sil:'Delete this surah\'s audio from your device?',indir_hata:'Could not download the surah. Check your connection.',
     ayar_bildirim:'Adhan notifications',ayar_deneme:'Test the adhan sound',ayar_deneme_btn:'Test',deneme_bekle:'10 s…',deneme_baslik:'Adhan sound test',deneme_govde:'This notification should arrive with the adhan.',deneme_not:'Leave the app and wait — the notification should arrive with the adhan within 10 seconds. Make sure your phone is not on silent and Focus is off.',bildirim_govde:'It is time for {v}.',bildirim_izin:'Notification permission was not granted. You can enable it in Settings > Mihenk > Notifications.',
     ceviri_yok:'This narration has no translation in the source; showing the {dil} text.',
@@ -627,17 +632,17 @@ const L = {
     ezan_kutup_baslik:'Some prayer times do not occur here', ezan_kutup:'At your latitude the sun does not reach the angle required for Fajr and Isha in this season, so those times do not occur astronomically. We do not invent times — what cannot be calculated is shown as “—”. Please consult a local mosque or Islamic centre for the ruling that applies in your region.',
     vakit:{imsak:'Fajr',gunes:'Sunrise',ogle:'Dhuhr',ikindi:'Asr',aksam:'Maghrib',yatsi:'Isha'},
     kible_etk:'Qibla direction', yon:['North','Northeast','East','Southeast','South','Southwest','West','Northwest'],
-    pw_alt:'Unlimited hadith verification and Quran search', pw_m1:'Unlimited hadith verification', pw_m2:'Unlimited Quran & topic search', pw_m3:'Works on all your devices with the same Apple ID',
+    pw_alt:'Unlimited hadith verification and Quran search', pw_m1:'Unlimited hadith verification', pw_m2:'Unlimited Quran & topic search', pw_m3:'Download the recitation, listen offline',pw_m4:'Works on all your devices with the same account',
     pw_satinal:'Get Mihenk Plus',
     pw_kalan:(n)=>`${n} free left`, pw_aktif:'Plus active', pw_basarili:'Activated! Unlimited access unlocked.', pw_gecersiz:'Invalid key.', pw_yakinda:'Purchase coming soon (App Store).',
     nav_bugun:'Today', ayar_baslik:'Settings', ayar_dil:'Language', ayar_gizlilik:'Privacy Policy', ayar_kullanim:'Terms of Use',
     ayar_hakkinda:'Mihenk brings the hadith text, scholars\' grading and Quran translation from verified sources — it does not generate them. Consult a scholar on disputed matters.',
     selam:'As-salamu alaykum', gun_ayet:'Verse of the Day', gun_hadis:'Hadith of the Day',
-    pw_yillik:'Yearly', pw_aylik:'Monthly', pw_avantaj:(p)=>`Save ${p}%`, pw_devam:'Continue', pw_restore:'Restore purchases',
+    pw_yillik:'Yearly', pw_aylik:'Monthly', pw_deneme:(s)=>`First ${s} free`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'days':'day',WEEK:n>1?'weeks':'week',MONTH:n>1?'months':'month',YEAR:n>1?'years':'year'}[b]||''),pw_avantaj:(p)=>`Save ${p}%`, pw_devam:'Continue', pw_restore:'Restore purchases',
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
   },
   fr: {
-    indir_teklif:'Télécharge ce récitateur pour écouter hors ligne (~800 Mo).',indir_et:'Télécharger',indir_iptal:'Annuler',indir_kaldir:'Supprimer',indir_hazir:'{k} est disponible hors ligne.',indir_basliyor:'Préparation…',indir_bitti:'Récitation téléchargée. Tu peux écouter hors ligne.',indir_iptal_oldu:'Téléchargement arrêté. Tu peux reprendre plus tard.',indir_kaldir_onay:'Supprimer la récitation téléchargée de l\'appareil ?',
+    indir_plus:'La récitation hors ligne est incluse dans Mihenk Plus. Lire et écouter en ligne restent gratuits.',indir_teklif:'Télécharge ce récitateur pour écouter hors ligne (~800 Mo).',indir_et:'Télécharger',indir_iptal:'Annuler',indir_kaldir:'Supprimer',indir_hazir:'{k} est disponible hors ligne.',indir_basliyor:'Préparation…',indir_bitti:'Récitation téléchargée. Tu peux écouter hors ligne.',indir_iptal_oldu:'Téléchargement arrêté. Tu peux reprendre plus tard.',indir_kaldir_onay:'Supprimer la récitation téléchargée de l\'appareil ?',
     indir_sil:'Supprimer l\'audio de cette sourate de l\'appareil ?',indir_hata:'Téléchargement impossible. Vérifie ta connexion.',
     ayar_bildirim:'Notifications d\'adhan',ayar_deneme:'Tester le son de l\'adhan',ayar_deneme_btn:'Tester',deneme_bekle:'10 s…',deneme_baslik:'Test du son de l\'adhan',deneme_govde:'Cette notification devrait arriver avec l\'adhan.',deneme_not:'Quitte l\'app et attends — la notification devrait arriver avec l\'adhan sous 10 secondes. Vérifie que le téléphone n\'est pas en silencieux et que Concentration est désactivé.',bildirim_govde:'C\'est l\'heure de {v}.',bildirim_izin:'Permission refusée. Active-la dans Réglages > Mihenk > Notifications.',
     ceviri_yok:'Cette narration n\'a pas de traduction dans la source ; texte en {dil} affiché.',
@@ -668,17 +673,17 @@ const L = {
     ezan_kutup_baslik:'Certaines prières n\'ont pas lieu ici', ezan_kutup:'À votre latitude, le soleil n\'atteint pas l\'angle requis pour le Fajr et l\'Isha en cette saison ; ces horaires n\'existent donc pas astronomiquement. Nous n\'inventons pas d\'horaires — ce qui n\'est pas calculable est affiché « — ». Consultez une mosquée ou un centre islamique local pour la règle applicable.',
     vakit:{imsak:'Fajr',gunes:'Lever du soleil',ogle:'Dhuhr',ikindi:'Asr',aksam:'Maghrib',yatsi:'Isha'},
     kible_etk:'Direction de la qibla', yon:['Nord','Nord-est','Est','Sud-est','Sud','Sud-ouest','Ouest','Nord-ouest'],
-    pw_alt:'Vérification de hadiths et recherche coranique illimitées', pw_m1:'Vérification de hadiths illimitée', pw_m2:'Recherche coranique et thématique illimitée', pw_m3:'Valable sur tous vos appareils avec le même identifiant Apple',
+    pw_alt:'Vérification de hadiths et recherche coranique illimitées', pw_m1:'Vérification de hadiths illimitée', pw_m2:'Recherche coranique et thématique illimitée', pw_m3:'Télécharge la récitation, écoute hors ligne',pw_m4:'Valable sur tous tes appareils avec le même compte',
     pw_satinal:'Passer à Mihenk Plus',
     pw_kalan:(n)=>`${n} requêtes gratuites restantes`, pw_aktif:'Plus actif', pw_basarili:'Activé ! Accès illimité débloqué.', pw_gecersiz:'Clé invalide.', pw_yakinda:'Achat bientôt disponible (App Store).',
     nav_bugun:'Aujourd\'hui', ayar_baslik:'Réglages', ayar_dil:'Langue', ayar_gizlilik:'Politique de confidentialité', ayar_kullanim:'Conditions d\'utilisation',
     ayar_hakkinda:'Mihenk rapporte le texte du hadith, le degré des savants et la traduction du Coran depuis des sources vérifiées — il ne les génère pas. Consultez un savant pour les questions litigieuses.',
     selam:'As-salâmu alaykum', gun_ayet:'Verset du jour', gun_hadis:'Hadith du jour',
-    pw_yillik:'Annuel', pw_aylik:'Mensuel', pw_avantaj:(p)=>`-${p} %`, pw_devam:'Continuer', pw_restore:'Restaurer les achats',
+    pw_yillik:'Annuel', pw_aylik:'Mensuel', pw_deneme:(s)=>`${s} offerts`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'jours':'jour',WEEK:n>1?'semaines':'semaine',MONTH:'mois',YEAR:n>1?'ans':'an'}[b]||''),pw_avantaj:(p)=>`-${p} %`, pw_devam:'Continuer', pw_restore:'Restaurer les achats',
     pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
   },
   id: {
-    indir_teklif:'Unduh qari ini untuk mendengarkan tanpa internet (~800 MB).',indir_et:'Unduh',indir_iptal:'Batal',indir_kaldir:'Hapus',indir_hazir:'{k} tersedia offline.',indir_basliyor:'Menyiapkan…',indir_bitti:'Tilawah terunduh. Kini bisa didengarkan tanpa internet.',indir_iptal_oldu:'Unduhan dihentikan. Bisa dilanjutkan nanti.',indir_kaldir_onay:'Hapus tilawah yang diunduh dari perangkat?',
+    indir_plus:'Tilawah offline ada di Mihenk Plus. Membaca dan mendengarkan online tetap gratis.',indir_teklif:'Unduh qari ini untuk mendengarkan tanpa internet (~800 MB).',indir_et:'Unduh',indir_iptal:'Batal',indir_kaldir:'Hapus',indir_hazir:'{k} tersedia offline.',indir_basliyor:'Menyiapkan…',indir_bitti:'Tilawah terunduh. Kini bisa didengarkan tanpa internet.',indir_iptal_oldu:'Unduhan dihentikan. Bisa dilanjutkan nanti.',indir_kaldir_onay:'Hapus tilawah yang diunduh dari perangkat?',
     indir_sil:'Hapus audio surah ini dari perangkat?',indir_hata:'Surah tidak dapat diunduh. Periksa koneksimu.',
     ayar_bildirim:'Notifikasi azan',ayar_deneme:'Coba suara azan',ayar_deneme_btn:'Coba',deneme_bekle:'10 dtk…',deneme_baslik:'Uji suara azan',deneme_govde:'Notifikasi ini seharusnya datang dengan suara azan.',deneme_not:'Keluar dari aplikasi dan tunggu — notifikasi akan datang dengan suara azan dalam 10 detik. Pastikan ponsel tidak dalam mode senyap dan Fokus mati.',bildirim_govde:'Waktu {v} telah masuk.',bildirim_izin:'Izin notifikasi belum diberikan. Aktifkan di Pengaturan > Mihenk > Notifikasi.',
     ceviri_yok:'Riwayat ini tidak memiliki terjemahan di sumber; menampilkan teks {dil}.',
@@ -709,17 +714,17 @@ const L = {
     ezan_kutup_baslik:'Sebagian waktu salat tidak terjadi di sini', ezan_kutup:'Pada lintang ini matahari tidak mencapai sudut yang diperlukan untuk Subuh dan Isya pada musim ini, sehingga waktu tersebut tidak terjadi secara astronomis. Kami tidak mengarang waktu — yang tidak dapat dihitung ditampilkan “—”. Silakan tanyakan kepada masjid atau lembaga Islam setempat.',
     vakit:{imsak:'Subuh',gunes:'Terbit',ogle:'Zuhur',ikindi:'Asar',aksam:'Magrib',yatsi:'Isya'},
     kible_etk:'Arah kiblat', yon:['Utara','Timur laut','Timur','Tenggara','Selatan','Barat daya','Barat','Barat laut'],
-    pw_alt:'Verifikasi hadis dan pencarian Al-Qur\'an tanpa batas', pw_m1:'Verifikasi hadis tanpa batas', pw_m2:'Pencarian Al-Qur\'an & topik tanpa batas', pw_m3:'Berlaku di semua perangkat dengan Apple ID yang sama',
+    pw_alt:'Verifikasi hadis dan pencarian Al-Qur\'an tanpa batas', pw_m1:'Verifikasi hadis tanpa batas', pw_m2:'Pencarian Al-Qur\'an & topik tanpa batas', pw_m3:'Unduh tilawah, dengarkan tanpa internet',pw_m4:'Berlaku di semua perangkat dengan akun yang sama',
     pw_satinal:'Dapatkan Mihenk Plus',
     pw_kalan:(n)=>`${n} kueri gratis tersisa`, pw_aktif:'Plus aktif', pw_basarili:'Aktif! Akses tanpa batas terbuka.', pw_gecersiz:'Kunci tidak valid.', pw_yakinda:'Pembelian segera hadir (App Store).',
     nav_bugun:'Hari Ini', ayar_baslik:'Pengaturan', ayar_dil:'Bahasa', ayar_gizlilik:'Kebijakan Privasi', ayar_kullanim:'Ketentuan Penggunaan',
     ayar_hakkinda:'Mihenk menyajikan teks hadis, penilaian ulama, dan terjemahan Al-Qur\'an dari sumber terverifikasi — bukan mengarangnya. Rujuklah kepada ulama untuk masalah yang diperselisihkan.',
     selam:'Assalamu\'alaikum', gun_ayet:'Ayat Hari Ini', gun_hadis:'Hadis Hari Ini',
-    pw_yillik:'Tahunan', pw_aylik:'Bulanan', pw_avantaj:(p)=>`Hemat ${p}%`, pw_devam:'Lanjutkan', pw_restore:'Pulihkan pembelian',
+    pw_yillik:'Tahunan', pw_aylik:'Bulanan', pw_deneme:(s)=>`${s} pertama gratis`,pw_sure:(n,b)=>n+' '+({DAY:'hari',WEEK:'minggu',MONTH:'bulan',YEAR:'tahun'}[b]||''),pw_avantaj:(p)=>`Hemat ${p}%`, pw_devam:'Lanjutkan', pw_restore:'Pulihkan pembelian',
     pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
   },
   ar: {
-    indir_teklif:'نزّل هذا القارئ للاستماع دون إنترنت (≈800 ميغابايت).',indir_et:'تنزيل',indir_iptal:'إلغاء',indir_kaldir:'إزالة',indir_hazir:'{k} متاح دون إنترنت.',indir_basliyor:'جارٍ التحضير…',indir_bitti:'تم تنزيل التلاوة. يمكنك الاستماع دون إنترنت.',indir_iptal_oldu:'تم إيقاف التنزيل. يمكنك المتابعة لاحقًا.',indir_kaldir_onay:'هل تريد حذف التلاوة المنزَّلة من جهازك؟',
+    indir_plus:'التلاوة دون اتصال مع مِحَك بلس. القراءة والاستماع عبر الإنترنت مجانيان.',indir_teklif:'نزّل هذا القارئ للاستماع دون إنترنت (≈800 ميغابايت).',indir_et:'تنزيل',indir_iptal:'إلغاء',indir_kaldir:'إزالة',indir_hazir:'{k} متاح دون إنترنت.',indir_basliyor:'جارٍ التحضير…',indir_bitti:'تم تنزيل التلاوة. يمكنك الاستماع دون إنترنت.',indir_iptal_oldu:'تم إيقاف التنزيل. يمكنك المتابعة لاحقًا.',indir_kaldir_onay:'هل تريد حذف التلاوة المنزَّلة من جهازك؟',
     indir_sil:'هل تريد حذف تلاوة هذه السورة من جهازك؟',indir_hata:'تعذّر تنزيل السورة. تحقّق من اتصالك.',
     ayar_bildirim:'تنبيهات الأذان',ayar_deneme:'جرّب صوت الأذان',ayar_deneme_btn:'جرّب',deneme_bekle:'10 ث…',deneme_baslik:'تجربة صوت الأذان',deneme_govde:'كان ينبغي أن يصل هذا التنبيه بصوت الأذان.',deneme_not:'اخرج من التطبيق وانتظر — سيصل التنبيه بصوت الأذان خلال 10 ثوانٍ. تأكد أن الهاتف ليس صامتًا وأن وضع التركيز مغلق.',bildirim_govde:'حان وقت {v}.',bildirim_izin:'لم يُمنح إذن الإشعارات. يمكنك تفعيله من الإعدادات > مِحَنك > الإشعارات.',
     ceviri_yok:'لا تتوفر ترجمة لهذه الرواية في المصدر؛ يُعرض النص بلغة {dil}.',
@@ -750,17 +755,17 @@ const L = {
     ezan_kutup_baslik:'بعض الأوقات لا تتحقّق في هذا الموقع', ezan_kutup:'في خط العرض الذي أنت فيه لا تبلغ الشمس الزاوية اللازمة للفجر والعشاء في هذا الفصل، فلا تتحقّق هذه الأوقات فلكيًّا. نحن لا نختلق الأوقات — وما يتعذّر حسابه يُعرض بعلامة «—». يُستحسن سؤال مسجد أو مركز إسلامي في منطقتك عن الحكم المعمول به.',
     vakit:{imsak:'الفجر',gunes:'الشروق',ogle:'الظهر',ikindi:'العصر',aksam:'المغرب',yatsi:'العشاء'},
     kible_etk:'اتجاه القبلة', yon:['شمال','شمال شرقي','شرق','جنوب شرقي','جنوب','جنوب غربي','غرب','شمال غربي'],
-    pw_alt:'تحقّق غير محدود من الأحاديث وبحث في القرآن', pw_m1:'تحقّق غير محدود من الأحاديث', pw_m2:'بحث غير محدود في القرآن والمواضيع', pw_m3:'يعمل على جميع أجهزتك بمعرّف Apple نفسه',
+    pw_alt:'تحقّق غير محدود من الأحاديث وبحث في القرآن', pw_m1:'تحقّق غير محدود من الأحاديث', pw_m2:'بحث غير محدود في القرآن والمواضيع', pw_m3:'نزّل التلاوة واستمع دون اتصال',pw_m4:'يعمل على كل أجهزتك بالحساب نفسه',
     pw_satinal:'اشترك في مِحَنك بلس',
     pw_kalan:(n)=>`بقي ${n} استعلامات مجانية`, pw_aktif:'بلس مُفعّل', pw_basarili:'تم التفعيل! وصول غير محدود.', pw_gecersiz:'مفتاح غير صالح.', pw_yakinda:'الشراء قريبًا (App Store).',
     nav_bugun:'اليوم', ayar_baslik:'الإعدادات', ayar_dil:'اللغة', ayar_gizlilik:'سياسة الخصوصية', ayar_kullanim:'شروط الاستخدام',
     ayar_hakkinda:'يُحضِر مِحَنك نصّ الحديث وحُكم العلماء وترجمة القرآن من مصادر موثّقة — لا يُنشئها. اسأل عالمًا في المسائل الخلافية.',
     selam:'السلام عليكم', gun_ayet:'آية اليوم', gun_hadis:'حديث اليوم',
-    pw_yillik:'سنوي', pw_aylik:'شهري', pw_avantaj:(p)=>`توفير ${p}%`, pw_devam:'متابعة', pw_restore:'استعادة المشتريات',
+    pw_yillik:'سنوي', pw_aylik:'شهري', pw_deneme:(s)=>`${s} مجانًا`,pw_sure:(n,b)=>n+' '+({DAY:n>2?'أيام':'أيام',WEEK:'أسابيع',MONTH:'أشهر',YEAR:'سنوات'}[b]||''),pw_avantaj:(p)=>`توفير ${p}%`, pw_devam:'متابعة', pw_restore:'استعادة المشتريات',
     pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
   },
   ur: {
-    indir_teklif:'انٹرنیٹ کے بغیر سننے کے لیے یہ قاری ڈاؤن لوڈ کریں (≈800 MB)۔',indir_et:'ڈاؤن لوڈ',indir_iptal:'منسوخ',indir_kaldir:'ہٹائیں',indir_hazir:'{k} آف لائن دستیاب ہے۔',indir_basliyor:'تیاری جاری…',indir_bitti:'تلاوت ڈاؤن لوڈ ہو گئی۔ اب آف لائن سن سکتے ہیں۔',indir_iptal_oldu:'ڈاؤن لوڈ رک گیا۔ بعد میں جاری رکھ سکتے ہیں۔',indir_kaldir_onay:'کیا ڈاؤن لوڈ شدہ تلاوت آلے سے حذف کریں؟',
+    indir_plus:'آف لائن تلاوت مِحک پلس کے ساتھ۔ پڑھنا اور آن لائن سننا مفت رہے گا۔',indir_teklif:'انٹرنیٹ کے بغیر سننے کے لیے یہ قاری ڈاؤن لوڈ کریں (≈800 MB)۔',indir_et:'ڈاؤن لوڈ',indir_iptal:'منسوخ',indir_kaldir:'ہٹائیں',indir_hazir:'{k} آف لائن دستیاب ہے۔',indir_basliyor:'تیاری جاری…',indir_bitti:'تلاوت ڈاؤن لوڈ ہو گئی۔ اب آف لائن سن سکتے ہیں۔',indir_iptal_oldu:'ڈاؤن لوڈ رک گیا۔ بعد میں جاری رکھ سکتے ہیں۔',indir_kaldir_onay:'کیا ڈاؤن لوڈ شدہ تلاوت آلے سے حذف کریں؟',
     indir_sil:'کیا اس سورت کی تلاوت آلے سے حذف کر دیں؟',indir_hata:'سورت ڈاؤن لوڈ نہیں ہو سکی۔ کنکشن دیکھیں۔',
     ayar_bildirim:'اذان کی اطلاعات',ayar_deneme:'اذان کی آواز آزمائیں',ayar_deneme_btn:'آزمائیں',deneme_bekle:'10 س…',deneme_baslik:'اذان کی آواز کا امتحان',deneme_govde:'یہ اطلاع اذان کی آواز کے ساتھ آنی چاہیے تھی۔',deneme_not:'ایپ سے باہر نکلیں اور انتظار کریں — اطلاع 10 سیکنڈ میں اذان کی آواز کے ساتھ آنی چاہیے۔ یقینی بنائیں کہ فون سائلنٹ پر نہیں اور فوکس بند ہے۔',bildirim_govde:'{v} کا وقت ہو گیا۔',bildirim_izin:'اطلاعات کی اجازت نہیں ملی۔ سیٹنگز > مِحنک > اطلاعات سے فعال کریں۔',
     ceviri_yok:'اس روایت کا ترجمہ ماخذ میں موجود نہیں؛ {dil} متن دکھایا جا رہا ہے۔',
@@ -791,13 +796,13 @@ const L = {
     ezan_kutup_baslik:'یہاں بعض اوقات پیدا نہیں ہوتے', ezan_kutup:'آپ کے عرضِ بلد پر اس موسم میں سورج فجر اور عشاء کے لیے مطلوبہ زاویے تک نہیں پہنچتا، اس لیے یہ اوقات فلکی طور پر وجود میں نہیں آتے۔ ہم اوقات گھڑتے نہیں — جو شمار نہیں ہو سکتا وہ «—» دکھایا جاتا ہے۔ اپنے علاقے کی مسجد یا اسلامی مرکز سے رہنمائی لیں۔',
     vakit:{imsak:'فجر',gunes:'طلوعِ آفتاب',ogle:'ظہر',ikindi:'عصر',aksam:'مغرب',yatsi:'عشاء'},
     kible_etk:'قبلہ کی سمت', yon:['شمال','شمال مشرق','مشرق','جنوب مشرق','جنوب','جنوب مغرب','مغرب','شمال مغرب'],
-    pw_alt:'لامحدود حدیث تصدیق اور قرآن تلاش', pw_m1:'لامحدود حدیث تصدیق', pw_m2:'لامحدود قرآن و موضوع تلاش', pw_m3:'ایک ہی Apple ID والے تمام آلات پر کارآمد',
+    pw_alt:'لامحدود حدیث تصدیق اور قرآن تلاش', pw_m1:'لامحدود حدیث تصدیق', pw_m2:'لامحدود قرآن و موضوع تلاش', pw_m3:'تلاوت ڈاؤن لوڈ کریں، بغیر انٹرنیٹ سنیں',pw_m4:'ایک ہی اکاؤنٹ والے تمام آلات پر کارآمد',
     pw_satinal:'مِحنک پلس حاصل کریں',
     pw_kalan:(n)=>`${n} مفت سوالات باقی`, pw_aktif:'پلس فعال', pw_basarili:'فعال! لامحدود رسائی کھل گئی۔', pw_gecersiz:'کلید غلط ہے۔', pw_yakinda:'خریداری جلد (App Store)۔',
     nav_bugun:'آج', ayar_baslik:'ترتیبات', ayar_dil:'زبان', ayar_gizlilik:'رازداری پالیسی', ayar_kullanim:'شرائطِ استعمال',
     ayar_hakkinda:'مِحنک حدیث کا متن، علما کا درجہ اور قرآن کا ترجمہ مستند مآخذ سے پیش کرتا ہے — خود نہیں گھڑتا۔ اختلافی مسائل میں عالم سے رجوع کریں۔',
     selam:'السلام علیکم', gun_ayet:'آج کی آیت', gun_hadis:'آج کی حدیث',
-    pw_yillik:'سالانہ', pw_aylik:'ماہانہ', pw_avantaj:(p)=>`${p}% بچت`, pw_devam:'جاری رکھیں', pw_restore:'خریداری بحال کریں',
+    pw_yillik:'سالانہ', pw_aylik:'ماہانہ', pw_deneme:(s)=>`پہلے ${s} مفت`,pw_sure:(n,b)=>n+' '+({DAY:'دن',WEEK:'ہفتے',MONTH:'ماہ',YEAR:'سال'}[b]||''),pw_avantaj:(p)=>`${p}% بچت`, pw_devam:'جاری رکھیں', pw_restore:'خریداری بحال کریں',
     pw_hata:'مکمل نہ ہوسکا۔ دوبارہ کوشش کریں۔', pw_restore_yok:'بحال کرنے کو کوئی سبسکرپشن نہیں۔',
   },
 };
@@ -1230,6 +1235,10 @@ function sorguluEkranMi(){
   return false;
 }
 function hakGoster(){
+  // Premium durumu her değiştiğinde indirme şeridi de yenilenmeli: abone olan
+  // kullanıcı "Plus ile" yazısını görmeye devam edip düğmeye basınca yeniden
+  // paywall yiyordu.
+  try{ if(typeof indirSeridiCiz==='function') indirSeridiCiz(); }catch(e){}
   // Sayaç artık üstte değil, sorgunun yapıldığı kartın içinde — üstte görünüp
   // kaybolunca bütün sayfa aşağı yukarı kayıyordu.
   const metin = premium
@@ -1295,7 +1304,7 @@ async function iapBaslat(){
     rcUrunler = {}; (products||[]).forEach(p=>{ rcUrunler[p.identifier]=p; });
     if(rcUrunler[URUNLER.yillik]) document.getElementById('fiyatYillik').textContent = rcUrunler[URUNLER.yillik].priceString;
     if(rcUrunler[URUNLER.aylik]) document.getElementById('fiyatAylik').textContent = rcUrunler[URUNLER.aylik].priceString;
-    avantajCiz();
+    avantajCiz(); denemeCiz();
     await iapPremiumKontrol();
   }catch(e){ console.warn('IAP başlatılamadı', e); }
 }
@@ -1303,6 +1312,23 @@ async function iapBaslat(){
 // (ülke, para birimi, fiyat güncellemesi) ve sabit yüzde ilk değişiklikte yalan
 // olur — üstelik ürünler hiç yüklenemediğinde de ekranda kalıyordu.
 // Artık gerçek StoreKit fiyatlarından hesaplanır; hesaplanamıyorsa rozet GİZLENİR.
+// Ücretsiz deneme yalnızca YILLIK planda tanımlı. Süreyi ve birimi mağazadan
+// okuyup kullanıcının dilinde yazarız — sabit metin yazmak, teklif ülkeye göre
+// değişince ya da kaldırılınca tutulmayan bir söz olurdu.
+function denemeCiz(){
+  const el=document.getElementById('planDeneme'); if(!el) return;
+  const y=rcUrunler&&rcUrunler[URUNLER.yillik];
+  const ip=y&&y.introPrice;
+  // Yalnız gerçekten BEDAVA olan tanıtım teklifi "deneme"dir; indirimli ilk
+  // dönem de introPrice olarak gelir ve onu "ücretsiz" demek yanlış olur.
+  const bedava = ip && (Number(ip.price)===0 || ip.priceString==='' || /free/i.test(ip.paymentMode||''));
+  if(!ip || !bedava || !ip.periodNumberOfUnits){ el.style.display='none'; return; }
+  const n=ip.periodNumberOfUnits, birim=String(ip.periodUnit||'').toUpperCase();
+  const sure=(T.pw_sure&&T.pw_sure(n,birim)) || (n+' '+birim.toLowerCase());
+  el.textContent=(typeof T.pw_deneme==='function')?T.pw_deneme(sure):sure;
+  el.style.display='';
+}
+
 function avantajCiz(){
   const el=document.getElementById('planRozet'); if(!el) return;
   const y=rcUrunler&&rcUrunler[URUNLER.yillik], a=rcUrunler&&rcUrunler[URUNLER.aylik];
@@ -1756,7 +1782,9 @@ function indirSeridiCiz(durumMetni){
     d.textContent=(T.indir_hazir||'{k} çevrimdışı dinlenebilir.').replace('{k}', kariAdi(KARILER.find(k=>k.id===kari)||KARILER[0]));
     e.textContent=T.indir_kaldir||'Kaldır'; e.classList.add('tehlike');
   }else{
-    d.textContent=T.indir_teklif||'Tilaveti internetsiz dinlemek için bu kâriyi indir (≈800 MB).';
+    d.textContent = premium
+      ? (T.indir_teklif||'Tilaveti internetsiz dinlemek için bu kâriyi indir (≈800 MB).')
+      : (T.indir_plus||'Çevrimdışı tilavet Mihenk Plus ile. Okumak ve çevrimiçi dinlemek ücretsiz.');
     e.textContent=T.indir_et||'İndir'; e.classList.remove('tehlike');
   }
 }
@@ -1864,6 +1892,11 @@ document.getElementById('denemeBtn').onclick=async()=>{
 };
 document.getElementById('indirEylem').onclick=async()=>{
   if(indirmeSuruyor){ indirmeIptal=true; return; }
+  // Çevrimdışı tilavet artık premium faydası. "Sınırsız sorgu" tek başına
+  // aboneliği tutmuyor: yoğun kullandığı ay ödeyip iptal ediyor. İndirilmiş
+  // tilavet, iptal ettiğinde KAYBEDECEĞİ bir şey — ayrıca 0,8 GB'lık gerçek
+  // bir bant genişliği maliyeti. Okuma ve çevrimiçi dinleme ücretsiz kalıyor.
+  if(!premium && !kariTamMi()){ paywallGoster('kari-indir'); return; }
   if(kariTamMi()){
     if(!confirm(T.indir_kaldir_onay||'İndirilen tilavet cihazdan silinsin mi?')) return;
     await kariSil(); indirSeridiCiz(); sureListesiCiz(document.getElementById('sureAra')?.value||''); return;
@@ -1972,7 +2005,7 @@ function dilUygula(yeni){
       const y=kuranYer(); if(y && y.sure) sureAc(y.sure, y.ayet);
     }
   }
-  avantajCiz();   // rozet metni dile bağlı
+  avantajCiz(); denemeCiz();   // rozet ve deneme metni dile bağlı
   hakGoster();
 }
 document.querySelectorAll('.dil').forEach(b=>b.onclick=()=>dilUygula(b.dataset.dil));
