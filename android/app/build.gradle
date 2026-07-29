@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+// Yükleme anahtarı repoda DEĞİL: keystore.properties ve .jks .gitignore'da.
+// Dosya yoksa release derlemesi imzasız kalır (CI'da veya başka makinede
+// sessizce yanlış anahtarla imzalamaktansa açıkça başarısız olsun diye).
+def imzaDosya = rootProject.file('keystore.properties')
+def imza = new Properties()
+if (imzaDosya.exists()) imzaDosya.withInputStream { imza.load(it) }
+
 android {
     namespace "com.nurettinerzen.mihenk"
     compileSdk rootProject.ext.compileSdkVersion
@@ -16,8 +23,19 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (imza['storeFile']) {
+                storeFile rootProject.file(imza['storeFile'])
+                storePassword imza['storePassword']
+                keyAlias imza['keyAlias']
+                keyPassword imza['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            if (imza['storeFile']) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

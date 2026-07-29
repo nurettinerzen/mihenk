@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <!-- Uygulamanın koyu yeşil zemini; beyazda ikonun kenarları kayboluyordu. -->
+    <color name="ic_launcher_background">#0B100E</color>
 </resources>
