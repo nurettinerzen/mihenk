@@ -37,8 +37,13 @@ const EKRANLAR = [
                      document.getElementById('konu').value = KONU;
                      document.getElementById('btnKonu').click();
                      await sonucBekle('sonucKonu');
-                     document.getElementById('sonucKonu').scrollIntoView({block:'start'});
-                     await bekle(300);` },
+                     // Kaydırma yerine sorgu kartını gizle. CSS zoom altında
+                     // hiçbir kaydırma yöntemi (scrollIntoView, offsetTop,
+                     // getBoundingClientRect) doğru yere gitmiyordu; kart
+                     // gizlenince sonuçlar zaten sekmelerin hemen altında
+                     // başlıyor ve kare her seferinde aynı çıkıyor.
+                     document.querySelector('#mod-konu .kart').style.display = 'none';
+                     await bekle(400);` },
   { ad: '04', adim: `nav('kuran'); alt('.ksekme','kmod','oku'); await bekle(900);` },
   { ad: '05', adim: `nav('ezan'); await bekle(1800);` },
 ];
@@ -57,6 +62,11 @@ function hazirla(dil, cihaz) {
   const html = readFileSync('www/index.html', 'utf8');
   // zoom, yerleşim genişliğini 1080/2,5 = 432 CSS px'e indiriyor.
   const on = `<style>html{zoom:2.5}</style><script>
+    // Ekran görüntüsü koşuları gerçek kullanıcı değil: analitik olayları
+    // gitmesin, panelde sahte cihaz/oturum görünmesin.
+    (function(){ const f = window.fetch;
+      window.fetch = (u, ...r) => String(u).includes('/api/olay')
+        ? Promise.resolve(new Response(null, { status: 204 })) : f(u, ...r); })();
     localStorage.setItem('dil', ${JSON.stringify(dil)});
     localStorage.setItem('konum', ${JSON.stringify(JSON.stringify(KONUM))});
     localStorage.setItem('cihaz', ${JSON.stringify(cihaz)});
@@ -78,11 +88,15 @@ function cek(dil, ekran, konu, hedef) {
     const alt = (sinif, veri, deger) =>
       document.querySelector(sinif+'[data-'+veri+'="'+deger+'"]').click();
     const sonucBekle = async (id) => {
-      for (let i = 0; i < 60; i++) {
+      // Sık ve kısa yokla: her tur sanal saati ilerletiyor, seyrek yoklama
+      // bütçeyi boşa harcıyor. Ayrıca sonucun BOŞ olmadığını da doğrula.
+      for (let i = 0; i < 400; i++) {
         const el = document.getElementById(id);
-        if (el && el.classList.contains('gorunur') && !el.querySelector('.yukleniyor')) return;
-        await bekle(500);
+        if (el && el.classList.contains('gorunur') && !el.querySelector('.yukleniyor')
+            && el.innerHTML.length > 400) { await bekle(400); return el; }
+        await bekle(100);
       }
+      throw new Error('sonuc-gelmedi');
     };
     (async () => { ${ekran.adim} })();
   `;
@@ -101,8 +115,10 @@ function cek(dil, ekran, konu, hedef) {
     // 1080x1920 ve sayfaya CSS zoom 2,5 uygulanıyor: yerleşim 432 CSS px
     // (telefon) olarak akıyor, çıktı tam 1080x1920.
     '--window-size=1080,1920', '--force-device-scale-factor=1',
-    // Sorgu ve tilavet listesi ağdan geliyor; ekran hazır olana kadar sanal zaman.
-    '--virtual-time-budget=45000',
+    // Sanal zaman bütçesi hem ağı hem BEKLEME DÖNGÜSÜNÜ besliyor: 45 sn'de
+    // döngü bütçeyi yiyip bitiriyor, yanıt gelmeden kare alınıyordu (Türkçe
+    // dışındaki beş dilin sonuç ekranı bomboş çıktı). Bol bütçe.
+    '--virtual-time-budget=180000',
     `--screenshot=${hedef}`,
     `file://${GECICI}/kare.html`,
   ], { stdio: 'pipe' });
