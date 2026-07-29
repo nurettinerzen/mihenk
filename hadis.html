@@ -184,10 +184,11 @@
   textarea::placeholder,input.metin::placeholder{color:var(--daha-soluk);font-family:'Plus Jakarta Sans',sans-serif}
   textarea{min-height:120px}
   textarea:focus,input.metin:focus{outline:none;border-color:var(--zumrut-koyu);box-shadow:0 0 0 3px #57c4a322}
-  .cipler{display:flex;flex-wrap:wrap;gap:9px;margin-top:14px}
+  .cipler{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
   .cip{background:linear-gradient(180deg,#1e2b25,#16211c);border:1px solid #2b3b34;color:var(--soluk);
-    font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:500;padding:9px 15px;border-radius:12px;
-    cursor:pointer;transition:.18s;box-shadow:0 1px 2px #0004}
+    padding:10px 6px;border-radius:11px;font-size:12.5px;cursor:pointer;text-align:center;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:40px;
+    display:flex;align-items:center;justify-content:center;transition:border-color .15s,color .15s}
   .cip:hover{background:linear-gradient(180deg,#26382f,#1a2721);border-color:var(--zumrut-koyu);
     color:var(--metin);transform:translateY(-1px);box-shadow:0 4px 10px #0005}
   .cip:active{transform:translateY(0)}
@@ -1096,7 +1097,6 @@ function ezanCiz(){
     : '';
   document.getElementById('ezanIcerik').innerHTML=`
     ${enlemUyari}${ustBlok}
-    ${sira.map(([k,ts])=>`<div class="vakit ${k===nextKey?'simdi':''}"><span class="isim">${T.vakit[k]}</span><span class="saat">${fmtSaat(ts)}</span></div>`).join('')}
     <div class="kible">
       <svg class="pusula" viewBox="0 0 100 100">
         <circle cx="50" cy="50" r="46" fill="none" stroke="var(--cizgi)" stroke-width="2"/>
@@ -1109,7 +1109,8 @@ function ezanCiz(){
         </g>
       </svg>
       <div class="kible-bilgi"><div class="etk">${T.kible_etk}</div><div class="der">${deg}° · ${yon}</div></div>
-    </div>`;
+    </div>
+    ${sira.map(([k,ts])=>`<div class="vakit ${k===nextKey?'simdi':''}"><span class="isim">${T.vakit[k]}</span><span class="saat">${fmtSaat(ts)}</span></div>`).join('')}`;
   document.getElementById('ezanIcerik').style.display='';
   document.getElementById('ezanBaslangic').style.display='none';
   if(nextTs){
@@ -1794,7 +1795,7 @@ document.getElementById('btnKuran').onclick=calistirKuran;
 function cipleriKur(){
   const yap=(kapId,list,inputId)=>{
     const kap=document.getElementById(kapId); kap.innerHTML='';
-    list.forEach(k=>{const b=document.createElement('button');b.className='cip';b.textContent=k;
+    list.slice(0,9).forEach(k=>{const b=document.createElement('button');b.className='cip';b.textContent=k;   // 3×3 ızgara tam dolsun; 10. çip tek başına satır açıyordu
       // Çip SADECE kutuyu doldurur; kullanıcı butona basınca çalışır (çift-çalışma yok).
       b.onclick=()=>{const inp=document.getElementById(inputId);inp.value=k;};kap.appendChild(b);});
   };
