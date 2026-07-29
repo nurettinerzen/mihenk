@@ -1031,6 +1031,10 @@ function vakitleriHesapla(lat, lng, gun = new Date()){
   return {
     vakitler: { imsak:ms(t.fajr), gunes:ms(t.sunrise), ogle:ms(t.dhuhr),
                 ikindi:ms(t.asr), aksam:ms(t.maghrib), yatsi:ms(t.isha) },
+    // Yatsıdan sonra "sonraki vakit" boş kalıyordu: sunucu yanıtında yarınImsak
+    // vardı ama cihazda hesaplarken üretilmiyordu. Gece uygulamayı açan kullanıcı
+    // — ki sabah namazına bakmak isteyen tam odur — tire görüyordu.
+    yarinImsak: ms(new adhan.PrayerTimes(c, new Date(gun.getTime() + 864e5), p).fajr),
     kible: Math.round(adhan.Qibla(c) * 10) / 10,
     // Konumun saat dilimi — cihazınki DEĞİL. Seyahatteyken ikisi ayrışır ve
     // vakitler saatlerce kayar (simülatör testinde 10 saat kayma görüldü).
@@ -1982,6 +1986,17 @@ document.getElementById('planYillik').onclick=()=>planSec(URUNLER.yillik);
 document.getElementById('planAylik').onclick=()=>planSec(URUNLER.aylik);
 document.getElementById('restoreBtn').onclick=restore;
 if(localStorage.getItem('premium')==='1') premium=true;
+
+// Konum kaydediliyordu ama hiç geri yüklenmiyordu: kullanıcı uygulamayı her
+// açışında Ezan sekmesinde tekrar "Konumumu kullan"a basmak zorunda kalıyordu.
+// İzin zaten verilmiş, koordinat zaten elimizde — sormaya gerek yok.
+(function konumuGeriYukle(){
+  let k=null; try{ k=JSON.parse(localStorage.getItem('konum')||'null'); }catch(e){}
+  if(!k || typeof k.lat!=='number' || typeof k.lng!=='number') return;
+  const v = vakitleriHesapla(k.lat, k.lng);
+  if(!v) return;                       // adhan yüklenemediyse butona düşsün
+  ezanVeri = v; ezanCiz(); pusulaBaslat();
+})();
 
 dilUygula(dil); // başlangıç
 durumYukle();   // premium/kalan durumunu çek
