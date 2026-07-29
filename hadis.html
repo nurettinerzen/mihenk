@@ -1044,6 +1044,30 @@ function vakitleriHesapla(lat, lng, gun = new Date()){
 const BILDIRIM_VAKIT = ['imsak','ogle','ikindi','aksam','yatsi'];   // güneş vakit değil, bildirim yok
 let bildirimAcik = localStorage.getItem('bildirim') === '1';
 const LN = () => window.Capacitor?.Plugins?.LocalNotifications;
+const ANDROID = () => window.Capacitor?.getPlatform?.() === 'android';
+
+// Android 8'den beri bildirim sesi bildirimin DEĞİL kanalın özelliği: `sound`
+// alanı sessizce yok sayılır ve varsayılan ses çalar. Ezan sesi ancak sesi
+// baştan tanımlanmış bir kanaldan gelirse duyulur. Kanalın sesi sonradan da
+// değiştirilemez — değişirse kanalı silip yeniden kurmak gerekir.
+const EZAN_KANAL = 'ezan_v1';
+let _kanalKuruldu = false;
+async function kanalKur(){
+  if(_kanalKuruldu || !ANDROID()) return;
+  const ln = LN(); if(!ln?.createChannel) return;
+  try{
+    await ln.createChannel({
+      id: EZAN_KANAL,
+      name: 'Ezan',
+      description: 'Namaz vakti bildirimleri',
+      sound: 'ezan.wav',        // res/raw/ezan.wav
+      importance: 5,            // yüksek: ekranda belirsin ve ses çıksın
+      visibility: 1,            // kilit ekranında görünsün
+      vibration: true,
+    });
+    _kanalKuruldu = true;
+  }catch(e){ console.warn('bildirim kanalı kurulamadı', e); }
+}
 
 async function bildirimleriPlanla(lat, lng){
   const ln = LN(); if(!ln || !bildirimAcik) return 0;
@@ -1064,7 +1088,8 @@ async function bildirimleriPlanla(lat, lng){
           title: T.vakit[k],
           body: (T.bildirim_govde || '{v} vakti girdi.').replace('{v}', T.vakit[k]),
           schedule: { at: new Date(ts), allowWhileIdle: true },
-          sound: 'ezan.caf',            // 4 tekbir, 28 sn (iOS sınırı 30); kamu malı kayıt
+          sound: 'ezan.caf',            // iOS: 2 tekbir, 11,3 sn (sınır 30); kamu malı kayıt
+          channelId: EZAN_KANAL,        // Android: ses buradan gelir, üstteki alan yok sayılır
         });
       }
     }
@@ -1079,6 +1104,7 @@ async function bildirimAcKapa(ac){
     if(!ln) return false;                       // web'de bildirim yok
     const izin = await ln.requestPermissions();
     if(izin?.display !== 'granted') return false;
+    await kanalKur();
   }
   bildirimAcik = !!ac; localStorage.setItem('bildirim', ac ? '1' : '0');
   if(!ac && ln){
@@ -1822,6 +1848,7 @@ document.getElementById('denemeBtn').onclick=async()=>{
       body: T.deneme_govde||'Bu bildirim ezan sesiyle gelmeliydi.',
       schedule:{ at:new Date(Date.now()+10000), allowWhileIdle:true },
       sound:'ezan.caf',
+      channelId: EZAN_KANAL,
     }]});
     olay('ezan_bildirim',{acik:true});
     b.textContent = T.deneme_bekle||'10 sn…';

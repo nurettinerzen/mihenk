@@ -16,3 +16,10 @@ magaza/
 corpus.json
 diller/
 magaza-gorseller/
+
+# Android
+android/local.properties
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/
