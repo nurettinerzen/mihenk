@@ -485,6 +485,15 @@
         </span>
         <button class="anahtar" id="bildirimAnahtar" role="switch" aria-checked="false"><span></span></button>
       </div>
+      <!-- Ezan sesi ancak vakit girince duyuluyordu: hem kullanıcı hem biz saatlerce
+           bekliyorduk. 10 saniyelik deneme, sesin gerçekten çaldığını anında gösterir. -->
+      <div class="ayar-satir" id="denemeSatir">
+        <span class="sol">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="var(--zumrut)" stroke-width="1.7"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/></svg>
+          <span data-i18n="ayar_deneme">Ezan sesini dene</span>
+        </span>
+        <button class="cip" id="denemeBtn" style="min-height:32px;padding:7px 14px" data-i18n="ayar_deneme_btn">Dene</button>
+      </div>
       <a class="ayar-satir" href="https://mihenk-api.onrender.com/gizlilik" target="_blank" rel="noopener">
         <span class="sol" data-i18n="ayar_gizlilik">Gizlilik Politikası</span><span class="ok">›</span>
       </a>
@@ -548,7 +557,7 @@ const L = {
   tr: {
     indir_teklif:'Tilaveti internetsiz dinlemek için bu kâriyi indir (≈800 MB).',indir_et:'İndir',indir_iptal:'İptal',indir_kaldir:'Kaldır',indir_hazir:'{k} çevrimdışı dinlenebilir.',indir_basliyor:'Hazırlanıyor…',indir_bitti:'Tilavet indirildi. Artık internetsiz dinleyebilirsin.',indir_iptal_oldu:'İndirme durduruldu. Kaldığın yerden devam edebilirsin.',indir_kaldir_onay:'İndirilen tilavet cihazdan silinsin mi?',
     indir_sil:'Bu sûrenin sesi cihazdan silinsin mi?',indir_hata:'Sûre indirilemedi. Bağlantını kontrol et.',
-    ayar_bildirim:'Ezan bildirimi',bildirim_govde:'{v} vakti girdi.',bildirim_izin:'Bildirim izni verilmedi. iPhone Ayarlar > Mihenk > Bildirimler bölümünden açabilirsin.',
+    ayar_bildirim:'Ezan bildirimi',ayar_deneme:'Ezan sesini dene',ayar_deneme_btn:'Dene',deneme_bekle:'10 sn…',deneme_baslik:'Ezan sesi denemesi',deneme_govde:'Bu bildirim ezan sesiyle gelmeliydi.',deneme_not:'Uygulamadan çık ve bekle — bildirim 10 saniye içinde ezan sesiyle gelmeli. Telefonun sessizde olmadığından ve Odaklanma modunun kapalı olduğundan emin ol.',bildirim_govde:'{v} vakti girdi.',bildirim_izin:'Bildirim izni verilmedi. iPhone Ayarlar > Mihenk > Bildirimler bölümünden açabilirsin.',
     ceviri_yok:'Bu rivayetin Türkçe çevirisi kaynakta yok; {dil} metni gösteriliyor.',
     yogun_baslik:'Şu an çok yoğunuz',
     ses_hata:'Tilavet indirilemedi. İnternet bağlantını kontrol et.',fark_title:'Metnin kaynaktakinden farklı',fark_body:'Aşağıdaki kayıt bu hadisin kaynaktaki hâlidir. Derecelendirme kaynak metne aittir, senin yazdığın metne değil.',pw_yenileme:'Abonelik, dönem bitiminden en az 24 saat önce iptal edilmedikçe kendini yeniler. Yönetim ve iptal App Store hesap ayarlarından yapılır.',
@@ -589,7 +598,7 @@ const L = {
   en: {
     indir_teklif:'Download this reciter to listen offline (~800 MB).',indir_et:'Download',indir_iptal:'Cancel',indir_kaldir:'Remove',indir_hazir:'{k} is available offline.',indir_basliyor:'Preparing…',indir_bitti:'Recitation downloaded. You can now listen offline.',indir_iptal_oldu:'Download stopped. You can resume where you left off.',indir_kaldir_onay:'Delete the downloaded recitation from your device?',
     indir_sil:'Delete this surah\'s audio from your device?',indir_hata:'Could not download the surah. Check your connection.',
-    ayar_bildirim:'Adhan notifications',bildirim_govde:'It is time for {v}.',bildirim_izin:'Notification permission was not granted. You can enable it in Settings > Mihenk > Notifications.',
+    ayar_bildirim:'Adhan notifications',ayar_deneme:'Test the adhan sound',ayar_deneme_btn:'Test',deneme_bekle:'10 s…',deneme_baslik:'Adhan sound test',deneme_govde:'This notification should arrive with the adhan.',deneme_not:'Leave the app and wait — the notification should arrive with the adhan within 10 seconds. Make sure your phone is not on silent and Focus is off.',bildirim_govde:'It is time for {v}.',bildirim_izin:'Notification permission was not granted. You can enable it in Settings > Mihenk > Notifications.',
     ceviri_yok:'This narration has no translation in the source; showing the {dil} text.',
     yogun_baslik:'We are busy right now',
     ses_hata:'Could not load the recitation. Check your connection.',fark_title:'Your text differs from the source',fark_body:'The record below is how this hadith appears in the source. The grading belongs to the source text, not to the text you entered.',pw_yenileme:'Subscription renews automatically unless cancelled at least 24 hours before the end of the period. Manage or cancel in your App Store account settings.',
@@ -630,7 +639,7 @@ const L = {
   fr: {
     indir_teklif:'Télécharge ce récitateur pour écouter hors ligne (~800 Mo).',indir_et:'Télécharger',indir_iptal:'Annuler',indir_kaldir:'Supprimer',indir_hazir:'{k} est disponible hors ligne.',indir_basliyor:'Préparation…',indir_bitti:'Récitation téléchargée. Tu peux écouter hors ligne.',indir_iptal_oldu:'Téléchargement arrêté. Tu peux reprendre plus tard.',indir_kaldir_onay:'Supprimer la récitation téléchargée de l\'appareil ?',
     indir_sil:'Supprimer l\'audio de cette sourate de l\'appareil ?',indir_hata:'Téléchargement impossible. Vérifie ta connexion.',
-    ayar_bildirim:'Notifications d\'adhan',bildirim_govde:'C\'est l\'heure de {v}.',bildirim_izin:'Permission refusée. Active-la dans Réglages > Mihenk > Notifications.',
+    ayar_bildirim:'Notifications d\'adhan',ayar_deneme:'Tester le son de l\'adhan',ayar_deneme_btn:'Tester',deneme_bekle:'10 s…',deneme_baslik:'Test du son de l\'adhan',deneme_govde:'Cette notification devrait arriver avec l\'adhan.',deneme_not:'Quitte l\'app et attends — la notification devrait arriver avec l\'adhan sous 10 secondes. Vérifie que le téléphone n\'est pas en silencieux et que Concentration est désactivé.',bildirim_govde:'C\'est l\'heure de {v}.',bildirim_izin:'Permission refusée. Active-la dans Réglages > Mihenk > Notifications.',
     ceviri_yok:'Cette narration n\'a pas de traduction dans la source ; texte en {dil} affiché.',
     yogun_baslik:'Service très sollicité',
     ses_hata:'Récitation indisponible. Vérifie ta connexion.',fark_title:'Ton texte diffère de la source',fark_body:'La fiche ci-dessous correspond au hadith tel qu\'il figure dans la source. Le degré d\'authenticité concerne le texte source, pas celui que tu as saisi.',pw_yenileme:'L\'abonnement se renouvelle automatiquement sauf résiliation au moins 24 heures avant la fin de la période. Gestion et résiliation dans les réglages de ton compte App Store.',
@@ -671,7 +680,7 @@ const L = {
   id: {
     indir_teklif:'Unduh qari ini untuk mendengarkan tanpa internet (~800 MB).',indir_et:'Unduh',indir_iptal:'Batal',indir_kaldir:'Hapus',indir_hazir:'{k} tersedia offline.',indir_basliyor:'Menyiapkan…',indir_bitti:'Tilawah terunduh. Kini bisa didengarkan tanpa internet.',indir_iptal_oldu:'Unduhan dihentikan. Bisa dilanjutkan nanti.',indir_kaldir_onay:'Hapus tilawah yang diunduh dari perangkat?',
     indir_sil:'Hapus audio surah ini dari perangkat?',indir_hata:'Surah tidak dapat diunduh. Periksa koneksimu.',
-    ayar_bildirim:'Notifikasi azan',bildirim_govde:'Waktu {v} telah masuk.',bildirim_izin:'Izin notifikasi belum diberikan. Aktifkan di Pengaturan > Mihenk > Notifikasi.',
+    ayar_bildirim:'Notifikasi azan',ayar_deneme:'Coba suara azan',ayar_deneme_btn:'Coba',deneme_bekle:'10 dtk…',deneme_baslik:'Uji suara azan',deneme_govde:'Notifikasi ini seharusnya datang dengan suara azan.',deneme_not:'Keluar dari aplikasi dan tunggu — notifikasi akan datang dengan suara azan dalam 10 detik. Pastikan ponsel tidak dalam mode senyap dan Fokus mati.',bildirim_govde:'Waktu {v} telah masuk.',bildirim_izin:'Izin notifikasi belum diberikan. Aktifkan di Pengaturan > Mihenk > Notifikasi.',
     ceviri_yok:'Riwayat ini tidak memiliki terjemahan di sumber; menampilkan teks {dil}.',
     yogun_baslik:'Sedang sibuk',
     ses_hata:'Rekaman tidak dapat dimuat. Periksa koneksi internetmu.',fark_title:'Teksmu berbeda dari sumber',fark_body:'Catatan di bawah adalah bunyi hadis ini dalam sumbernya. Derajat keabsahan berlaku untuk teks sumber, bukan teks yang kamu masukkan.',pw_yenileme:'Langganan diperpanjang otomatis kecuali dibatalkan minimal 24 jam sebelum periode berakhir. Kelola atau batalkan di pengaturan akun App Store.',
@@ -712,7 +721,7 @@ const L = {
   ar: {
     indir_teklif:'نزّل هذا القارئ للاستماع دون إنترنت (≈800 ميغابايت).',indir_et:'تنزيل',indir_iptal:'إلغاء',indir_kaldir:'إزالة',indir_hazir:'{k} متاح دون إنترنت.',indir_basliyor:'جارٍ التحضير…',indir_bitti:'تم تنزيل التلاوة. يمكنك الاستماع دون إنترنت.',indir_iptal_oldu:'تم إيقاف التنزيل. يمكنك المتابعة لاحقًا.',indir_kaldir_onay:'هل تريد حذف التلاوة المنزَّلة من جهازك؟',
     indir_sil:'هل تريد حذف تلاوة هذه السورة من جهازك؟',indir_hata:'تعذّر تنزيل السورة. تحقّق من اتصالك.',
-    ayar_bildirim:'تنبيهات الأذان',bildirim_govde:'حان وقت {v}.',bildirim_izin:'لم يُمنح إذن الإشعارات. يمكنك تفعيله من الإعدادات > مِحَنك > الإشعارات.',
+    ayar_bildirim:'تنبيهات الأذان',ayar_deneme:'جرّب صوت الأذان',ayar_deneme_btn:'جرّب',deneme_bekle:'10 ث…',deneme_baslik:'تجربة صوت الأذان',deneme_govde:'كان ينبغي أن يصل هذا التنبيه بصوت الأذان.',deneme_not:'اخرج من التطبيق وانتظر — سيصل التنبيه بصوت الأذان خلال 10 ثوانٍ. تأكد أن الهاتف ليس صامتًا وأن وضع التركيز مغلق.',bildirim_govde:'حان وقت {v}.',bildirim_izin:'لم يُمنح إذن الإشعارات. يمكنك تفعيله من الإعدادات > مِحَنك > الإشعارات.',
     ceviri_yok:'لا تتوفر ترجمة لهذه الرواية في المصدر؛ يُعرض النص بلغة {dil}.',
     yogun_baslik:'الخدمة مزدحمة الآن',
     ses_hata:'تعذّر تحميل التلاوة. تحقّق من اتصالك بالإنترنت.',fark_title:'نصّك يختلف عن المصدر',fark_body:'السجل أدناه هو نصّ الحديث كما ورد في المصدر. الحكم يخصّ نصّ المصدر لا النصّ الذي أدخلته.',pw_yenileme:'يتجدّد الاشتراك تلقائيًا ما لم يُلغَ قبل نهاية المدة بأربع وعشرين ساعة على الأقل. الإدارة والإلغاء من إعدادات حساب App Store.',
@@ -753,7 +762,7 @@ const L = {
   ur: {
     indir_teklif:'انٹرنیٹ کے بغیر سننے کے لیے یہ قاری ڈاؤن لوڈ کریں (≈800 MB)۔',indir_et:'ڈاؤن لوڈ',indir_iptal:'منسوخ',indir_kaldir:'ہٹائیں',indir_hazir:'{k} آف لائن دستیاب ہے۔',indir_basliyor:'تیاری جاری…',indir_bitti:'تلاوت ڈاؤن لوڈ ہو گئی۔ اب آف لائن سن سکتے ہیں۔',indir_iptal_oldu:'ڈاؤن لوڈ رک گیا۔ بعد میں جاری رکھ سکتے ہیں۔',indir_kaldir_onay:'کیا ڈاؤن لوڈ شدہ تلاوت آلے سے حذف کریں؟',
     indir_sil:'کیا اس سورت کی تلاوت آلے سے حذف کر دیں؟',indir_hata:'سورت ڈاؤن لوڈ نہیں ہو سکی۔ کنکشن دیکھیں۔',
-    ayar_bildirim:'اذان کی اطلاعات',bildirim_govde:'{v} کا وقت ہو گیا۔',bildirim_izin:'اطلاعات کی اجازت نہیں ملی۔ سیٹنگز > مِحنک > اطلاعات سے فعال کریں۔',
+    ayar_bildirim:'اذان کی اطلاعات',ayar_deneme:'اذان کی آواز آزمائیں',ayar_deneme_btn:'آزمائیں',deneme_bekle:'10 س…',deneme_baslik:'اذان کی آواز کا امتحان',deneme_govde:'یہ اطلاع اذان کی آواز کے ساتھ آنی چاہیے تھی۔',deneme_not:'ایپ سے باہر نکلیں اور انتظار کریں — اطلاع 10 سیکنڈ میں اذان کی آواز کے ساتھ آنی چاہیے۔ یقینی بنائیں کہ فون سائلنٹ پر نہیں اور فوکس بند ہے۔',bildirim_govde:'{v} کا وقت ہو گیا۔',bildirim_izin:'اطلاعات کی اجازت نہیں ملی۔ سیٹنگز > مِحنک > اطلاعات سے فعال کریں۔',
     ceviri_yok:'اس روایت کا ترجمہ ماخذ میں موجود نہیں؛ {dil} متن دکھایا جا رہا ہے۔',
     yogun_baslik:'ابھی رش ہے',
     ses_hata:'تلاوت لوڈ نہیں ہو سکی۔ اپنا انٹرنیٹ کنکشن دیکھیں۔',fark_title:'آپ کا متن ماخذ سے مختلف ہے',fark_body:'نیچے دیا گیا اندراج اس حدیث کی ماخذ میں موجود صورت ہے۔ درجہ ماخذ کے متن کا ہے، آپ کے لکھے متن کا نہیں۔',pw_yenileme:'رکنیت خود بخود تجدید ہوتی ہے جب تک مدت ختم ہونے سے کم از کم 24 گھنٹے قبل منسوخ نہ کی جائے۔ انتظام اور منسوخی App Store اکاؤنٹ کی ترتیبات سے۔',
@@ -1785,6 +1794,7 @@ const bildirimAnahtarCiz=()=>{
   const b=document.getElementById('bildirimAnahtar'); if(!b) return;
   b.setAttribute('aria-checked', bildirimAcik ? 'true' : 'false');
   document.getElementById('bildirimSatir').style.display = LN() ? '' : 'none';  // web'de gizle
+  document.getElementById('denemeSatir').style.display = LN() ? '' : 'none';
 };
 document.getElementById('bildirimAnahtar').onclick=async()=>{
   const yeni=!bildirimAcik;
@@ -1798,6 +1808,29 @@ document.getElementById('bildirimAnahtar').onclick=async()=>{
   }
 };
 bildirimAnahtarCiz();
+// Ezan sesi denemesi: 10 sn sonra gerçek bildirim. Sistem bildirimi olarak gelir,
+// yani uygulama içinde ses çalmakla AYNI ŞEY DEĞİL — asıl merak ettiğimiz de bu.
+document.getElementById('denemeBtn').onclick=async()=>{
+  const ln=LN(); if(!ln) return;
+  const b=document.getElementById('denemeBtn');
+  const izin=await bildirimAcKapa(true);
+  if(!izin){ alert(T.bildirim_izin||'Bildirim izni verilmedi.'); return; }
+  try{
+    await ln.schedule({ notifications:[{
+      id: 999,
+      title: T.deneme_baslik||'Ezan sesi denemesi',
+      body: T.deneme_govde||'Bu bildirim ezan sesiyle gelmeliydi.',
+      schedule:{ at:new Date(Date.now()+10000), allowWhileIdle:true },
+      sound:'ezan.caf',
+    }]});
+    olay('ezan_bildirim',{acik:true});
+    b.textContent = T.deneme_bekle||'10 sn…';
+    // Kullanıcının uygulamadan çıkması gerekiyor: ön plandayken iOS bildirimi
+    // banner olarak göstermez ve sesi çalmaz.
+    alert(T.deneme_not||'Uygulamadan çıkıp bekle — bildirim 10 saniye içinde ezan sesiyle gelmeli. Telefonun sessizde olmadığından emin ol.');
+    setTimeout(()=>{ b.textContent = T.ayar_deneme_btn||'Dene'; }, 12000);
+  }catch(e){ alert('Deneme kurulamadı: '+(e.message||e)); }
+};
 document.getElementById('indirEylem').onclick=async()=>{
   if(indirmeSuruyor){ indirmeIptal=true; return; }
   if(kariTamMi()){
