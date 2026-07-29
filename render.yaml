@@ -6,6 +6,12 @@ services:
     plan: standard          # embedding modeli + vektörler için (starter'ın RAM'i yetmeyebilir)
     healthCheckPath: /health
     autoDeploy: true
+    # Analitik olayları günlük JSONL olarak buraya yazılır. Disk olmadan her
+    # deploy/restart ölçümü sıfırlar (panel bunu kırmızıyla söyler).
+    disk:
+      name: veri
+      mountPath: /veri
+      sizeGB: 1
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false          # Render panelinden gir

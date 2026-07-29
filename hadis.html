@@ -492,7 +492,7 @@
         <span class="sol" data-i18n="ayar_kullanim">Kullanım Koşulları</span><span class="ok">›</span>
       </a>
       <div class="ayar-not" data-i18n="ayar_hakkinda">Mihenk; hadis metnini, âlim derecesini ve Kur'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.</div>
-      <div class="ayar-surum">Mihenk 1.2</div><!-- MARKETING_VERSION ile aynı olmalı -->
+      <div class="ayar-surum" id="surumEtiket">Mihenk 1.2</div><!-- MARKETING_VERSION ile aynı olmalı -->
 
     </div>
   </div>
@@ -510,6 +510,9 @@ const API = (location.hostname === 'localhost' && location.protocol.startsWith('
           : location.protocol.startsWith('http') ? location.origin   // web: aynı origin
           : BACKEND;                                                  // iOS/Capacitor (capacitor:// / file:) → uzak backend
 const APP_KEY = "mihenk_dd4e1cc82891921d3fa559e8";
+// Ölçümde sürüm ayrımı: hangi hatanın/davranışın hangi sürümden geldiğini görmek
+// için. Ayarlardaki etiketten okunur, tek yerde güncellensin.
+const SURUM_ETIKET = (document.getElementById('surumEtiket')?.textContent || 'Mihenk ?').replace('Mihenk ','').trim();
 let dil = localStorage.getItem('dil') || 'tr';
 // --- Cihaz kimliği ---
 // Kimlik SADECE localStorage'daki UUID'ydi. WKWebView, iOS depolama baskısında
@@ -863,7 +866,7 @@ async function istek(yol, govde){
   const cihaz = await cihazAl();   // kalıcı kimlik hazır olmadan istek atma
   const r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil, cihaz})});
   if(r.status===429){ const e=new Error('limit'); e.yogun=true; throw e; }   // 'bağlanamadım' demek yanıltıcıydı
-  if(r.status===402){ const j=await r.json(); if(j.checkout) checkoutUrl=j.checkout; paywallGoster(); throw {paywall:true}; }
+  if(r.status===402){ const j=await r.json(); if(j.checkout) checkoutUrl=j.checkout; paywallGoster('kota-bitti'); throw {paywall:true}; }
   if(!r.ok) throw new Error('sunucu '+r.status);
   const j = await r.json();
   if(j.kalan!==undefined){ kalan=j.kalan; premium=!!j.premium; if(j.checkout) checkoutUrl=j.checkout; hakGoster(); }
@@ -871,6 +874,51 @@ async function istek(yol, govde){
   _sonIstek.set(imza, { t: Date.now(), veri: j });
   return j;
 }
+// --- Anonim ürün ölçümü ---------------------------------------------------
+// Üçüncü taraf SDK yok: kimlik olarak cihazın zaten kullandığı rastgele UUID
+// gidiyor, isim/e-posta/IDFA/konum/IP gitmiyor. Amaç kişi izlemek değil, hangi
+// ekranda kaç saniye kalınıp nerede bırakıldığını görmek.
+let _olayKuyruk = [];
+let _olayZaman = null;
+function olay(a, p){
+  _olayKuyruk.push({ a, ...(p||{}) });
+  // Yığın gönder: her olayda bir istek atmak hem pil hem kota (429) israfı.
+  if(_olayKuyruk.length >= 20) return olayGonder();
+  if(!_olayZaman) _olayZaman = setTimeout(olayGonder, 15000);
+}
+async function olayGonder(){
+  if(_olayZaman){ clearTimeout(_olayZaman); _olayZaman = null; }
+  if(!_olayKuyruk.length) return;
+  const yigin = _olayKuyruk; _olayKuyruk = [];
+  try{
+    const c = await cihazAl();
+    await fetch(API+'/api/olay',{method:'POST',keepalive:true,
+      headers:{'content-type':'application/json','x-app-key':APP_KEY},
+      body:JSON.stringify({cihaz:c, olaylar:yigin})});
+  }catch(e){
+    // Ölçüm hiçbir zaman kullanıcıyı etkilemez. Tekrar denemiyoruz da: çevrimdışı
+    // bir cihazda kuyruk sonsuz büyür ve tekrar bağlanınca aynı veriyi çoğaltır.
+  }
+}
+// Ekranda geçirilen süre. Uygulama arka plana alınınca sayaç durur — yoksa
+// telefonu cebe koyan kullanıcı "3 saat Kur'an okudu" görünür.
+let _ekranAd = null, _ekranT = 0;
+function ekranBaslat(ad){
+  ekranBitir();
+  _ekranAd = ad; _ekranT = Date.now();
+}
+function ekranBitir(){
+  if(!_ekranAd) return;
+  const sn = Math.round((Date.now() - _ekranT) / 1000);
+  if(sn >= 1 && sn < 3600) olay('ekran', { ad:_ekranAd, sn });
+  _ekranAd = null;
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden){ ekranBitir(); olayGonder(); }
+  else if(_ekranAd === null && typeof aktifEkranAdi === 'function') ekranBaslat(aktifEkranAdi());
+});
+window.addEventListener('pagehide', ()=>{ ekranBitir(); olayGonder(); });
+
 function yukleniyor(el){el.className='sonuc gorunur';el.innerHTML=`<div class="yukleniyor"><span class="spin"></span>${T.yukleniyor}</div>`;}
 function hata(el,e){const yogun=e&&e.yogun;el.className='sonuc gorunur';el.innerHTML=`<div class="kart uyari-kart"><div class="uyari-baslik">${yogun?(T.yogun_baslik||T.err_title):T.err_title}</div><div class="anlam">${yogun?T.yogun:T.err_body}</div></div>`;}
 
@@ -880,8 +928,10 @@ async function calistirDogrula(){
   if(metin.length<8){ const e=document.getElementById('sonucDogrula'); e.className='sonuc gorunur'; e.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.girdi_kisa||'Lütfen doğrulamak istediğin hadis metnini yapıştır.'}</div></div>`; return; }
   const el=document.getElementById('sonucDogrula'); yukleniyor(el);
   document.getElementById('btnDogrula').disabled=true;
+  const _t0=Date.now(); olay('sorgu',{tur:'dogrula',dil});
   try{
     const j=await istek('/api/dogrula',{metin});
+    olay('sonuc',{tur:'dogrula',bulundu:!!j.bulundu,ms:Date.now()-_t0});
     if(j.bulundu){
       // Kaynak sahih olsa bile kullanıcının metni manayı değiştiriyorsa yeşil rozeti
       // tek başına göstermek yanlış onaydır; farkı kartın ÜSTÜNDE açıkça bildiririz.
@@ -912,8 +962,10 @@ async function calistirKonu(){
   if(konu.length<2){ const e=document.getElementById('sonucKonu'); e.className='sonuc gorunur'; e.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.girdi_bos||'Lütfen bir konu yaz.'}</div></div>`; return; }
   const el=document.getElementById('sonucKonu'); yukleniyor(el);
   document.getElementById('btnKonu').disabled=true;
+  const _t0=Date.now(); olay('sorgu',{tur:'konu',dil});
   try{
     const j=await istek('/api/konu',{konu});
+    olay('sonuc',{tur:'konu',bulundu:!!(j.sonuclar&&j.sonuclar.length),ms:Date.now()-_t0});
     if(!j.sonuclar.length){
       el.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.konu_bos}</div></div>`;
     }else{
@@ -1154,7 +1206,7 @@ function hakGoster(){
   if(b){ const serit=b.parentElement; if(serit) serit.style.display='none'; }  // üstteki şerit kalktı
 }
 
-function paywallGoster(){ document.getElementById('paywall').classList.add('acik'); }
+function paywallGoster(kaynak){ document.getElementById('paywall').classList.add('acik'); olay('paywall',{kaynak:kaynak||'sayac'}); }
 function paywallGizle(){ document.getElementById('paywall').classList.remove('acik'); }
 // --- Mihenk Plus / Apple IAP (RevenueCat) ---
 const RC_KEY = 'appl_VJAIwVAqpNCfirEgFSXFZSAIvKt'; // RevenueCat > Mihenk > public Apple SDK key
@@ -1260,10 +1312,16 @@ async function satinAl(){
     // gitmek yarış yaratıyordu: ödeme geçtiği hâlde kontrol henüz güncellenmemiş
     // customerInfo görüp false dönüyor, aşağıdaki if sessizce atlanıyor ve kullanıcı
     // parasını ödemiş olduğu hâlde EKRANDA HİÇBİR ŞEY GÖRMÜYORDU.
+    olay('satinalma',{durum:'basladi',plan:seciliUrun});
     const { customerInfo } = await Purchases.purchaseStoreProduct({ product: rcUrunler[seciliUrun] });
+    olay('satinalma',{durum:'tamam',plan:seciliUrun});
     if(await iapPremiumKontrol(customerInfo)){ m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
     else { await premiumYap(); m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
-  }catch(e){ if(!(e && (e.userCancelled || e.code==='1' || /cancel/i.test(e.message||'')))){ m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; } }
+  }catch(e){
+    const iptal = e && (e.userCancelled || e.code==='1' || /cancel/i.test(e.message||''));
+    olay('satinalma',{durum: iptal?'iptal':'hata', plan:seciliUrun});
+    if(!iptal){ m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; }
+  }
 }
 async function restore(){
   const m=document.getElementById('lisansMesaj');
@@ -1274,9 +1332,9 @@ async function restore(){
     // paywall'ı açıp "geri yükle"ye basarsa RC henüz kurulmamış olabilirdi.
     await cihazAl();
     await Purchases.restorePurchases();
-    if(await iapPremiumKontrol()){ m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
-    else { m.textContent=T.pw_restore_yok; m.className='paywall-mesaj'; }
-  }catch(e){ m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; }
+    if(await iapPremiumKontrol()){ olay('geri_yukle',{durum:'bulundu'}); m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
+    else { olay('geri_yukle',{durum:'yok'}); m.textContent=T.pw_restore_yok; m.className='paywall-mesaj'; }
+  }catch(e){ olay('geri_yukle',{durum:'hata'}); m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; }
 }
 async function durumYukle(){
   try{
@@ -1634,6 +1692,7 @@ async function sesCal(id){
   const sesHata=()=>{ sesDurdur(); sesUyari(); };
   calanSes.onerror=sesHata;
   calanSes.play().catch(sesHata);
+  olay('oynat',{sure: (KURAN.find(x=>x.id===id)||{}).sure});
   calanSes.onended=()=>{
     const sonraki=KURAN.find(a=>a.id===id+1);
     sesDurdur();
@@ -1708,7 +1767,15 @@ document.querySelectorAll('.unav').forEach(b=>b.onclick=()=>{
   // ekranından ve mini oynatıcıdan yapılabiliyor.
   if(b.dataset.bol==='bugun' && !gununVeri) gununYukle();
   hakGoster();   // sayaç yalnız sorgu harcanan ekranlarda görünsün
+  ekranBaslat(aktifEkranAdi());
 });
+// Ölçümde ekran adı: ana sekme + varsa alt sekme ("hadis/konu", "kuran/oku").
+function aktifEkranAdi(){
+  const bol = document.querySelector('.unav.aktif')?.dataset.bol || 'bugun';
+  if(bol==='hadis') return 'hadis/'+(document.querySelector('.sekme.aktif')?.dataset.mod||'konu');
+  if(bol==='kuran') return 'kuran/'+(document.querySelector('.ksekme.aktif')?.dataset.kmod||'ara');
+  return bol;
+}
 // Ayarlar
 document.getElementById('ayarBtn').onclick=()=>document.getElementById('ayarlar').classList.add('acik');
 document.getElementById('ayarKapat').onclick=()=>document.getElementById('ayarlar').classList.remove('acik');
@@ -1722,6 +1789,7 @@ const bildirimAnahtarCiz=()=>{
 document.getElementById('bildirimAnahtar').onclick=async()=>{
   const yeni=!bildirimAcik;
   const oldu=await bildirimAcKapa(yeni);
+  olay('ezan_bildirim',{acik:!!(yeni&&oldu)});
   bildirimAnahtarCiz();
   if(yeni && !oldu){ alert(T.bildirim_izin||'Bildirim izni verilmedi. Ayarlar > Bildirimler bölümünden açabilirsin.'); return; }
   if(yeni){
@@ -1736,12 +1804,13 @@ document.getElementById('indirEylem').onclick=async()=>{
     if(!confirm(T.indir_kaldir_onay||'İndirilen tilavet cihazdan silinsin mi?')) return;
     await kariSil(); indirSeridiCiz(); sureListesiCiz(document.getElementById('sureAra')?.value||''); return;
   }
-  indirmeSuruyor=true; indirSeridiCiz(T.indir_basliyor||'Hazırlanıyor…');
+  indirmeSuruyor=true; olay('kari_indir',{durum:'basladi',kari}); indirSeridiCiz(T.indir_basliyor||'Hazırlanıyor…');
   const sonuc=await kariIndir((i,t,bayt)=>{
     const yuzde=Math.round(i*100/t), mb=Math.round(bayt/1048576);
     indirSeridiCiz(`%${yuzde} · ${i}/${t} ${T.ayet_sayisi||'ayet'} · ${mb} MB`);
   });
   indirmeSuruyor=false;
+  olay('kari_indir',{durum: sonuc===true?'bitti':(sonuc==='iptal'?'iptal':'hata'), kari});
   if(sonuc===true) sesUyari(T.indir_bitti||'Tilavet indirildi. Artık internetsiz dinleyebilirsin.');
   else if(sonuc==='iptal') sesUyari(T.indir_iptal_oldu||'İndirme durduruldu. Kaldığın yerden devam edebilirsin.');
   else sesUyari(T.indir_hata||'İndirilemedi. Bağlantını kontrol et.');
@@ -1756,6 +1825,7 @@ document.querySelectorAll('.sekme').forEach(b=>b.onclick=()=>{
   const m=b.dataset.mod;
   document.getElementById('mod-dogrula').style.display=m==='dogrula'?'':'none';
   document.getElementById('mod-konu').style.display=m==='konu'?'':'none';
+  ekranBaslat(aktifEkranAdi());
 });
 // Kur'an sekmeleri: Konuya Göre / Oku & Dinle
 document.querySelectorAll('.ksekme').forEach(b=>b.onclick=()=>{
@@ -1764,6 +1834,7 @@ document.querySelectorAll('.ksekme').forEach(b=>b.onclick=()=>{
   const m=b.dataset.kmod;
   document.getElementById('kmod-ara').style.display=m==='ara'?'':'none';
   document.getElementById('kmod-oku').style.display=m==='oku'?'':'none';
+  ekranBaslat(aktifEkranAdi());
   if(m==='oku'){ okuModuAc(); indirSeridiCiz(); } else sesDurdur();
   hakGoster();   // Oku&Dinle'de sorgu harcanmıyor, sayaç görünmesin
 });
@@ -1811,6 +1882,7 @@ function cipleriKur(){
 
 // Dil uygula: statik metinler + çipler + T
 function dilUygula(yeni){
+  if(dil && yeni!==dil) olay('dil_degis',{dil:yeni});
   dil=yeni; T=L[dil]; localStorage.setItem('dil',dil);
   document.documentElement.lang=dil;
   document.documentElement.dir = RTL(dil) ? 'rtl' : 'ltr'; // Arapça + Urduca sağdan sola
@@ -1842,7 +1914,7 @@ function dilUygula(yeni){
 document.querySelectorAll('.dil').forEach(b=>b.onclick=()=>dilUygula(b.dataset.dil));
 
 // Paywall bağlama
-document.getElementById('plusBtn').onclick=paywallGoster;
+document.getElementById('plusBtn').onclick=()=>paywallGoster('buton');
 document.getElementById('paywallKapat').onclick=paywallGizle;
 document.getElementById('paywall').onclick=e=>{ if(e.target.id==='paywall') paywallGizle(); };
 document.getElementById('paywallSatinAl').onclick=satinAl;
@@ -1855,6 +1927,16 @@ dilUygula(dil); // başlangıç
 durumYukle();   // premium/kalan durumunu çek
 gununYukle();   // Bugün: günün ayeti + hadisi
 iapBaslat();    // RevenueCat (native + RC_KEY varsa): fiyatları çek + premium kontrol
+
+// Ölçüm başlangıcı. "ilk": bu cihazda uygulamanın ilk açılışı — kurulum sayısını
+// App Store'dan ayrı, gerçekten AÇAN kişi olarak görmek için.
+(function(){
+  const ilk = !localStorage.getItem('acildi');
+  if(ilk) localStorage.setItem('acildi','1');
+  let tz=''; try{ tz=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }catch(e){}
+  olay('acilis',{ ilk, dil, tz, surum: SURUM_ETIKET });
+  ekranBaslat(aktifEkranAdi());
+})();
 </script>
 </body>
 </html>

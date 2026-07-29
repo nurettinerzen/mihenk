@@ -17,6 +17,8 @@ import { embedOne, embedder, cos, DIM } from './embed.mjs';
 import * as adhan from 'adhan';
 import tzlookup from 'tz-lookup';
 import Anthropic from '@anthropic-ai/sdk';
+import { olayYaz, ozet as olayOzet } from './olay.mjs';
+import { panelHtml } from './panel.mjs';
 
 const PORT = process.env.PORT || 8788;
 const APP_KEY = process.env.APP_KEY || 'hadis-dev';
@@ -1021,6 +1023,21 @@ const sunucu = http.createServer(async (req, res) => {
     }, null, 1));
   }
 
+  // Ürün analitiği paneli — aynı anahtarla korunur. Anahtar yoksa uç yok.
+  if (url.pathname === '/panel' || url.pathname === '/panel.json') {
+    const anahtar = process.env.OLCUM_ANAHTAR || '';
+    if (!anahtar || url.searchParams.get('k') !== anahtar) { res.writeHead(404); return res.end(); }
+    const gun = Math.min(365, Math.max(1, Number(url.searchParams.get('gun')) || 30));
+    const o = olayOzet(gun);
+    if (url.pathname === '/panel.json') {
+      res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
+      return res.end(JSON.stringify(o, null, 1));
+    }
+    // Panel URL'i anahtar taşıyor: arama motorlarına ve yönlendirenlere sızmasın.
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'x-robots-tag': 'noindex', 'referrer-policy': 'no-referrer' });
+    return res.end(panelHtml(o));
+  }
+
   if (url.pathname === '/health') {
     res.writeHead(200, { 'content-type': 'application/json' });
     return res.end(JSON.stringify({ ok: true, surum: SURUM, hadis: corpus.length, ayet: ayat.length, model: MODEL, llm: !!anthropic }));
@@ -1051,6 +1068,19 @@ const sunucu = http.createServer(async (req, res) => {
   try {
     // /api/lisans KALDIRILDI: IAP dışı kilit açma App Store 3.1.1 ihlali. Uç kapalı
     // durumdaydı ama TEST_LISANS bir gün Render panelinden girilirse yeniden açılırdı.
+    // Analitik yığını. Kotadan ve LLM yolundan tamamen ayrı: ölçüm yüzünden
+    // kullanıcının ücretsiz sorgusu eksilmesin, ölçüm kesintisi de sorguyu bozmasın.
+    // Yanıt her hâlükârda 204 — istemci hata görürse olayları biriktirip tekrar
+    // dener, bu da diski aynı veriyle iki kez doldurur.
+    if (req.method === 'POST' && url.pathname === '/api/olay') {
+      if (req.headers['x-app-key'] !== APP_KEY) { res.writeHead(401); return res.end(); }
+      try {
+        const b = JSON.parse((await govde(req)) || '{}');
+        olayYaz(b.cihaz, b.olaylar);
+      } catch { /* bozuk yığın sessizce düşer */ }
+      res.writeHead(204); return res.end();
+    }
+
     const POST_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu', '/api/namaz', '/api/durum', '/api/gunun', '/api/iap-onay'];
     if (req.method === 'POST' && POST_YOLLAR.includes(url.pathname)) {
       if (req.headers['x-app-key'] !== APP_KEY) { res.writeHead(401); return res.end(JSON.stringify({ hata: 'yetkisiz' })); }
