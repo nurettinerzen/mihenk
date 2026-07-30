@@ -42,12 +42,10 @@
     <!-- Namaz vakti bildirimi -->
     <!-- Android 13+ bildirim izni artık çalışma anında isteniyor. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Vakit bildirimi dakikası dakikasına olmak zorunda; Android 12+ normal
-         alarmları pil için 10+ dakika kaydırabiliyor. USE_EXACT_ALARM alarm
-         saatleri/namaz vakti gibi kullanıcının kendi belirlemediği ama tam
-         zamanında olması gereken bildirimler için Google'ın verdiği izin. -->
+    <!-- Android 12+ için kullanıcı tarafından verilebilen özel erişim. Mihenk
+         alarm saati/takvim uygulaması olmadığı için daha kısıtlı
+         USE_EXACT_ALARM iznini istemez. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <!-- Telefon yeniden başlatılınca planlanmış vakitler kaybolmasın. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
