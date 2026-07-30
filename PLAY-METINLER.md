@@ -30,7 +30,7 @@ HADITH AND QURAN BY TOPIC
 Type a topic or a word — patience, trust, a mother's right, debt, neighbours — and get the closest hadith and verses by meaning, not just by keyword. Each verse shows the Arabic, transliteration, translation, and surah, page and juz.
 
 READ AND LISTEN
-Read the Quran with translation and listen to the recitation. Download a reciter once and listen with no connection at all. Playback continues with the screen off, with lock screen controls.
+Read the full Quran with translation. Online listening with Mishary Alafasy is free. Mihenk Plus unlocks all seven reciters and offline downloads. Playback continues with the screen off, with lock screen controls.
 
 PRAYER TIMES AND QIBLA
 Prayer times calculated on your device for your location, so they stay correct without internet. A live qibla compass. Adhan notifications when a prayer time comes in, which you can turn on or off.
@@ -41,7 +41,7 @@ Every day greets you with a verse and an authentic hadith.
 SIX LANGUAGES
 Turkish, English, French, Indonesian, Arabic and Urdu.
 
-Mihenk includes 5 free searches in total. Mihenk Plus unlocks unlimited searches. Everything else — reading, online listening, prayer times and qibla — is free and always will be.
+Mihenk includes 5 free searches in total. Mihenk Plus unlocks all seven reciters, offline listening and unlimited searches. Quran reading, online listening with Alafasy, prayer times and qibla are free.
 
 Mihenk is an informational tool. It does not issue rulings; for disputed matters, consult a scholar.
 
@@ -72,7 +72,7 @@ KONUYA GÖRE HADİS VE KUR'AN
 Bir konu ya da kelime yaz — sabır, tevekkül, anne hakkı, borç, komşuluk — anlamca en yakın hadisleri ve ayetleri getirir; sadece kelime eşleşmesi değil. Her ayette Arapça metin, okunuş, meâl ve sûre-sayfa-cüz bilgisi bir arada.
 
 OKU VE DİNLE
-Kur'an'ı meâliyle oku, tilavetini dinle. Seçtiğin kâriyi bir kez indir, sonra internetsiz dinle. Ekranı kapatsan da çalmaya devam eder, kilit ekranından kontrol edebilirsin.
+Kur'an'ın tamamını meâliyle oku. Mishary Alafasy ile çevrimiçi dinleme ücretsiz. Mihenk Plus yedi kârinin tamamını ve çevrimdışı indirmeyi açar. Ekranı kapatsan da çalmaya devam eder, kilit ekranından kontrol edebilirsin.
 
 NAMAZ VAKTİ VE KIBLE
 Vakitler cihazında hesaplanır, yani internet olmasa da doğrudur. Canlı kıble pusulası. Vakit girdiğinde ezan sesiyle bildirim — ayarlardan açıp kapatabilirsin.
@@ -83,7 +83,7 @@ Her gün seni bir ayet ve bir sahih hadis karşılar.
 ALTI DİL
 Türkçe, İngilizce, Fransızca, Endonezce, Arapça ve Urduca.
 
-Mihenk toplam 5 ücretsiz arama içerir. Mihenk Plus sınırsız aramayı açar. Geri kalan her şey — okuma, çevrimiçi dinleme, namaz vakti ve kıble — ücretsiz ve öyle kalacak.
+Mihenk toplam 5 ücretsiz arama içerir. Mihenk Plus yedi kârinin tamamını, çevrimdışı dinlemeyi ve sınırsız aramayı açar. Kur'an okuma, Alafasy ile çevrimiçi dinleme, namaz vakti ve kıble ücretsizdir.
 
 Mihenk bir bilgilendirme aracıdır. Fıkhî hüküm vermez; ihtilaflı konularda bir âlime veya müftülüğe danışınız.
 
@@ -114,7 +114,7 @@ HADITHS ET CORAN PAR THÈME
 Écris un thème ou un mot — patience, confiance en Dieu, droit de la mère, dette, voisinage — et reçois les hadiths et versets les plus proches par le sens, pas seulement par mot-clé. Chaque verset affiche l'arabe, la translittération, la traduction, ainsi que la sourate, la page et le juz.
 
 LIRE ET ÉCOUTER
-Lis le Coran avec sa traduction et écoute la récitation. Télécharge un récitateur une fois, puis écoute sans aucune connexion. La lecture continue écran éteint, avec les commandes sur l'écran verrouillé.
+Lis le Coran entier avec sa traduction. L'écoute en ligne avec Mishary Alafasy est gratuite. Mihenk Plus débloque les sept récitateurs et les téléchargements hors ligne. La lecture continue écran éteint, avec les commandes sur l'écran verrouillé.
 
 HEURES DE PRIÈRE ET QIBLA
 Les heures sont calculées sur ton appareil pour ta position : elles restent justes sans internet. Boussole qibla en direct. Notification avec l'adhan à l'entrée de chaque prière, activable ou non.
@@ -125,7 +125,7 @@ Chaque jour t'accueille avec un verset et un hadith authentique.
 SIX LANGUES
 Turc, anglais, français, indonésien, arabe et ourdou.
 
-Mihenk comprend 5 recherches gratuites au total. Mihenk Plus débloque les recherches illimitées. Tout le reste — lecture, écoute en ligne, heures de prière et qibla — est gratuit et le restera.
+Mihenk comprend 5 recherches gratuites au total. Mihenk Plus débloque les sept récitateurs, l'écoute hors ligne et les recherches illimitées. La lecture, l'écoute en ligne avec Alafasy, les heures de prière et la qibla sont gratuites.
 
 Mihenk est un outil d'information. Il ne délivre pas d'avis juridique ; pour les questions débattues, consulte un savant.
 
@@ -156,7 +156,7 @@ HADIS DAN QURAN MENURUT TEMA
 Tulis satu tema atau kata — sabar, tawakal, hak ibu, utang, tetangga — dan dapatkan hadis serta ayat yang paling dekat maknanya, bukan sekadar kecocokan kata. Setiap ayat menampilkan teks Arab, transliterasi, terjemahan, serta surah, halaman, dan juz.
 
 BACA DAN DENGARKAN
-Baca Al-Qur'an dengan terjemahannya dan dengarkan tilawahnya. Unduh satu qari sekali saja, lalu dengarkan tanpa koneksi sama sekali. Tilawah terus berjalan meski layar mati, dengan kendali di layar kunci.
+Baca seluruh Al-Qur'an dengan terjemahannya. Mendengarkan online dengan Mishary Alafasy gratis. Mihenk Plus membuka ketujuh qari dan unduhan offline. Tilawah terus berjalan meski layar mati, dengan kendali di layar kunci.
 
 WAKTU SALAT DAN KIBLAT
 Waktu salat dihitung di perangkatmu sesuai lokasi, jadi tetap tepat tanpa internet. Kompas kiblat langsung. Notifikasi azan saat waktu salat masuk, bisa dinyalakan atau dimatikan.
@@ -167,7 +167,7 @@ Setiap hari menyambutmu dengan satu ayat dan satu hadis sahih.
 ENAM BAHASA
 Turki, Inggris, Prancis, Indonesia, Arab, dan Urdu.
 
-Mihenk mencakup total 5 pencarian gratis. Mihenk Plus membuka pencarian tanpa batas. Selebihnya — membaca, mendengarkan online, waktu salat, dan kiblat — gratis dan akan tetap gratis.
+Mihenk mencakup total 5 pencarian gratis. Mihenk Plus membuka ketujuh qari, mendengarkan offline, dan pencarian tanpa batas. Membaca, mendengarkan online dengan Alafasy, waktu salat, dan kiblat gratis.
 
 Mihenk adalah alat informasi. Ia tidak mengeluarkan fatwa; untuk masalah yang diperselisihkan, tanyakan kepada ulama.
 
@@ -198,7 +198,7 @@ Ketentuan Penggunaan: https://mihenk-api.onrender.com/kullanim
 اكتب موضوعًا أو كلمة — الصبر، التوكّل، حق الأم، الدَّين، الجار — لتحصل على أقرب الأحاديث والآيات معنًى، لا مجرّد تطابق لفظي. تعرض كل آية النص العربي ونطقه وترجمته والسورة والصفحة والجزء.
 
 اقرأ واستمع
-اقرأ القرآن مع ترجمته واستمع إلى تلاوته. نزّل قارئًا مرة واحدة ثم استمع دون أي اتصال. تستمر التلاوة والشاشة مطفأة، مع التحكّم من شاشة القفل.
+اقرأ القرآن كاملًا مع ترجمته. الاستماع إلى مشاري العفاسي عبر الإنترنت مجاني. يفتح مِحَك بلس القراء السبعة والتنزيل للاستماع دون اتصال. تستمر التلاوة والشاشة مطفأة، مع التحكّم من شاشة القفل.
 
 مواقيت الصلاة والقبلة
 تُحسب المواقيت على جهازك حسب موقعك، فتبقى صحيحة دون إنترنت. بوصلة قبلة مباشرة. تنبيه بصوت الأذان عند دخول الوقت، يمكنك تشغيله أو إيقافه.
@@ -209,7 +209,7 @@ Ketentuan Penggunaan: https://mihenk-api.onrender.com/kullanim
 ست لغات
 التركية والإنجليزية والفرنسية والإندونيسية والعربية والأردية.
 
-يتضمن مِحَك 5 عمليات بحث مجانية إجمالًا. يفتح مِحَك بلس بحثًا غير محدود. وما عدا ذلك — القراءة والاستماع عبر الإنترنت والمواقيت والقبلة — مجاني وسيبقى كذلك.
+يتضمن مِحَك 5 عمليات بحث مجانية إجمالًا. يفتح مِحَك بلس القراء السبعة والاستماع دون اتصال والبحث غير المحدود. قراءة القرآن والاستماع إلى العفاسي عبر الإنترنت والمواقيت والقبلة مجانية.
 
 مِحَك أداة معلوماتية. لا يُصدر أحكامًا فقهية؛ وفي المسائل الخلافية استشر عالمًا.
 
@@ -240,7 +240,7 @@ Ketentuan Penggunaan: https://mihenk-api.onrender.com/kullanim
 کوئی موضوع یا لفظ لکھیں — صبر، توکل، ماں کا حق، قرض، ہمسایہ — اور مفہوم کے اعتبار سے قریب ترین احادیث و آیات پائیں، محض لفظی مطابقت نہیں۔ ہر آیت کے ساتھ عربی متن، تلفظ، ترجمہ اور سورت، صفحہ و پارہ۔
 
 پڑھیں اور سنیں
-قرآن ترجمے کے ساتھ پڑھیں اور تلاوت سنیں۔ اپنا پسندیدہ قاری ایک بار ڈاؤن لوڈ کریں، پھر بغیر انٹرنیٹ سنیں۔ اسکرین بند ہونے پر بھی تلاوت جاری رہتی ہے، لاک اسکرین سے کنٹرول کریں۔
+پورا قرآن ترجمے کے ساتھ پڑھیں۔ مشاری العفاسی کے ساتھ آن لائن سماعت مفت ہے۔ مِحک پلس تمام سات قاری اور آف لائن ڈاؤن لوڈ کھولتا ہے۔ اسکرین بند ہونے پر بھی تلاوت جاری رہتی ہے، لاک اسکرین سے کنٹرول کریں۔
 
 اوقاتِ نماز اور قبلہ
 اوقات آپ کے آلے پر آپ کے مقام کے مطابق شمار ہوتے ہیں، اس لیے انٹرنیٹ کے بغیر بھی درست۔ زندہ قبلہ کمپاس۔ وقت داخل ہوتے ہی اذان کی آواز کے ساتھ اطلاع، جسے آن یا آف کیا جا سکتا ہے۔
@@ -251,7 +251,7 @@ Ketentuan Penggunaan: https://mihenk-api.onrender.com/kullanim
 چھ زبانیں
 ترکی، انگریزی، فرانسیسی، انڈونیشی، عربی اور اردو۔
 
-مِحک میں مجموعی طور پر 5 مفت تلاشیں شامل ہیں۔ مِحک پلس لامحدود تلاش کھولتا ہے۔ باقی سب کچھ — پڑھنا، آن لائن سننا، اوقاتِ نماز اور قبلہ — مفت ہے اور مفت رہے گا۔
+مِحک میں مجموعی طور پر 5 مفت تلاشیں شامل ہیں۔ مِحک پلس تمام سات قاری، آف لائن سماعت اور لامحدود تلاش کھولتا ہے۔ قرآن پڑھنا، عفاسی کے ساتھ آن لائن سماعت، اوقاتِ نماز اور قبلہ مفت ہیں۔
 
 مِحک ایک معلوماتی ذریعہ ہے۔ یہ فقہی حکم نہیں دیتا؛ اختلافی مسائل میں کسی عالم سے رجوع کریں۔
 

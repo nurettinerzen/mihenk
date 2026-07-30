@@ -130,7 +130,7 @@ mkdirSync(CIKTI, { recursive: true });
 
 for (const dil of liste) {
   const { konu } = DILLER[dil];
-  // Dil başına ayrı cihaz: günlük 5 ücretsiz sorgu kotası tek kimlikte tükenmesin.
+  // Dil başına ayrı cihaz: toplam 5 ücretsiz sorgu kotası tek kimlikte tükenmesin.
   hazirla(dil, `ekran-goruntusu-${dil}`);
   const klasor = join(CIKTI, dil);
   mkdirSync(klasor, { recursive: true });

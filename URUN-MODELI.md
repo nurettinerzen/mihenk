@@ -8,7 +8,7 @@
 
 **Ücretsiz deneme: yok.**
 
-**Premium'un sattığı şey: sadece "sınırsız sorgu".** Paywall'da ikinci bir fayda olarak "Reklamsız" yazıyordu — oysa uygulamada hiç reklam yok, yani ücretsiz kullanıcı da reklamsız. O satır denetimde düzeltildi ama geriye tek gerçek fayda kaldı.
+**Premium paketi:** yedi kârinin tamamı, çevrimdışı tilavet indirme ve sınırsız hadis/Kur'an araması. Kur'an'ın tamamını okuma, Mishary Alafasy ile çevrimiçi dinleme, namaz vakitleri ve kıble ücretsizdir. Reklam yoktur; bu nedenle "reklamsız" Premium faydası olarak yazılmaz.
 
 **Telemetri: yarım.** `hadis-api.mjs:876` `olcum` nesnesi ve `/olcum` ucu (`OLCUM_ANAHTAR` ile) var — istek sayıları, diller, hatalar, bulunamayan sorgular ölçülüyor. Bu arama kalitesi için değerli. **Ama paywall hunisi hiç yok:** kaç kişi paywall gördü, kaçı satın almayı başlattı, kaçı tamamladı — bilmiyorsun. Yani kotayı ve fiyatı körlemesine ayarlıyorsun.
 
@@ -30,8 +30,9 @@ Toplam kota ile deneme çelişmiyor: ilk 5 arama ürünü ispatlar, deneme yıll
 ### 3. Premium'a birikimli değer ekle — "sınırsız" tek başına abonelik tutmaz
 "Sınırsız kullanım" üzerine kurulu abonelik, kullanıcıyı yoğun kullandığı ay ödeyip sonra iptal etmeye iter. Kalıcı abonelik, iptal ettiğinde **kaybedeceği bir şey** ister. Bu uygulamada doğal adaylar:
 
+- **Kâri çeşitliliği** — Alafasy ücretsiz; diğer altı kâri Premium.
+- **Çevrimdışı tilavet** — tüm kâri indirmeleri Premium.
 - **Koleksiyon / favoriler** — kullanıcının kaydettiği hadisler, kendi notlarıyla
-- **Kâri indirme** (paralel oturumda yazılıyor) — çevrimdışı tilavet doğal bir premium faydası, üstelik gerçek bir maliyet kalemi. Bunu premium yap.
 - **Okuma planı / seri** — günlük hadis veya sûre takibi; ezan bildirimleri zaten alışkanlık kancası kuruyor, üstüne bir ilerleme katmanı iyi oturur
 - Arama geçmişi ve kaydedilen sorgular
 
@@ -40,17 +41,17 @@ Toplam kota ile deneme çelişmiyor: ilk 5 arama ürünü ispatlar, deneme yıll
 
 Not: premium'un kendisi artık RevenueCat'in keychain kimliğine bağlı (denetimde düzeltildi), yani **satın alma** için giriş gerekmiyor — bu doğru. Giriş yalnızca kullanıcının ürettiği veriyi taşımak için.
 
-### 5. Reklam: yalnız ödüllü ve isteğe bağlı
-Hadis/ayet kartının yanında banner veya kendiliğinden açılan geçiş reklamı kullanma. AdMob kategori filtresi istenmeyen reklamı yüzde yüz garantiyle engellemiyor. Güvenli model: ücretsiz 5 hak bittikten sonra kullanıcının isteğiyle reklam izleyip 1 ek arama kazanması. Sunucu tarafı doğrulama olmadan hak verme.
+### 5. Reklam: ilk sürümlerde yok
+Hadis/ayet kartının yanında banner veya kendiliğinden açılan geçiş reklamı kullanma. AdMob kategori filtresi istenmeyen reklamı yüzde yüz garantiyle engellemiyor. İlk gelir modeli yalnız Premium aboneliktir; yeterli aktif kullanıcı ve ölçüm oluşmadan reklam SDK'sı eklenmez.
 
 ## SIRA
 
 1. **Paywall hunisi** — ölçmeden ayarlama yapılmaz
 2. **Yıllığa 3 gün deneme** (metin StoreKit'ten)
-3. **Kâri indirmeyi premium faydası yap** — paralel oturum bitirince
-4. Tek seferlik arama paketleri ekle; abonelik istemeyen kullanıcıyı kaybetme
-5. Ödüllü reklamla 1 ek arama seçeneğini test et
-6. Koleksiyon + notlar + okuma planı, ardından opsiyonel giriş
+3. **Kâri seçimi + çevrimdışı indirmeyi Premium yap**
+4. Paywall'ı ses deneyimi merkezli anlat; sınırsız aramayı destekleyici fayda yap
+5. Koleksiyon + notlar + okuma planı, ardından opsiyonel giriş
+6. Aktif kullanıcı ve dönüşüm verisi oluşursa tek seferlik arama paketini ayrıca değerlendir
 
 ## DOKUNMA
 - Üyelik yokluğu ve temel ibadet araçlarının ücretsiz kalması doğru.

@@ -42,7 +42,7 @@ let n = 0;
 async function sorgula(q) {
   const r = await fetch(API + '/api/konu', {
     method: 'POST', headers: { 'content-type': 'application/json', 'x-app-key': KEY },
-    // Her sorguya AYRI cihaz kimliği: günlük 5 ücretsiz sorgu kotasına takılmayalım.
+    // Her sorguya AYRI cihaz kimliği: toplam 5 ücretsiz sorgu kotasına takılmayalım.
     body: JSON.stringify({ konu: q.sorgu, dil: q.dil, cihaz: 'degerlendirme-' + (n++) }),
   });
   if (!r.ok) throw new Error(`${q.id}: HTTP ${r.status}`);

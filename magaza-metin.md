@@ -21,6 +21,9 @@ Sosyal medyada, bir sohbette ya da bir mesajda gördüğün hadisi yapıştır. 
 **Konuya Göre Hadis & Kur'an**
 Aradığın hadisin ya da ayetin tam kelimesini hatırlaman gerekmez. "Tevekkül", "anne hakkı", "kalbin huzur bulması" gibi anlamı yaz; Mihenk anlamca en yakın hadisleri ve ayetleri getirir. Her ayette Arapça metin, okunuş, Diyanet meâli, sûre-sayfa-cüz bilgisi bir arada.
 
+**Kur'an Oku & Dinle**
+Kur'an'ın tamamını meâliyle oku. Mishary Alafasy ile çevrimiçi dinleme ücretsizdir. Mihenk Plus; yedi kârinin tamamını, çevrimdışı tilavet indirmeyi ve ekran kapalıyken dinlemeyi açar.
+
 **Ezan & Kıble**
 Bulunduğun konuma göre günün namaz vakitleri ve canlı kıble pusulası. Konumun cihazında kalır, saklanmaz.
 
@@ -33,7 +36,7 @@ Din konusunda yanlış bilgi gerçek bir zarardır. Mihenk bu yüzden hiçbir di
 Mihenk bir bilgilendirme aracıdır, fetva mercii değildir; ihtilaflı konularda bir âlime veya müftülüğe danışınız.
 
 **Mihenk Plus**
-Uygulama toplam 5 ücretsiz yapay zekâ destekli sorgu içerir. Mihenk Plus aboneliği (aylık/yıllık) sınırsız hadis doğrulama ve Kur'an araması sunar. App Store üzerinden yönetilir.
+Uygulama toplam 5 ücretsiz yapay zekâ destekli sorgu içerir. Mihenk Plus (aylık/yıllık); yedi kârinin tamamını, çevrimdışı dinlemeyi ve sınırsız hadis doğrulama ile Kur'an aramasını açar. App Store üzerinden yönetilir.
 
 **Destek e-posta:** info@selenly.net
 **Destek URL:** https://mihenk-api.onrender.com/kullanim
@@ -47,11 +50,11 @@ Uygulama toplam 5 ücretsiz yapay zekâ destekli sorgu içerir. Mihenk Plus abon
 
 **Yıllık (mihenk_plus_yillik)**
 - Görünen ad: Mihenk Plus (Yıllık)
-- Açıklama: Sınırsız hadis doğrulama ve Kur'an araması. Yıllık, otomatik yenilenir.
+- Açıklama: Tüm kâriler, çevrimdışı dinleme ve sınırsız arama. Yıllık, otomatik yenilenir.
 
 **Aylık (mihenk_plus_aylik)**
 - Görünen ad: Mihenk Plus (Aylık)
-- Açıklama: Sınırsız hadis doğrulama ve Kur'an araması. Aylık, otomatik yenilenir.
+- Açıklama: Tüm kâriler, çevrimdışı dinleme ve sınırsız arama. Aylık, otomatik yenilenir.
 
 ---
 
@@ -76,6 +79,9 @@ Paste a hadith you saw on social media, in a chat, or a message. Mihenk searches
 HADITH & QURAN BY TOPIC
 You don't need to remember the exact wording. Type a meaning — "trust in God", "a mother's rights", "the heart finding peace" — and Mihenk brings the closest hadiths and verses by meaning. Each verse shows Arabic, transliteration, the Diyanet translation, and surah–page–juz.
 
+READ & LISTEN TO THE QURAN
+Read the full Quran with translation. Online listening with Mishary Alafasy is free. Mihenk Plus unlocks all seven reciters, offline recitation downloads, and background playback.
+
 ADHAN & QIBLA
 Daily prayer times for your location and a live qibla compass. Your location stays on your device; it is not stored.
 
@@ -88,8 +94,8 @@ Wrong information about religion is a real harm. That's why Mihenk never has AI 
 Mihenk is an informational tool, not a source of religious verdicts; for disputed matters consult a scholar.
 
 MIHENK PLUS
-The app includes 5 free AI-assisted queries in total. Mihenk Plus (monthly/yearly) unlocks unlimited hadith verification and Quran search, managed through the App Store.
+The app includes 5 free AI-assisted queries in total. Mihenk Plus (monthly/yearly) unlocks all seven reciters, offline listening, and unlimited hadith verification and Quran search. It is managed through the App Store.
 
 **Subscription EN localization:**
-- Mihenk Plus (Monthly) — Unlimited hadith verification and Quran search. Monthly, auto-renews.
-- Mihenk Plus (Yearly) — Unlimited hadith verification and Quran search. Yearly, auto-renews.
+- Mihenk Plus (Monthly) — All reciters, offline listening and unlimited search. Monthly, auto-renews.
+- Mihenk Plus (Yearly) — All reciters, offline listening and unlimited search. Yearly, auto-renews.
