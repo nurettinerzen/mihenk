@@ -57,5 +57,5 @@ Ajan pod yarışını önlemek için `npm run sync-ios` yerine `node yap-www.mjs
 ## 5. Karar senin / dokunulmayanlar
 - **Konu arama sıralaması zayıf**: `tevazu` 0/5, `borç` 2/5, `komşuluk` → şuf'a rivayetleri. Formüle **dokunulmadı** — ölçüm seti olmadan körlemesine oynanmaz. Yerine `degerlendirme-konu.json` (30 sorgu, 6 dil) + `degerlendirme-calistir.mjs` kuruldu. **Temel çizgi: 133/150 (ilk5).** Set bildirilen bozuklukları yakalıyor.
 - **`الربا` sıralaması hâlâ zayıf** — `ربا` "العرباض" gibi isimlerin içinde de bulunuyor. Ölçüm setine `redOrnek` olarak yazıldı.
-- **CORS `*` + `APP_KEY` istemcide açık metin** (`hadis.html:490`). Anahtar sır değil; kotayı aşmak isteyen `cihaz` alanını değiştirerek sınırsız ücretsiz sorgu alabilir. Ayrı, koordineli iş (mağazadaki sürümü kırar).
+- **CORS `*` + `APP_KEY` istemcide açık metin** (`hadis.html:490`). Anahtar sır değil; kotayı aşmak isteyen `cihaz` alanını değiştirerek yeniden ücretsiz sorgu alabilir. Kalıcı toplam kota maliyeti azaltır ama hesap/güvenilir cihaz doğrulaması olmadan kötüye kullanım tamamen kapanmaz.
 - Bildirim/ezan ve kâri indirme kodu paralel oturumun işi — ajanlar dokunmadı. `bildirimAcKapa` yazılmış ama hiçbir yerden çağrılmıyor (ayarlarda açma/kapama yok).

@@ -22,7 +22,7 @@ services:
       # IP başına saatlik tavan. 120 idi ve MEŞRU kullanıcıyı kilitliyordu: TR ve
       # Endonezya'da mobil operatörler CGNAT kullanıyor, yüzlerce abone tek genel
       # IP'nin arkasından çıkıp birbirini 429'a düşürüyordu. Asıl fren artık cihaz
-      # başına (CIHAZ_RATE_LIMIT) + günlük ücretsiz sorgu kotası (FREE_LIMIT).
+      # başına (CIHAZ_RATE_LIMIT) + cihaz başına toplam ücretsiz sorgu kotası.
       # Normalize hadis indeksi dil başına ~60 MB; kaç dil bellekte tutulsun.
       # 2 GB'lık instance'ta 2 güvenli (6 dil tutulunca OOM restart oluyordu).
       - key: NORM_LIMIT
@@ -31,6 +31,8 @@ services:
         value: "3000"
       - key: CIHAZ_RATE_LIMIT
         value: "300"
+      - key: FREE_LIMIT
+        value: "5"
       # Normalize hadis indeksi açılışta 6 dil için hazırlanır (~370 MB; toplam RSS
       # ~1,2 GB / 2 GB). Bellek sıkışırsa kısalt (ör. "tr,en,ar"): listede olmayan dil
       # ilk sorgusunda hesaplanır, sonuç değişmez, yalnız o ilk istek ~700 ms yavaşlar.

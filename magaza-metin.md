@@ -33,7 +33,7 @@ Din konusunda yanlış bilgi gerçek bir zarardır. Mihenk bu yüzden hiçbir di
 Mihenk bir bilgilendirme aracıdır, fetva mercii değildir; ihtilaflı konularda bir âlime veya müftülüğe danışınız.
 
 **Mihenk Plus**
-Uygulama ücretsiz kullanılabilir ve günlük belirli sayıda yapay zekâ destekli sorgu içerir. Mihenk Plus aboneliği (aylık/yıllık) sınırsız hadis doğrulama ve Kur'an araması sunar. App Store üzerinden yönetilir.
+Uygulama toplam 5 ücretsiz yapay zekâ destekli sorgu içerir. Mihenk Plus aboneliği (aylık/yıllık) sınırsız hadis doğrulama ve Kur'an araması sunar. App Store üzerinden yönetilir.
 
 **Destek e-posta:** info@selenly.net
 **Destek URL:** https://mihenk-api.onrender.com/kullanim
@@ -88,7 +88,7 @@ Wrong information about religion is a real harm. That's why Mihenk never has AI 
 Mihenk is an informational tool, not a source of religious verdicts; for disputed matters consult a scholar.
 
 MIHENK PLUS
-The app is free with a limited number of AI-assisted queries per day. Mihenk Plus (monthly/yearly) unlocks unlimited hadith verification and Quran search, managed through the App Store.
+The app includes 5 free AI-assisted queries in total. Mihenk Plus (monthly/yearly) unlocks unlimited hadith verification and Quran search, managed through the App Store.
 
 **Subscription EN localization:**
 - Mihenk Plus (Monthly) — Unlimited hadith verification and Quran search. Monthly, auto-renews.

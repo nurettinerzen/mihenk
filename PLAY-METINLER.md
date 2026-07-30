@@ -41,7 +41,7 @@ Every day greets you with a verse and an authentic hadith.
 SIX LANGUAGES
 Turkish, English, French, Indonesian, Arabic and Urdu.
 
-Mihenk Plus removes the daily limit on searches. Everything else — reading, listening, prayer times, qibla — is free and always will be.
+Mihenk includes 5 free searches in total. Mihenk Plus unlocks unlimited searches. Everything else — reading, online listening, prayer times and qibla — is free and always will be.
 
 Mihenk is an informational tool. It does not issue rulings; for disputed matters, consult a scholar.
 
@@ -83,7 +83,7 @@ Her gün seni bir ayet ve bir sahih hadis karşılar.
 ALTI DİL
 Türkçe, İngilizce, Fransızca, Endonezce, Arapça ve Urduca.
 
-Mihenk Plus günlük arama sınırını kaldırır. Geri kalan her şey — okuma, dinleme, namaz vakti, kıble — ücretsiz ve öyle kalacak.
+Mihenk toplam 5 ücretsiz arama içerir. Mihenk Plus sınırsız aramayı açar. Geri kalan her şey — okuma, çevrimiçi dinleme, namaz vakti ve kıble — ücretsiz ve öyle kalacak.
 
 Mihenk bir bilgilendirme aracıdır. Fıkhî hüküm vermez; ihtilaflı konularda bir âlime veya müftülüğe danışınız.
 
@@ -125,7 +125,7 @@ Chaque jour t'accueille avec un verset et un hadith authentique.
 SIX LANGUES
 Turc, anglais, français, indonésien, arabe et ourdou.
 
-Mihenk Plus lève la limite quotidienne de recherches. Tout le reste — lecture, écoute, heures de prière, qibla — est gratuit et le restera.
+Mihenk comprend 5 recherches gratuites au total. Mihenk Plus débloque les recherches illimitées. Tout le reste — lecture, écoute en ligne, heures de prière et qibla — est gratuit et le restera.
 
 Mihenk est un outil d'information. Il ne délivre pas d'avis juridique ; pour les questions débattues, consulte un savant.
 
@@ -167,7 +167,7 @@ Setiap hari menyambutmu dengan satu ayat dan satu hadis sahih.
 ENAM BAHASA
 Turki, Inggris, Prancis, Indonesia, Arab, dan Urdu.
 
-Mihenk Plus menghapus batas pencarian harian. Selebihnya — membaca, mendengarkan, waktu salat, kiblat — gratis dan akan tetap gratis.
+Mihenk mencakup total 5 pencarian gratis. Mihenk Plus membuka pencarian tanpa batas. Selebihnya — membaca, mendengarkan online, waktu salat, dan kiblat — gratis dan akan tetap gratis.
 
 Mihenk adalah alat informasi. Ia tidak mengeluarkan fatwa; untuk masalah yang diperselisihkan, tanyakan kepada ulama.
 
@@ -209,7 +209,7 @@ Ketentuan Penggunaan: https://mihenk-api.onrender.com/kullanim
 ست لغات
 التركية والإنجليزية والفرنسية والإندونيسية والعربية والأردية.
 
-يرفع مِحَك بلس الحدّ اليومي للبحث. وما عداه — القراءة والاستماع والمواقيت والقبلة — مجاني وسيبقى كذلك.
+يتضمن مِحَك 5 عمليات بحث مجانية إجمالًا. يفتح مِحَك بلس بحثًا غير محدود. وما عدا ذلك — القراءة والاستماع عبر الإنترنت والمواقيت والقبلة — مجاني وسيبقى كذلك.
 
 مِحَك أداة معلوماتية. لا يُصدر أحكامًا فقهية؛ وفي المسائل الخلافية استشر عالمًا.
 
@@ -251,7 +251,7 @@ Ketentuan Penggunaan: https://mihenk-api.onrender.com/kullanim
 چھ زبانیں
 ترکی، انگریزی، فرانسیسی، انڈونیشی، عربی اور اردو۔
 
-مِحک پلس روزانہ تلاش کی حد ختم کر دیتا ہے۔ باقی سب کچھ — پڑھنا، سننا، اوقاتِ نماز، قبلہ — مفت ہے اور مفت رہے گا۔
+مِحک میں مجموعی طور پر 5 مفت تلاشیں شامل ہیں۔ مِحک پلس لامحدود تلاش کھولتا ہے۔ باقی سب کچھ — پڑھنا، آن لائن سننا، اوقاتِ نماز اور قبلہ — مفت ہے اور مفت رہے گا۔
 
 مِحک ایک معلوماتی ذریعہ ہے۔ یہ فقہی حکم نہیں دیتا؛ اختلافی مسائل میں کسی عالم سے رجوع کریں۔
 

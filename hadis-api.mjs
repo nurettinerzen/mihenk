@@ -19,6 +19,7 @@ import tzlookup from 'tz-lookup';
 import Anthropic from '@anthropic-ai/sdk';
 import { olayYaz, ozet as olayOzet } from './olay.mjs';
 import { panelHtml } from './panel.mjs';
+import { toplamKota } from './kota.mjs';
 
 const PORT = process.env.PORT || 8788;
 const APP_KEY = process.env.APP_KEY || 'hadis-dev';
@@ -896,7 +897,7 @@ setInterval(() => {
   console.log('[OLCUM]', JSON.stringify({
     istek: olcum.istek, dil: olcum.dil, hata: olcum.hata,
     bulunamadi: olcum.bulunamadi, anlamFarki: olcum.anlamFarki,
-    aktifCihaz: kullanim.size,
+    kotaCihaz: toplamKota.cihazSayisi(),
     bosSorgu: olcum.bosSorgu.slice(-25).map(x => `${x.yol}/${x.dil}: ${x.sorgu}`),
   }));
 }, 1800_000).unref();
@@ -912,24 +913,24 @@ const bosKaydet = (yol, dil, sorgu) => {
 // Render'ın kenar proxy'si arkasında kova zaten kaba.
 //
 // Yeni eşikler ve gerekçesi:
-// • IP: 3000/saat. Tek bir cihaz zaten günde 5 AI sorgusuyla (premiumsa da ekran
+// • IP: 3000/saat. Tek bir cihaz zaten toplam 5 ücretsiz AI sorgusuyla (premiumsa
+//   da ekran
 //   başına birkaç istekle) sınırlı; asıl akış /api/durum + /api/gunun + /api/namaz
 //   gibi ucuz uçlar. Ağır bir CGNAT havuzunda 300-500 aktif kullanıcı × saatte
 //   ~6 istek ≈ 3000. Eşik bunu geçirir, gerçek bir kötüye kullanımı (saniyede
 //   birden fazla istek süren tek IP) hâlâ keser.
 // • Cihaz: 300/saat. Tek kullanıcının insani üst sınırının çok üstünde; tek bir
 //   cihaz kimliğiyle döngüye giren istemci burada durur. Maliyeti asıl kesen
-//   FREE_LIMIT (günde 5 AI sorgusu) zaten yerinde.
+//   FREE_LIMIT (toplam 5 AI sorgusu) zaten yerinde.
 const LIMIT = Number(process.env.RATE_LIMIT || 3000);          // IP / saat
 const CIHAZ_LIMIT = Number(process.env.CIHAZ_RATE_LIMIT || 300); // cihaz / saat
 const cihazSayac = new Map();
 // Map'ler istemciden gelen anahtarlarla (IP, cihaz) büyüyor ve hiç temizlenmiyordu.
 // Saatte bir süresi geçmiş kayıtları at; premium kayıtları korunur.
 setInterval(() => {
-  const now = Date.now(), g = bugun();
+  const now = Date.now();
   for (const [k, v] of istekSayac) if (now > v.reset) istekSayac.delete(k);
   for (const [k, v] of cihazSayac) if (now > v.reset) cihazSayac.delete(k);
-  for (const [k, v] of kullanim) if (v.gun !== g) kullanim.delete(k);
   // Premium önbelleği de sınırsız büyümesin. 7 gündür dokunulmamış kaydı at:
   // silinse bile kayıp yok, cihaz döndüğünde RevenueCat'ten yeniden öğrenilir.
   for (const [k, v] of premiumCihaz) if (now - v.guncel > 7 * 86400_000) premiumCihaz.delete(k);
@@ -944,12 +945,10 @@ function sayacAstiMi(harita, anahtar, limit) {
 const limitAsildi = (ip) => sayacAstiMi(istekSayac, ip, LIMIT);
 const cihazLimitAsildi = (c) => sayacAstiMi(cihazSayac, c, CIHAZ_LIMIT);
 
-// --- Freemium: cihaz başına GÜNLÜK ücretsiz AI-sorgu; premium (abone) = sınırsız ---
+// --- Freemium: cihaz başına TOPLAM ücretsiz AI sorgusu; premium = sınırsız ---
 const FREE_LIMIT = Number(process.env.FREE_LIMIT || 5);
 const CHECKOUT_URL = process.env.CHECKOUT_URL || ''; // LemonSqueezy/Stripe ödeme linki (kurulunca)
 const AI_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu']; // limite tabi (namaz serbest)
-const kullanim = new Map();      // cihaz -> {gun, sayi}
-const bugun = () => new Date().toISOString().slice(0, 10);
 
 // --- Premium durumu: TEK DOĞRULUK KAYNAĞI RevenueCat ---
 // ESKİDEN premium kaydı sunucunun belleğinde bir Map'ti. Render her deploy/restart/
@@ -982,14 +981,10 @@ async function premiumMi(cihaz) {
 }
 function kalanHak(c, prem) {
   if (prem) return Infinity;
-  const r = kullanim.get(c);
-  if (!r || r.gun !== bugun()) return FREE_LIMIT;
-  return Math.max(0, FREE_LIMIT - r.sayi);
+  return toplamKota.kalan(c);
 }
 function hakKullan(c) {
-  let r = kullanim.get(c);
-  if (!r || r.gun !== bugun()) { r = { gun: bugun(), sayi: 0 }; kullanim.set(c, r); }
-  r.sayi++;
+  return toplamKota.kullan(c);
 }
 
 // --- Basit HTTP sunucu (CORS + app-key + rate limit + gövde sınırı) ---
@@ -1016,7 +1011,7 @@ const sunucu = http.createServer(async (req, res) => {
     return res.end(JSON.stringify({
       ...olcum,
       toplamIstek: Object.values(olcum.istek).reduce((a, b) => a + b, 0),
-      aktifCihaz: kullanim.size,
+      kotaCihaz: toplamKota.cihazSayisi(),
       // Kalıcı bir premium kaydı yok; bu yalnızca RevenueCat yanıtlarının önbelleği.
       premiumOnbellek: premiumCihaz.size,
       premiumOnbellekAbone: [...premiumCihaz.values()].filter(v => v.premium).length,

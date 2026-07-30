@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "start": "node --env-file=.env hadis-api.mjs",
+    "test": "node --test",
     "build-data": "node ingest.mjs && node ingest-kuran.mjs",
     "build-vectors": "node embed-kuran.mjs && node embed-hadis.mjs",
     "build": "npm run build-data && npm run build-vectors",
