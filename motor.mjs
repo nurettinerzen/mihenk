@@ -16,7 +16,7 @@ export function normalize(s) {
 
 const STOPWORDS = new Set(('ve bir bu da de o ki ile için gibi ama fakat çok daha en her hiç ne ya mi mı mu mü ise diye olan olarak sonra göre kadar ancak yani şu şey ben sen biz siz onlar dedi buyurdu resulullah peygamber sallallahu aleyhi vesellem allah anlatiyor rivayet nakleder bize haber verdi').split(' ').map(normalize));
 
-function tokenize(s) {
+export function tokenize(s) {
   return normalize(s).split(' ').filter(t => t.length > 2 && !STOPWORDS.has(t));
 }
 

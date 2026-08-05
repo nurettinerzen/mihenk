@@ -8,7 +8,8 @@
     "test": "node --test",
     "build-data": "node ingest.mjs && node ingest-kuran.mjs",
     "build-vectors": "node embed-kuran.mjs && node embed-hadis.mjs",
-    "build": "npm run build-data && npm run build-vectors",
+    "build-runtime": "node model-indir.mjs && node sp-hazirla.mjs && node vektor-int8.mjs && node db-yap.mjs",
+    "build": "npm run build-data && npm run build-vectors && npm run build-runtime",
     "sync-ios": "node yap-www.mjs && npx cap sync ios"
   },
   "dependencies": {
@@ -19,12 +20,14 @@
     "@capacitor/geolocation": "^7.1.8",
     "@capacitor/ios": "^7.6.8",
     "@capacitor/local-notifications": "^7.0.7",
-    "@huggingface/transformers": "^4.2.0",
     "@revenuecat/purchases-capacitor": "^10.4.0",
     "adhan": "^4.4.4",
+    "better-sqlite3": "^12.11.1",
+    "onnxruntime-node": "^1.27.0",
     "tz-lookup": "^6.1.25"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.6.8"
+    "@capacitor/cli": "^7.6.8",
+    "@huggingface/transformers": "^4.2.0"
   }
 }

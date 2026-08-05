@@ -10,10 +10,10 @@
 //   GET  /health
 
 import http from 'node:http';
-import { readFileSync, existsSync } from 'node:fs';
-import { gunzipSync } from 'node:zlib';
-import { Motor } from './motor.mjs';
-import { embedOne, embedder, cos, DIM } from './embed.mjs';
+import { readFileSync } from 'node:fs';
+import { embedOne, embedder, cos, cosI8, DIM } from './embed.mjs';
+import * as depo from './depo.mjs';
+import { metinAl, metinDili, trNorm, arNorm, hadisMatn, hadisMetni, DILLER } from './metin.mjs';
 import * as adhan from 'adhan';
 import tzlookup from 'tz-lookup';
 import Anthropic from '@anthropic-ai/sdk';
@@ -56,29 +56,11 @@ async function rcPremiumMi(cihaz) {
     return gecerli(j?.subscriber?.entitlements) || gecerli(j?.subscriber?.subscriptions);
   } catch { return null; }
 }
-console.log('Korpus yükleniyor...');
+console.log('Depo açılıyor (SQLite)...');
 const yol = (f) => new URL(`./${f}`, import.meta.url).pathname;
-// Büyük veri dosyaları depoda gzip'li tutulur (corpus 134MB → 37MB; GitHub 100MB sınırı).
-// .gz varsa onu aç, yoksa düz .json'a düş.
-const jsonOku = (ad) => {
-  const gz = yol(`${ad}.gz`);
-  if (existsSync(gz)) return JSON.parse(gunzipSync(readFileSync(gz)));
-  return JSON.parse(readFileSync(yol(ad), 'utf8'));
-};
-const corpus = jsonOku('corpus.json');
-// Mevzuat (halk arasında yaygın, aslı zayıf/olmayan sözler) — küçük, atıflı, âlim incelemesi bekleyen tohum.
-const mevzuat = JSON.parse(readFileSync(yol('mevzuat.json'), 'utf8')).map((m, i) => ({
-  id: `m${i}`, kitap: 'mevzuat', kitapTr: 'Halk arasında yaygın söz', kisaTr: 'Yaygın söz',
-  no: null, tr: m.metin, ar: '', derece: m.derece, dereceRaw: m.referans,
-  alimler: [], kaynak: 'Halk arasında yaygın söz', referans: m.referans, aciklama: m.aciklama, mevzuat: true,
-}));
-// Hadis: dile göre ayrı lexical motor (tr metni / en metni indekslenir).
-const hadisAll = [...corpus, ...mevzuat];
-const motorTr = new Motor(hadisAll, 'tr');
-const motorEn = new Motor(hadisAll, 'en');
-const hadisMotor = (dil) => (dil === 'en' ? motorEn : motorTr);
-// Kur'an: ayet korpusu (TR + EN meal + Arapça). Meal getirilir, üretilmez.
-const ayat = JSON.parse(readFileSync(yol('ayat.json'), 'utf8'));
+// Korpus artık RAM'de DEĞİL: metinler mihenk.db'de (depo.mjs), BM25 → FTS5,
+// normalize kopyalar inşa anında yazıldı. 30k×6 dil JSON'u belleğe açmak ~1 GB
+// tutuyor ve Standard (2 GB) plana mahkûm ediyordu; hedef 512 MB (Starter).
 // Sûre adları: ayat.json'da yalnız TR ve Latin transliterasyon var. Arapça/Urduca
 // arayüzde ayet kaynağı "Al-Baqara 255" diye Latin harflerle çıkıyordu (RTL bir
 // ekranda okunmuyor). sure.json Arapça adı taşıyor → sûre no ile eşleyip kullan.
@@ -95,135 +77,26 @@ const SURE_AD_AR = (() => {
 // bilinir. Latin transliterasyon yerine onu veririz.
 const sureAdiDil = (a, dil) => (dil === 'tr' ? a.sureAd
   : ((dil === 'ar' || dil === 'ur') && SURE_AD_AR.get(a.sure)) || a.sureAdEn);
-// Kur'an semantik indeksi — dile göre ayrı vektör (yerel embedding).
+// Kur'an semantik indeksi — dile göre ayrı vektör (yerel embedding), f32 (18 MB).
 const vekYukle = (f) => { const b = readFileSync(yol(f)); return new Float32Array(b.buffer, b.byteOffset, b.length / 4); };
 const kuranVek = { tr: vekYukle('vektor-kuran-tr.f32'), en: vekYukle('vektor-kuran-en.f32') };
-// Korpustaki bazı kayıtlar hadis metninin ardına şerh/izah/tahric bloğu ekliyor
-// (Fethu'l-Bari, "Diğer tahric", AÇIKLAMA…). Bunlar hadis DEĞİL; aramada
-// "ilim adamları/tevazu yoluyla" gibi şerh cümleleri hadis sanılıp konuları
-// çökertiyordu. Aramada ve gösterimde yalnızca rivayet metnini kullanırız.
-const SERH_KALIP = /(Diğer tahric|Fethu'?l-?Bari|Fethul Bari|İZAH|IZAH|ŞERH|Şerh:|AÇIKLAMA|Açıklama:|Tahric|Not:|Tekrarı?\s*:)/;
-// Hadis metni "Bize X rivayet etti… şöyle buyurdu:" diye başlar; asıl söz (matn)
-// bundan sonrasıdır. Arama isnad'daki râvi adlarına takılıyordu.
-// Korpusun %19'unda kart isnad zinciriyle açılıyordu ("Bize Leys, Ukayl'den; o da
-// İbn Şihâb'dan; o da Âişe'den şöyle tahdîs etmiştir: …"). Zincirin halkaları ';' ve
-// '.' ile bağlanır, ASIL SÖZ ise ':' (ya da "…etti ki,") ile açılır. Bu geçişin
-// metnin ilk %70'indeki SON örneğinden sonrası matn'dır. Ölçüm: 5.926 isnadlı
-// kayıttan 3.800'ü düzeliyor, aşırı kırpılan 0.
-const MATN_KOK = '(?:tahd[îi]s|riv[âa]yet|haber\\s+ver|naklet|nakled|ded|dedi|demiş|buyur|anlat|söyle|bersabda|a dit|said)';
-const MATN_KALIP = new RegExp(MATN_KOK + "[\\wçğıöşüÇĞİÖŞÜ]*(?:\\s+[\\wçğıöşüÇĞİÖŞÜ'’]+){0,2}\\s*(?::|ki\\s*,)", 'gi');
-function latinMatn(x) {
-  const re = new RegExp(MATN_KALIP.source, 'gi');
-  let son = null, m;
-  while ((m = re.exec(x))) { if (m.index < x.length * 0.7) son = m; else break; }
-  if (!son) return x;
-  const kalan = x.slice(son.index + son[0].length).replace(/^[\s:;.,"“«»)\]]+/, '').trim();
-  // Kesme sağlıklı mı: cümle harfle başlamalı, bağlaç artığıyla açılmamalı.
-  if (kalan.length < 40 || !/^[\p{L}"“]/u.test(kalan) || /^(ki|ve|de|da)\b/i.test(kalan)) return x;
-  return kalan;
-}
+// Şerh ayıklama + isnad soyma + normalizasyon fonksiyonları metin.mjs'e taşındı
+// (db-yap.mjs inşada aynılarını kullanır — çift kopya sapması olmasın diye).
 
-// --- Arapça / Urduca / Endonezce isnad ayıklama ---
-// Bu üç dilde MATN_KALIP hiç eşleşmiyordu (kökleri TR/EN/FR) → kartlarda hadis
-// yerine üç satır râvi zinciri görünüyordu.
-// YÖNTEM: metnin ORTASINDAN kesmek yerine SOLDAN soyma. Ortadan kesme (ilk denenen
-// "son rivayet fiili" yöntemi) ölçümde hadisin baş tarafını yiyip parça cümle
-// bırakıyordu ("…رسول الله صلى الله عليه وسلم بمخضب" gibi) — dinî içerikte parça
-// metin göstermek yanlış bilgidir. Soyma, baştaki halka isnad kalıbına uymadığı
-// anda DURUR; en kötü ihtimalle metin olduğu gibi kalır (bugünkü davranış).
-// Ölçüm (30.483 kayıt): AR 25.598 kayıt kırpıldı (%84,6), ortalama %72'si korundu,
-// 60 harften kısa kalan 0. UR %34,6. ID %90,5.
-const HRK = '[\\u064B-\\u0652\\u0670\\u0640\\u06D6-\\u06ED\\u200f]*';   // hareke/tatweel/RLM toleransı
-const arEsnek = (w) => w.split('').map(ch => ch === ' ' ? '\\s+' : (/[اأإآ]/.test(ch) ? '[اأإآ]' : ch) + HRK).join('');
-// isnad halkası: (قال/فقال…) + rivayet fiili + râvi adı + ',' ya da ':'
-const AR_HALKA = ['حدثنا', 'حدثني', 'حدثنيه', 'حدثهم', 'اخبرنا', 'اخبرني', 'اخبرهم', 'انبانا', 'انباني', 'ثنا', 'سمعت', 'عن'].map(w => '(?:' + arEsnek('و') + ')?' + arEsnek(w)).join('|');
-const AR_ONEK = ['قال', 'قالت', 'قالا', 'قالوا', 'وقال', 'فقال', 'يقول', 'ح'].map(arEsnek).join('|');
-// Baştaki artıklar: (a) ortak râvi — "…، وَإِسْحَاقُ بْنُ إِبْرَاهِيمَ، قَالاَ حَدَّثَنَا"
-// ikinci râvi adıyla açılıyor; (b) "- يَعْنِي ابْنَ بِلاَلٍ -" gibi araya sıkışmış
-// kimlik notu. İkisi de halka değil ama halkadan ÖNCE geliyor, temizlenmezse
-// soyma ilk adımda duruyordu.
-const AR_ARTIK = '(?:' + arEsnek('و') + '[^،:]{0,90}[،:][\\s\\u200f]*)?(?:[-ـ][^-ـ]{0,60}[-ـ][\\s،\\u200f]*)?';
-const AR_PEEL = new RegExp('^[\\s\\u200f]*' + AR_ARTIK + '(?:(?:' + AR_ONEK + ')' + HRK + '[\\s:،.]*)*(?:' + AR_HALKA + ')' + HRK + '(?![\\u0621-\\u064A])[^،:]{0,120}[،:]' + HRK + '\\s*');
-// Urduca: halkalar '،' / '۔' ile ayrılır ve rivayet fiiliyle biter.
-const UR_PEEL = /^\s*(?:\(.{0,50}?\)\s*)?(?:ہم\s+سے|ہم\s+کو|ہمیں|مجھ\s+سے|مجھ\s+کو|مجھے|ان\s+سے|ان\s+کو|انہیں|انہوں\s+نے|وہ|اور|پھر|کہا|کہ)?[^،۔]{0,110}?(?:بیان\s+کی(?:ا)?|خبر\s+دی|روایت\s+(?:کی|کرتے\s+ہیں)|نقل\s+ک(?:ی|رتے\s+ہیں)|حدیث\s+سنی|نے|سے)\s*[،۔]\s*/;
-// Endonezce: râvi adları köşeli parantez içinde → halka sınırı net.
-const ID_PEEL = /^\s*(?:[Tt]elah\s+)?(?:menceritakan|mengabarkan|memberitakan|mengkhabarkan|diceritakan|dikabarkan|meriwayatkan)\s+kepada\s*(?:kami|ku|nya|saya)?[^[]{0,40}\[[^\]]{0,140}\][\s,;]*(?:-[^-]{0,60}-[\s,;]*)?(?:(?:yang|dia|ia|beliau|dan)\s+)?(?:berkata|katanya|mengatakan)?[\s,;:]*|^\s*(?:dan\s+)?[Dd]ari\s+\[[^\]]{0,140}\][\s,;]*(?:-[^-]{0,60}-[\s,;]*)?(?:(?:yang|dia|ia|beliau)\s+)?(?:berkata|katanya|mengatakan)?[\s,;:]*|^\s*(?:aku|saya)\s+mendengar\s+\[[^\]]{0,140}\][\s,;]*(?:berkata|katanya)?[\s,;:]*/;
-// Urduca'yı Arapça'dan ayıran harfler (Arapça metinde bulunmaz).
-const URDU_HARF = /[ٹڈڑںھہےۃپچژگ]/;
-function soyIsnad(x, re) {
-  const bas = x;
-  for (let i = 0; i < 14; i++) {
-    const m = x.match(re);
-    if (!m || !m[0]) break;
-    const kalan = x.slice(m[0].length).trim();
-    // Aşırı soyma koruması: kalan çok kısaysa ya da metnin dörtte birinden azına
-    // indiyse soymayı bırak — eksik hadis göstermektense isnadlı tam metin daha iyi.
-    if (kalan.length < 60 || kalan.length < bas.length * 0.25) break;
-    x = kalan;
-  }
-  return x;
-}
-function hadisMatn(t) {
-  const x = hadisMetni(t);
-  // Dil parametresine değil METNİN KENDİSİNE bakarız: metinAl() istenen dil boşsa
-  // en→tr'ye düşüyor, yani 'ar' istenen kayıt İngilizce metin taşıyabiliyor.
-  if (/[؀-ۿ]/.test(x)) return soyIsnad(x, URDU_HARF.test(x) ? UR_PEEL : AR_PEEL);
-  if (/\[[^\]]+\]|kepada kami|shallallahu/.test(x)) return latinMatn(soyIsnad(x, ID_PEEL));
-  return latinMatn(x);
-}
-function hadisMetni(t) {
-  let x = (t || '').trim();
-  const m = x.match(SERH_KALIP);
-  if (m && m.index > 80) x = x.slice(0, m.index).trim();       // şerhten önceki kısım
-  if (x.length > 1400) {                                        // hâlâ çok uzunsa cümle sınırında kes
-    const kes = x.lastIndexOf('. ', 1400);
-    x = (kes > 300 ? x.slice(0, kes + 1) : x.slice(0, 1400)) + ' …';
-  }
-  return x;
-}
-
-// Hadis metinlerinin normalize kopyası (önek eşleşmeli lexical + alaka kapısı için).
-// ÖNCEDEN tek slotluk önbellek vardı: `hadisNorm` yalnız SON dili tutuyordu, dil
-// değişen her istek 30.483 kaydı yeniden normalize ediyordu (~700 ms tek çekirdeği
-// bloke ederek). Node tek iş parçacıklı olduğu için sunucu çok dilli trafikte
-// ~1,2 istek/sn'e düşüyordu. Artık dil BAŞINA kalıcı önbellek + açılışta ısıtma.
-// Dizi hadisAll boyundadır (corpus + mevzuat); lexHadis yalnız ilk corpus.length
-// öğesini kullanır, alaka kapısı tamamını.
-const hadisNormOnbellek = new Map();      // dil → string[]
-// Dil başına normalize kopya ~60 MB. Altısını birden tutmak RSS'i 2 GB sınırına
-// dayayıp instance'ı öldürüyordu. En son kullanılan NORM_LIMIT dili tutarız;
-// düşen dil bir sonraki sorgusunda (~700 ms) yeniden hesaplanır — sonuç aynı.
-const NORM_LIMIT = Math.max(1, Number(process.env.NORM_LIMIT || 2));
-function hadisNormAl(dil) {
-  let arr = hadisNormOnbellek.get(dil);
-  if (arr) {                                  // LRU: kullanılanı en sona al
-    hadisNormOnbellek.delete(dil); hadisNormOnbellek.set(dil, arr);
-    return arr;
-  }
-  const nf = dil === 'ar' ? arNorm : trNorm;
-  arr = hadisAll.map(h => ' ' + nf(hadisMatn(metinAl(h, dil))));
-  hadisNormOnbellek.set(dil, arr);
-  while (hadisNormOnbellek.size > NORM_LIMIT) {
-    const enEski = hadisNormOnbellek.keys().next().value;
-    hadisNormOnbellek.delete(enEski);          // v8 sonraki GC'de toplar
-  }
-  return arr;
-}
-// sorgu kelimesi, metindeki bir kelimenin ÖNEKİ ise eşleşir (sabır→sabreden değil ama
-// sabır→sabırla evet; kelime başına boşluk şartı kısmi/ortadan eşleşmeyi engeller)
+// lexHadis: sorgu kelimesi, metindeki bir kelimenin ÖNEKİ ise eşleşir (Arapça’da
+// substring — kökler eklerin içinde geçer). Tarama artık SQL LIKE ile C tarafında
+// (depo.hadisEslesen: dil başına ayrı hnorm_* tablosu, ~20 MB okuma); JS’e yalnız
+// eşleşen satır numaraları döner. Puanlama eski davranışla birebir:
+// n = kelimenin (varyantlarından biriyle) geçtiği corpus kaydı sayısı, out[i] = Σ idf.
 function lexHadis(dil, qw) {
-  const N = corpus.length, arr = hadisNormAl(dil);
+  const N = depo.nCorpus;
   const arMi2 = dil === 'ar';
-  const vars = qw.map(w => (arMi2 ? arVaryant(w) : kokVaryant(w)));
-  const idf = vars.map(vs => {
-    let n = 0; for (let i = 0; i < N; i++) if (vs.some(v => arr[i].includes(arMi2 ? v : ' ' + v))) n++;
-    return Math.log(1 + N / (1 + n));
-  });
   const out = new Float32Array(N);
-  for (let i = 0; i < N; i++) {
-    let sc = 0;
-    for (let k = 0; k < vars.length; k++) if (vars[k].some(v => arr[i].includes(arMi2 ? v : ' ' + v))) sc += idf[k];
-    out[i] = sc;
+  for (const w of qw) {
+    const vars = arMi2 ? arVaryant(w) : kokVaryant(w);
+    const rows = depo.hadisEslesen(dil, vars).filter(i => i <= N);   // mevzuat satırları puan dışı
+    const idf = Math.log(1 + N / (1 + rows.length));
+    for (const i of rows) out[i - 1] += idf;
   }
   return out;
 }
@@ -231,21 +104,28 @@ function lexHadis(dil, qw) {
 // Kur'an konu aramasının ANA motoru: ÖNEK eşleşmeli, idf ağırlıklı lexical.
 // BM25 tam kelime arıyordu ve Türkçe eklerde patlıyordu ("adalet" ↛ "adaleti").
 // Önek eşleşmesi bu sorunu çözer; embedding ise anlam desteği verir.
-const kuranTok = new Map();                      // dil → [Set(kelime)] (ayet başına)
-const kuranDF = new Map();                       // dil → Map(kelime → doküman sayısı)
-function kuranIndeks(dil) {
-  if (kuranTok.has(dil)) return;
-  const nf = dil === 'ar' ? arNorm : trNorm;   // Arapça: harekeleri yok say
-  const toks = ayat.map(a => new Set(nf(metinAl(a, dil)).split(' ').filter(w => w.length > 2)));
+// Dil başına Kur’an arama verisi: norm/metin dizileri + kelime kümeleri + df.
+// 6236 ayet ≈ 3-5 MB/dil; LRU 3 dil. Eski kuranTok/kuranDF davranışının birebir
+// karşılığı — yalnız kaynak artık RAM’deki ayat dizisi değil, depo (SQLite).
+const kuranDilOnbellek = new Map();   // dil → { toks, df, metin, norm }
+const KURAN_LRU = 3;
+function kuranDil(dil) {
+  let v = kuranDilOnbellek.get(dil);
+  if (v) { kuranDilOnbellek.delete(dil); kuranDilOnbellek.set(dil, v); return v; }
+  const { norm, metin } = depo.ayetDilYukle(dil);
+  const toks = norm.map(n => new Set(n.split(' ').filter(w => w.length > 2)));
   const df = new Map();
   for (const t of toks) for (const w of t) df.set(w, (df.get(w) || 0) + 1);
-  kuranTok.set(dil, toks); kuranDF.set(dil, df);
+  v = { toks, df, metin, norm };
+  kuranDilOnbellek.set(dil, v);
+  while (kuranDilOnbellek.size > KURAN_LRU) kuranDilOnbellek.delete(kuranDilOnbellek.keys().next().value);
+  return v;
 }
 // sorgu kelimesi, ayet kelimesinin ÖNEKİ ise eşleşir (adalet→adaleti, namaz→namazı)
 function lexPuan(dil, qw, kati = false) {
-  kuranIndeks(dil);
+  const { toks, df } = kuranDil(dil);
   const arMi = dil === 'ar';
-  const toks = kuranTok.get(dil), df = kuranDF.get(dil), N = ayat.length;
+  const N = depo.nAyet;
   const idf = new Map();
   const esles = (k, v) => arMi ? k.includes(v) : k.startsWith(v);
   for (const w of qw) {
@@ -253,7 +133,7 @@ function lexPuan(dil, qw, kati = false) {
     for (const [k, c] of df) if (vs.some(v => esles(k, v))) n += c;
     idf.set(w, Math.log(1 + N / (1 + n)));
   }
-  const out = new Float32Array(ayat.length);
+  const out = new Float32Array(N);
   for (let i = 0; i < toks.length; i++) {
     let s = 0;
     for (const w of qw) { const vs = arMi ? arVaryant(w) : kokVaryant(w, kati); for (const k of toks[i]) if (vs.some(v => esles(k, v))) { s += idf.get(w); break; } }
@@ -263,11 +143,14 @@ function lexPuan(dil, qw, kati = false) {
 }
 // Hadis semantik vektörleri (varsa) — konu araması semantik olsun. Yoksa lexical'e düşer.
 let hadisVek = null;
-try { hadisVek = { tr: vekYukle('vektor-hadis-tr.f32'), en: vekYukle('vektor-hadis-en.f32') }; console.log('Hadis semantik vektörleri yüklendi.'); }
+// int8 (v·127): 90 MB f32 yerine 22 MB. cosI8 ile karşılaştırılır; sıralama etkisi
+// ölçüldü (azami kosinüs sapması ~0.007).
+const i8Yukle = (f) => { const b = readFileSync(yol(f)); return new Int8Array(b.buffer, b.byteOffset, b.length); };
+try { hadisVek = { tr: i8Yukle('model/vektor-hadis-tr.i8'), en: i8Yukle('model/vektor-hadis-en.i8') }; console.log('Hadis semantik vektörleri yüklendi (int8).'); }
 catch { console.log('Hadis vektörleri henüz yok — konu araması lexical modda.'); }
 console.log('Embedding modeli yükleniyor (ilk sorgu gecikmesin diye)...');
 await embedder();
-console.log(`Hazır: ${corpus.length} hadis + ${mevzuat.length} mevzuat | Kur'an ${ayat.length} ayet (TR+EN semantik). Model: ${MODEL}. Anthropic: ${anthropic ? 'açık' : 'YOK (mock)'}`);
+console.log(`Hazır: ${depo.nCorpus} hadis + ${depo.nHadisAll - depo.nCorpus} mevzuat | Kur'an ${depo.nAyet} ayet (TR+EN semantik). Model: ${MODEL}. Anthropic: ${anthropic ? 'açık' : 'YOK (mock)'}`);
 
 // Derece → dile göre etiket + anlam + renk (UI kullanır)
 const DERECE_BILGI = {
@@ -320,20 +203,8 @@ const DERECE_BILGI = {
 
 // Desteklenen diller. fr/id/ur/ar: metin yerleşik veriden gelir; semantik eşleştirme
 // çok dilli embedding ile EN vektörü üzerinden yapılır (yeni vektör gerekmez).
-const DILLER = ['tr', 'en', 'fr', 'id', 'ur', 'ar'];
+// (DILLER/metinAl/metinDili metin.mjs'ten gelir — inşa katmanıyla ortak.)
 const dilAl = (d) => (DILLER.includes(d) ? d : 'tr');
-// Dil kodu → veri alanı. Endonezce alanı 'idn' (kaydın 'id' alanını ezmemesi için).
-const ALAN = { id: 'idn' };
-const metinAl = (o, dil) => o[ALAN[dil] || dil] || o.en || o.tr;   // görünen metin, fallback zinciri
-// Metnin HANGİ dilden geldiği: kaynak edisyonlarda boşluk var (ind-muslim'in %35'i,
-// fr'nin %14'ü boş) ve sessizce İngilizce'ye düşmek kullanıcıya hata gibi görünüyordu.
-// Elimizde olmayanı uydurmuyoruz; olmadığını söylüyoruz.
-const metinDili = (o, dil) => {
-  const k = ALAN[dil] || dil;
-  if (o[k] && String(o[k]).trim()) return dil;
-  if (o.en && String(o.en).trim()) return 'en';
-  return 'tr';
-};
 const vekAl = (V, dil) => V[dil] || V.en || V.tr;     // fr/id/ur/ar → EN pivot vektör
 
 // Korpustaki âlim/kaynak etiketleri Türkçe üretilmiş ("Buhârî ittifakı",
@@ -459,39 +330,20 @@ async function eslestir(metin, adaylar, dil = 'tr') {
 // --- Arapça lexical arama (korpustaki asıl Arapça metin üzerinde) ---
 // Harekeleri/tatweel'i atar, elif-hemze ve tâ marbûta varyantlarını sadeleştirir,
 // sonra nadir kelimelerin örtüşmesine göre puanlar. Üretmez; yalnızca aday getirir.
-const arNorm = (s) => (s || '')
-  // Osmanî mushafta hareke dışında hançer elif (U+0670) ve durak/tecvid işaretleri
-  // (U+06D6–U+06ED) var; bunlar "harf değil" sayılıp BOŞLUĞA çevrilince kelimeler
-  // parçalanıyordu (ٱلۡخَمۡرُ → "ل خم ر") ve Arapça arama büyük ölçüde ölüydü.
-  .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g, '')
-  .replace(/\u0671/g, 'ا')     // vasl elifi → elif
-  .replace(/[إأآا]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه')
-  .replace(/[^ء-ي\s]/g, ' ').replace(/\s+/g, ' ').trim();
+// (arNorm metin.mjs'ten gelir; inşada aynı fonksiyonla yazılmış harnorm/ar_df tabloları kullanılır.)
 const AR_STOP = new Set(['من','في','على','عن','الى','ان','ما','لا','هو','هي','قال','عليه','وسلم','صلى','الله','رسول','عن','بن','حدثنا','اخبرنا','كان','الي','هذا','التي','الذي']);
-let arDF = null; // kelime → kaç kayıtta geçtiği (nadir kelime daha değerli)
-function arIndeks() {
-  if (arDF) return arDF;
-  arDF = new Map();
-  for (const h of corpus) {
-    if (!h.ar) continue;
-    for (const w of new Set(arNorm(h.ar).split(' '))) if (w.length > 2) arDF.set(w, (arDF.get(w) || 0) + 1);
-  }
-  return arDF;
-}
 function arapcaAra(sorgu, k = 10) {
-  const df = arIndeks(), N = corpus.length;
+  const N = depo.nCorpus;
   const qw = [...new Set(arNorm(sorgu).split(' '))].filter(w => w.length > 2 && !AR_STOP.has(w));
   if (!qw.length) return [];
-  const puan = [];
-  for (const h of corpus) {
-    if (!h.ar) continue;
-    const hs = new Set(arNorm(h.ar).split(' '));
-    let s = 0;
-    for (const w of qw) if (hs.has(w)) s += Math.log(N / (1 + (df.get(w) || 0)));   // idf ağırlığı
-    if (s > 0) puan.push([s / Math.sqrt(hs.size || 1), h]);                          // uzunluk normalizasyonu
+  const skor = new Map();                       // i → idf toplamı
+  for (const w of qw) {
+    const idf = Math.log(N / (1 + depo.arDf(w)));
+    for (const i of depo.arTamKelime(w)) skor.set(i, (skor.get(i) || 0) + idf);
   }
+  const puan = [...skor].map(([i, s]) => [s / Math.sqrt(depo.arKelime[i] || 1), i]);  // uzunluk normalizasyonu
   puan.sort((a, b) => b[0] - a[0]);
-  return puan.slice(0, k).map(([, h]) => h);
+  return puan.slice(0, k).map(([, i]) => depo.hadisAl(i));
 }
 
 async function dogrula(metin, dil = 'tr') {
@@ -502,15 +354,15 @@ async function dogrula(metin, dil = 'tr') {
     const qv = await embedOne(metin);
     const vek = vekAl(hadisVek, dil);
     const p = [];
-    for (let i = 0; i < corpus.length; i++) p.push([i, cos(vek, i * DIM, qv)]);
+    for (let i = 0; i < depo.nCorpus; i++) p.push([i, cosI8(vek, i * DIM, qv)]);
     p.sort((a, b) => b[1] - a[1]);
-    const sem = p.slice(0, 20).map(([i]) => corpus[i]);
+    const sem = p.slice(0, 20).map(([i]) => depo.hadisAl(i + 1));
     // Arapça sorguda semantik pivot zayıf (sorgu dili ≠ vektör dili). Asıl Arapça metin
     // korpusta mevcut → kelime örtüşmesiyle doğrudan ara ve adayların başına ekle.
     if (dil === 'ar') adaylar = [...arapcaAra(metin, 10), ...sem].filter((h, i, a) => a.findIndex(x => x.id === h.id) === i).slice(0, 24);
     else adaylar = sem;
   } else {
-    adaylar = hadisMotor(dil).ara(metin, 8);
+    adaylar = depo.hadisAra(dil, metin, 8);
   }
   if (!adaylar.length) return { bulundu: false, yakin: null, benzerler: [] };
   const { eslesenId, anlamFarki, farkNotu, yakinId, yakinGuven, guven } = await eslestir(metin, adaylar, dil);
@@ -559,14 +411,9 @@ async function konu(sorgu, dil = 'tr') {
   const norm = dil === 'ar' ? arNorm : trNorm;
   const qwK = [...new Set(norm(aramaK).split(' '))].filter(w => w.length > 2);
   if (qwK.length) {
-    // Kapı her istekte 30.483 kaydı YENİDEN normalize ediyordu (sorgu konusu
-    // metinlerde geçmiyorsa erken çıkış da olmuyor). Aynı önbelleği kullanır.
-    const norms = hadisNormAl(dil);
-    let sinyal = false;
-    for (let i = 0; i < norms.length; i++) {
-      if (qwK.some(w => norms[i].includes(w))) { sinyal = true; break; }
-    }
-    if (!sinyal) return { konu: sorgu, sonuclar: [], alakasiz: true };
+    // Kapı SQL'de koşar (LIKE '%kelime%' + LIMIT 1): substring semantiği eski
+    // norms[i].includes(w) davranışıyla birebir, ama C tarafında erken çıkışlı.
+    if (!depo.hadisKapiVar(dil, qwK)) return { konu: sorgu, sonuclar: [], alakasiz: true };
   }
   // Semantik + lexical harman (Kur'an tarafındaki ile aynı mantık): saf semantik
   // "içki" sorgusunda alakasız hadisleri öne çıkarıyordu.
@@ -579,28 +426,30 @@ async function konu(sorgu, dil = 'tr') {
     let lexMax = 0; if (lexArrH) for (const v of lexArrH) if (v > lexMax) lexMax = v;
     const tekTerimK = [...new Set(trNorm(sorgu).split(' '))].filter(w => w.length > 2).length <= 2;
     const puan = [];
-    for (let i = 0; i < corpus.length; i++) {
-      const h = corpus[i];
-      if (h.derece !== 'sahih' && h.derece !== 'hasen') continue;
+    for (let i = 0; i < depo.nCorpus; i++) {
+      const dk = depo.dereceArr[i];
+      if (dk !== 1 && dk !== 2) continue;                  // sahih(1) / hasen(2) filtresi
       const lx = lexMax ? lexArrH[i] / lexMax : 0;
       if (tekTerimK && lx === 0) continue;                 // tek terim → o kelime geçmeli
-      const sem = cos(vek, i * DIM, qv);
+      const sem = cosI8(vek, i * DIM, qv);
       puan.push([i, (0.35 + 0.65 * lx) * Math.max(0, sem)]);
     }
     puan.sort((a, b) => b[1] - a[1]);
-    // korpusta 577 mükerrer kayıt var; aynı metin listede iki kez çıkmasın
-    const gor = new Set(), sec = [];
+    // korpusta 577 mükerrer kayıt var; aynı metin listede iki kez çıkmasın.
+    // Kayıtlar teker teker depodan çekilir (yalnız aday olanlar — tipik 10-40 kayıt).
+    const gor = new Set(), sec = [], kayit = new Map();
     for (const [i, sk] of puan) {
       if (sec.length >= 10 || sk <= 0) break;
-      const imza = trNorm(hadisMetni(metinAl(corpus[i], dil))).slice(0, 90);
+      const h = kayit.get(i) || depo.hadisAl(i + 1); kayit.set(i, h);
+      const imza = trNorm(hadisMetni(metinAl(h, dil))).slice(0, 90);
       if (gor.has(imza)) continue;
       gor.add(imza); sec.push(i);
     }
-    return { konu: sorgu, sonuclar: sec.map(i => derecele(corpus[i], dil)) };
+    return { konu: sorgu, sonuclar: sec.map(i => derecele(kayit.get(i), dil)) };
   }
   // Fallback: lexical + sorgu genişletme
   const q = await genislet(sorgu, dil);
-  const sonuc = hadisMotor(dil).ara(q, 10, h => h.derece === 'sahih' || h.derece === 'hasen');
+  const sonuc = depo.hadisAra(dil, q, 10, true);
   return { konu: sorgu, sonuclar: sonuc.map(a => derecele(a, dil)) };
 }
 
@@ -623,7 +472,7 @@ const hubAl = (vek) => {
   return h;
 };
 function hubHesapla(vek) {
-  const n = ayat.length, h = new Float32Array(n);
+  const n = depo.nAyet, h = new Float32Array(n);
   const ORNEK = 160, adim = Math.max(1, Math.floor(n / ORNEK));
   const ornekler = [];
   for (let i = 0; i < n; i += adim) ornekler.push(i);
@@ -669,8 +518,7 @@ const kokVaryant = (w, kati = false) => {
   if (!kati && w.length >= 7) v.push(w.slice(0, 5));
   return v;
 };
-const trNorm = (s) => (s || '').toLocaleLowerCase('tr').normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '').replace(/ı/g, 'i').replace(/[^\p{L}\p{N} ]/gu, ' ');
+// (trNorm metin.mjs'ten gelir — inşadaki normalize kopyalarla aynı fonksiyon.)
 
 // Kavram → meâlde geçen karşılık. Diyanet meâli terimi değil ANLAMINI yazar:
 // "tevekkül" meâlde hiç geçmez ("Allah'a güven" der), "infak"/"ihlas" da öyle.
@@ -750,25 +598,19 @@ async function kuranKonu(sorgu, dil = 'tr') {
   // "الصَّبْرُ" → "ال ص ب ر" gibi parçalara bölünüyordu. Bu yüzden Arapça'da bu
   // kanal ya hiç çalışmıyor ya da tek harflik parçalarla rastgele puan veriyordu.
   const qw = [...new Set(nfQ(aramaMetni).split(' '))].filter(w => w.length > 2);
-  const puan = new Array(ayat.length);
-  for (let i = 0; i < ayat.length; i++) {
-    const a = ayat[i];
-    const metin = metinAl(a, dil) || '';
+  const { metin: metinArr, norm: normArr } = kuranDil(dil);
+  const puan = new Array(depo.nAyet);
+  for (let i = 0; i < depo.nAyet; i++) {
+    const metin = metinArr[i] || '';
     // merkezîlik cezası: 'her şeye benzeyen' ayetleri düşür. (Bölme denendi ama
     // nadir/tuhaf ayetleri aşırı yükseltiyordu; çıkarma daha dengeli.)
     const sem = cos(vek, i * DIM, qv) - 0.45 * hubSkor[i];        // merkezîlik düzeltmeli semantik
     const lx = lexMax ? lexArr[i] / lexMax : 0;                      // 0..1 normalize lexical
-    // ÇARPIM: ikisinin de yüksek olmasını ister. Toplamada tek başına güçlü
-    // lexical yetiyordu ve çokanlamlılık sızıyordu ("huzur bulmak" ↔ "huzurumuza
-    // getirilecekler"); anlam düşükse artık lexical tek başına yukarı taşımıyor.
-    // Taban (0.35) sayesinde kelimesi geçmeyen ama anlamca doğru ayet de kalabiliyor.
-    // Tek kelimelik sorgu belirli bir terimdir ("abla", "namaz") → o kelimenin
-    // geçtiği ayetler dışına çıkma. Cümlede ise taban katsayı, kelimesi geçmeyen
-    // ama anlamca doğru ayetin de listede kalmasını sağlar.
+    // ÇARPIM + taban (0.35): gerekçeler için git geçmişine bak — davranış birebir korundu.
     if (tekTerim && !kavramVar && lx === 0) { puan[i] = [i, -1]; continue; }
     let s = (0.35 + 0.65 * lx) * Math.max(0, sem);
     if (qw.length) {                                        // lexical katkı
-      const mn = nfQ(metin);
+      const mn = normArr[i];        // = nfQ(metinAl(a, dil)) — inşada aynı fonksiyonla yazıldı
       let hit = 0; for (const w of qw) if (mn.includes(w)) hit++;
       if (hit) s += 0.10 * (hit / qw.length);   // tam kelime geçişi ek destek
     }
@@ -787,19 +629,19 @@ async function kuranKonu(sorgu, dil = 'tr') {
         // bağlam birleştirmesi komşu ayetleri de kapsıyor → örtüşen sonuçları atla
         if (alinan.has(i) || alinan.has(i - 1) || alinan.has(i + 1)) continue;
         // bazı meâllerde ardışık ayetler aynı cümleyi tekrar eder (ör. Abese 34-37)
-        const imza = nfQ(metinAl(ayat[i], dil)).slice(0, 55);
+        const imza = normArr[i].slice(0, 55);
         if (gorulenMetin.has(imza)) continue;
         gorulenMetin.add(imza); alinan.add(i); secili.push([i, sk]);
       }
       return secili;
     })().map(([i, s]) => {
-      const a = ayat[i];
+      const a = depo.ayetAl(i + 1);
       // "Faiz yiyenler", "Şükrederseniz…" gibi tek başına anlam vermeyen kısa
       // meâlleri komşu ayetle tamamla (aynı sûre içinde). Metin yine VERİDEN gelir,
       // sadece bitişik ayet eklenir — üretim yok.
       let metin = metinAl(a, dil), arapca = a.ar || '', ayetEt = String(a.ayet), okunusEt = a.okunus || '';
       if (metin.length < 90) {
-        const nx = ayat[i + 1], pv = ayat[i - 1];
+        const nx = depo.ayetAl(i + 2), pv = i > 0 ? depo.ayetAl(i) : null;
         if (nx && nx.sure === a.sure) {
           metin = metin.replace(/[\s.;,]+$/, '') + '. ' + metinAl(nx, dil); arapca += ' ' + (nx.ar || '');
           okunusEt += ' ' + (nx.okunus || ''); ayetEt = `${a.ayet}-${nx.ayet}`;
@@ -821,19 +663,16 @@ async function kuranKonu(sorgu, dil = 'tr') {
 const GUNUN_AYETLER = [[2,286],[94,5],[13,28],[2,152],[65,3],[39,53],[2,153],[16,128],[14,7],[29,69],[3,139],[10,57],[2,45],[3,159],[93,4],[2,255],[8,46],[64,11],[3,173],[57,4]];
 // Ana ekranda bağlamsız gösterilecek içerik: had/ceza, savaş, kıyamet alameti, ırk
 // tasviri gibi bağlam isteyen rivayetler günlük ilham kartına uygun değil.
-const GUNUN_ELE = /(kıyamet|cehennem|azâb|azap|recm|celde|kırbaç|öldür|katl|savaş|gazve|deccal|zina|cariye|köle|kesil|lânet|lanet|helâk|helak|burnu|yüzlü)/i;
-const gununHadisHavuz = corpus.filter(h => h.derece === 'sahih' && h.tr
-  && h.tr.length > 60 && h.tr.length < 340
-  && !GUNUN_ELE.test(h.tr)
-  && !/^\s*(Bize|Bana)\b/.test(h.tr));   // isnad'la açılan kayıt kartta kötü duruyor
+// Günün hadisi havuzu inşada süzülür (db-yap.mjs, aynı filtre) → depo.gununHavuz.
 function gunSeed() { const d = new Date(); return Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5); }
 function gunun(dil = 'tr') {
   const gi = gunSeed();
   const [s, a] = GUNUN_AYETLER[gi % GUNUN_AYETLER.length];
-  const ay = ayat.find(x => x.sure === s && x.ayet === a);
+  const ay = depo.ayetBul(s, a);
   // (gi*7) havuzun sonunu hiç görmüyordu (366*7 < havuz) → bir yıl boyunca hep aynı
   // bölümden, ardışık kayıtlar geliyordu. Büyük asal ile havuzun tamamına dağıt.
-  const hd = gununHadisHavuz.length ? gununHadisHavuz[(gi * 7919) % gununHadisHavuz.length] : null;
+  const hv = depo.gununHavuz;
+  const hd = hv.length ? depo.hadisAl(hv[(gi * 7919) % hv.length]) : null;
   return {
     ayet: ay ? { kaynak: `${sureAdiDil(ay, dil)} ${ay.ayet}`, ar: ay.ar, okunus: dil === 'tr' ? ay.okunus : '', tr: metinAl(ay, dil) } : null,
     hadis: hd ? { kaynak: kaynakDil(hd, dil), tr: hadisMatn(metinAl(hd, dil)), ar: hd.ar, dereceEtiket: (DERECE_BILGI.sahih.etiket[dil] || DERECE_BILGI.sahih.etiket.en) } : null,
@@ -887,7 +726,7 @@ const say = (o, k) => { o[k] = (o[k] || 0) + 1; };
 // Bellek nöbeti: instance sessizce öldürülüyordu; sınıra yaklaşmayı görelim.
 setInterval(() => {
   const rss = Math.round(process.memoryUsage().rss / 1048576);
-  if (rss > 1500) console.warn(`[BELLEK] RSS ${rss} MB — normalize önbellek: ${hadisNormOnbellek.size} dil`);
+  if (rss > 440) console.warn(`[BELLEK] RSS ${rss} MB — 512 MB sınırına yaklaşılıyor`);
 }, 300_000).unref();
 // Sayaçlar bellekte tutulduğu için her deploy sıfırlıyordu. Yarım saatte bir
 // özeti log'a bas: Render logları kalıcı, böylece deploy sonrası da geçmiş kalır.
@@ -1035,7 +874,7 @@ const sunucu = http.createServer(async (req, res) => {
 
   if (url.pathname === '/health') {
     res.writeHead(200, { 'content-type': 'application/json' });
-    return res.end(JSON.stringify({ ok: true, surum: SURUM, hadis: corpus.length, ayet: ayat.length, model: MODEL, llm: !!anthropic }));
+    return res.end(JSON.stringify({ ok: true, surum: SURUM, hadis: depo.nCorpus, ayet: depo.nAyet, model: MODEL, llm: !!anthropic }));
   }
 
   // /app-ads.txt KALDIRILDI: uygulamada hiç reklam yok (AdMob SDK'sı da yok).
@@ -1184,25 +1023,6 @@ const sunucu = http.createServer(async (req, res) => {
   }
   res.writeHead(404); res.end(JSON.stringify({ hata: 'yok' }));
 });
-
-// Normalize edilmiş hadis metinlerini AÇILIŞTA hesapla (dinlemeye başlamadan önce):
-// dil değiştiren her istek 30.483 kaydı yeniden normalize edip tek çekirdeği
-// ~700 ms bloke ediyordu. Bellek maliyeti log'a yazılır, sürpriz olmasın.
-// BELLEK: 6 dilin tamamı ~370 MB tutuyor (ölçüldü; toplam RSS ~1,2 GB, Render
-// standard planında 2 GB var). Bellek sıkışırsa NORM_DILLER ile ısıtılan dil
-// listesi kısaltılabilir; listede olmayan dil ilk sorgusunda (bir kereye mahsus
-// ~700 ms) hesaplanıp yine önbelleğe alınır — sonuç değişmez, yalnız ilk istek yavaşlar.
-{
-  // Varsayılan artık TÜM diller değil: 6 dil ısıtmak +360 MB demekti ve bellek
-  // sınırını aşıyordu. tr+en ısınır, diğerleri ilk sorgularında hesaplanır.
-  const istenen = (process.env.NORM_DILLER || '').split(',').map(s => s.trim()).filter(d => DILLER.includes(d));
-  const isit = istenen.length ? istenen : ['tr', 'en'];
-  const t0 = Date.now(), m0 = process.memoryUsage().heapUsed;
-  for (const d of isit) hadisNormAl(d);
-  console.log(`Normalize hadis indeksi: ${isit.length} dil (${isit.join(',')}), ${Date.now() - t0} ms, ` +
-    `+${Math.round((process.memoryUsage().heapUsed - m0) / 1048576)} MB | RSS ` +
-    `${Math.round(process.memoryUsage().rss / 1048576)} MB`);
-}
 
 // Port doluysa (eski süreç hâlâ ayakta, yanlış PORT) 'error' dinleyicisi olmadan
 // EADDRINUSE yakalanmamış istisna olarak süreci öldürüyordu — Render'da sebebi

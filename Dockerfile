@@ -6,8 +6,13 @@ RUN npm ci --omit=dev
 
 COPY . .
 
-# Embedding modelini image'a önceden indir (runtime ilk sorgu beklemesin).
-RUN node -e 'import("./embed.mjs").then(m=>m.embedder()).then(()=>console.log("model cached")).catch(e=>{console.error(e);process.exit(1)})'
+# İnşa-anı veri hattı (runtime RAM'i 512 MB'a sığdıran düzen):
+#   model-indir  → q8 ONNX (~113 MB) + tokenizer.json
+#   sp-hazirla   → kompakt sentencepiece vocab (sp-vocab.bin, ~4 MB)
+#   vektor-int8  → hadis vektörleri f32→i8 (90→22 MB)
+#   db-yap       → corpus+ayat → mihenk.db (SQLite; metinler artık RAM'de değil)
+RUN node model-indir.mjs && node sp-hazirla.mjs && node vektor-int8.mjs && node db-yap.mjs \
+  && rm -f corpus.json.gz vektor-hadis-tr.f32 vektor-hadis-en.f32 model/tokenizer.json
 
 ENV PORT=8788
 EXPOSE 8788

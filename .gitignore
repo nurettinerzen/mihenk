@@ -1,6 +1,10 @@
 node_modules/
 .env
 .DS_Store
+# inşa ürünleri (Docker'da üretilir; yerelde npm run build-runtime)
+model/
+mihenk.db
+veri/
 www/
 ios/App/Pods/
 ios/App/App/public/
