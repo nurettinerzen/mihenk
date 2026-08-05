@@ -6,15 +6,14 @@ services:
   - type: web
     name: mihenk-api
     runtime: docker
-    plan: starter           # 512 MB yeter: canlı RSS ~250-300 MB (5 Ağu 2026 metrik teyidi)
+    plan: free              # RSS ~280 MB → 512 MB'a sığar. Kullanıcı kararı (5 Ağu 2026):
+                            # gider sıfırlansın; uyku/cold-start + kalıcı disk kaybı kabul.
     healthCheckPath: /health
     autoDeploy: true
-    # Analitik olayları günlük JSONL olarak buraya yazılır. Disk olmadan her
-    # deploy/restart ölçümü sıfırlar (panel bunu kırmızıyla söyler).
-    disk:
-      name: veri
-      mountPath: /veri
-      sizeGB: 1
+    # ⚠️ Kalıcı disk KALDIRILDI (free instance disk desteklemiyor). Analitik (olay)
+    # ve cihaz kotası artık ./veri'ye (konteyner FS) yazılır: uyanık kaldığı sürece
+    # birikir, uyku/deploy'da SIFIRLANIR. Panel geçmişi 5 Ağu 2026'da yerel yedeğe
+    # alındı (hadis/veri-yedek/). Ölçüm ciddileşince Starter'a dönüp diski geri koy.
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false          # Render panelinden gir

@@ -21,21 +21,26 @@ const MODEL_ONNX = process.env.MODEL_ONNX || [
 ].find(existsSync);
 const SP_BIN = process.env.SP_VOCAB || yol('model/sp-vocab.bin');
 
-let _sess = null, _tok = null;
-export async function embedder() {
-  if (!_sess) {
-    if (!MODEL_ONNX) throw new Error('model_quantized.onnx bulunamadı — önce model-indir.mjs çalıştır');
-    _tok = new SpTokenizer(SP_BIN);
-    // Arena/mem-pattern KAPALI: ORT arenası tek başına yüzlerce MB ayırıyordu.
-    // Tek iş parçacığı: kısa sorgularda (≤512 token) inferans zaten ~5-30 ms.
-    _sess = await ort.InferenceSession.create(MODEL_ONNX, {
-      enableCpuMemArena: false, enableMemPattern: false,
-      graphOptimizationLevel: 'disabled',
-      intraOpNumThreads: 1, interOpNumThreads: 1,
-    });
-    await calistir([0, 2]);        // ısınma: ilk gerçek sorgu JIT bedeli ödemesin
+let _sess = null, _tok = null, _kurulum = null;
+// Promise-tekil: eşzamanlı iki çağrı İKİ oturum yaratıp RAM'i ikiye katlamasın
+// (512 MB'lık instance'ta OOM demek). İlk çağrı kurulumu başlatır, diğerleri bekler.
+export function embedder() {
+  if (!_kurulum) {
+    _kurulum = (async () => {
+      if (!MODEL_ONNX) throw new Error('model_quantized.onnx bulunamadı — önce model-indir.mjs çalıştır');
+      _tok = new SpTokenizer(SP_BIN);
+      // Arena/mem-pattern KAPALI: ORT arenası tek başına yüzlerce MB ayırıyordu.
+      // Tek iş parçacığı: kısa sorgularda (≤512 token) inferans zaten ~5-30 ms.
+      _sess = await ort.InferenceSession.create(MODEL_ONNX, {
+        enableCpuMemArena: false, enableMemPattern: false,
+        graphOptimizationLevel: 'disabled',
+        intraOpNumThreads: 1, interOpNumThreads: 1,
+      });
+      await calistir([0, 2]);      // ısınma: ilk gerçek sorgu JIT bedeli ödemesin
+      return _sess;
+    })();
   }
-  return _sess;
+  return _kurulum;
 }
 
 async function calistir(ids) {

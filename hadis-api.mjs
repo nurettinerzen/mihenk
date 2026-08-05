@@ -148,8 +148,12 @@ let hadisVek = null;
 const i8Yukle = (f) => { const b = readFileSync(yol(f)); return new Int8Array(b.buffer, b.byteOffset, b.length); };
 try { hadisVek = { tr: i8Yukle('model/vektor-hadis-tr.i8'), en: i8Yukle('model/vektor-hadis-en.i8') }; console.log('Hadis semantik vektörleri yüklendi (int8).'); }
 catch { console.log('Hadis vektörleri henüz yok — konu araması lexical modda.'); }
-console.log('Embedding modeli yükleniyor (ilk sorgu gecikmesin diye)...');
-await embedder();
+// Model ARKA PLANDA ısınır, boot'u BLOKLAMAZ: Free instance'ta (0.1 CPU) uykudan
+// uyanış hızlı kalsın — /health, statik sayfa, günün içeriği ve namaz model
+// beklemeden yanıt verir; semantik uçlar hazır olana dek embedOne içinde bekler.
+console.log('Embedding modeli arka planda yükleniyor...');
+embedder().then(() => console.log('Embedding modeli hazır.'))
+  .catch(e => console.error('Embedding modeli YÜKLENEMEDİ (semantik uçlar çalışmaz):', e.message));
 console.log(`Hazır: ${depo.nCorpus} hadis + ${depo.nHadisAll - depo.nCorpus} mevzuat | Kur'an ${depo.nAyet} ayet (TR+EN semantik). Model: ${MODEL}. Anthropic: ${anthropic ? 'açık' : 'YOK (mock)'}`);
 
 // Derece → dile göre etiket + anlam + renk (UI kullanır)
