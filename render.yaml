@@ -6,7 +6,7 @@ services:
   - type: web
     name: mihenk-api
     runtime: docker
-    plan: standard          # → starter'a geçiş: önce bu sürüm Standard'da doğrulanır, sonra düşürülür
+    plan: starter           # 512 MB yeter: canlı RSS ~250-300 MB (5 Ağu 2026 metrik teyidi)
     healthCheckPath: /health
     autoDeploy: true
     # Analitik olayları günlük JSONL olarak buraya yazılır. Disk olmadan her
