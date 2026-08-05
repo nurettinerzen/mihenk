@@ -1,5 +1,9 @@
 FROM node:20-slim
 
+# better-sqlite3 prebuilt bulunamazsa kaynaktan derlenir (node-gyp) → python3 + g++ gerekir.
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --omit=dev
