@@ -98,11 +98,20 @@ async function main() {
     const indMap = new Map((ind || []).map(h => [h.hadithnumber, (h.text || '').trim()]));
     const urdMap = new Map((urd || []).map(h => [h.hadithnumber, (h.text || '').trim()]));
 
-    let eklendi = 0;
+    let eklendi = 0, cevirisiz = 0;
     for (const h of tur) {
       const metin = (h.text || '').trim();
-      if (metin.length < 20) continue; // boş/çok kısa kayıtları atla
       const arapca = araMap.get(h.hadithnumber) || '';
+      const ingilizce = engMetinMap.get(h.hadithnumber) || '';
+      // ESKİDEN: Türkçesi kısa/boşsa kayıt HİÇ eklenmiyordu. Kaynaktaki Türkçe
+      // Nesâî baskısının %89'u boş (5.765 kaydın 5.136'sı) — yani Sünen-i
+      // Nesâî'nin neredeyse tamamı korpusun dışında kalmıştı. Sonuç, bu ürün
+      // için en kötü hata: yalnız Nesâî'de geçen SAHİH bir hadis sorulduğunda
+      // uygulama "Kütüb-i Sitte'de geçmiyor" diyordu. Kaydı Arapça ya da
+      // İngilizce metni varsa alıyoruz; çeviri yoksa arayüz zaten
+      // "bu rivayetin senin dilinde çevirisi kaynakta yok" diyor.
+      if (metin.length < 20 && arapca.length < 20 && ingilizce.length < 20) continue;
+      if (metin.length < 20) cevirisiz++;
       let dSel;
       if (kitap.hepSahih) {
         dSel = { derece: 'sahih', raw: 'Sahih (koleksiyon şartı)', alimler: [{ alim: `${kitap.kisaTr} ittifakı`, derece: 'Sahih', norm: 'sahih' }] };
@@ -118,7 +127,7 @@ async function main() {
         kisaTr: kitap.kisaTr,
         no: h.hadithnumber,
         tr: metin,
-        en: engMetinMap.get(h.hadithnumber) || '',
+        en: ingilizce,
         fr: fraMap.get(h.hadithnumber) || '',
         idn: indMap.get(h.hadithnumber) || '',   // Endonezce. DİKKAT: anahtar 'id' OLAMAZ — kaydın id'sini ezer.
         ur: urdMap.get(h.hadithnumber) || '',
@@ -130,7 +139,7 @@ async function main() {
       });
       eklendi++;
     }
-    process.stdout.write(`${eklendi} hadis (tr:${tur.length} ar:${ara?.length||0} eng:${eng?.length||0})`);
+    process.stdout.write(`${eklendi} hadis${cevirisiz ? ` (${cevirisiz}'i Türkçesiz)` : ''} (tr:${tur.length} ar:${ara?.length||0} eng:${eng?.length||0})`);
   }
 
   // Özet istatistik
