@@ -10,7 +10,7 @@
 //   GET  /health
 
 import http from 'node:http';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { embedOne, embedder, cos, cosI8, DIM } from './embed.mjs';
 import * as depo from './depo.mjs';
 import { metinAl, metinDili, trNorm, arNorm, hadisMatn, hadisMetni, DILLER } from './metin.mjs';
