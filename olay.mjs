@@ -97,9 +97,27 @@ export function diskDurumu() {
 
 // --- Toplama ---------------------------------------------------------------
 
+// Kendi test cihazlarımız. Bunlar hunide gerçek kullanıcı gibi görünüyordu:
+// 12 cihazlık ilk ölçümün çoğu bizdik ve "açan → sorgu yapan" oranı olduğundan
+// iyi çıkıyordu. Ürün kararını (kota, fiyat, paywall yeri) bu sayıya bakarak
+// vermek yanlış yere götürür.
+//
+// SİLMİYORUZ, sadece özetin dışında tutuyoruz: ham JSONL diskte duruyor, gerekirse
+// `testDahil=true` ile geri alınabilir. Silmek, sonradan "acaba neydi" dediğimizde
+// geri dönülemez olurdu.
+const TEST_CIHAZ = [
+  /^kurulum-testi$/,
+  /^ekran-goruntusu-/,   // mağaza görüntüsü üreteci (ekran-goruntusu.mjs)
+  /^test-/,
+];
+const testMi = (c) => TEST_CIHAZ.some((r) => r.test(String(c || '')));
+
 /** Panel ve /olcum için özet. Ham olay döndürmez; yalnız toplamlar. */
-export function ozet(gun = 30) {
-  const ev = olayOku(gun);
+export function ozet(gun = 30, { testDahil = false } = {}) {
+  const hepsi = olayOku(gun);
+  const ev = testDahil ? hepsi : hepsi.filter((e) => !testMi(e.c));
+  const elenenCihaz = new Set(hepsi.filter((e) => testMi(e.c)).map((e) => e.c)).size;
+  const elenenOlay = hepsi.length - ev.length;
   const say = (o, k, n = 1) => { if (k !== undefined) o[k] = (o[k] || 0) + n; };
 
   const gunluk = {};            // gün -> { cihaz:Set, olay, sorgu, paywall, satis }
@@ -193,6 +211,8 @@ export function ozet(gun = 30) {
     aralik: `son ${gun} gün`,
     toplamOlay: ev.length,
     toplamCihaz: acan.size,
+    // Elenenler görünür kalsın: "sayı neden düştü" sorusu panelde cevaplansın.
+    elenen: { cihaz: elenenCihaz, olay: elenenOlay, dahil: testDahil },
     gunluk: gunListe,
     huni,
     eldeTutma: { d1: eldeTutma(1), d7: eldeTutma(7) },

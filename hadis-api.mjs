@@ -951,7 +951,8 @@ const sunucu = http.createServer(async (req, res) => {
     const anahtar = process.env.OLCUM_ANAHTAR || '';
     if (!anahtar || url.searchParams.get('k') !== anahtar) { res.writeHead(404); return res.end(); }
     const gun = Math.min(365, Math.max(1, Number(url.searchParams.get('gun')) || 30));
-    const o = olayOzet(gun);
+    // test=1 ile kendi test cihazlarımız da dahil edilir (varsayılan: elenir).
+    const o = olayOzet(gun, { testDahil: url.searchParams.get('test') === '1' });
     if (url.pathname === '/panel.json') {
       res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
       return res.end(JSON.stringify(o, null, 1));

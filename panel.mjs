@@ -87,7 +87,13 @@ td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.04)}td.s{text-align
   .h-ad{grid-area:ad}.h-bar{grid-area:bar}.h-sayi{grid-area:sayi;text-align:left}}
 </style></head><body>
 <h1>Mihenk — kullanım paneli</h1>
-<p class="alt">${esc(o.aralik)} · ${o.toplamOlay} olay · analitik ${o.disk?.kalici ? 'kalıcı diskte' : '<b style="color:#e88">GEÇİCİ — disk bağlı değil, sunucu uyuyunca/yeniden başlayınca silinir</b>'}
+<p class="alt">${esc(o.aralik)} · ${o.toplamOlay} olay${
+  o.elenen && o.elenen.cihaz
+    ? (o.elenen.dahil
+        ? ` · <b style="color:#e4c98a">${o.elenen.cihaz} test cihazı DAHİL</b>`
+        : ` · ${o.elenen.cihaz} test cihazı (${o.elenen.olay} olay) elendi`)
+    : ''
+} · analitik ${o.disk?.kalici ? 'kalıcı diskte' : '<b style="color:#e88">GEÇİCİ — disk bağlı değil, sunucu uyuyunca/yeniden başlayınca silinir</b>'}
 <br>(Ücretsiz kota sayacı ayrı yerde: Supabase <code>mihenk_kota</code> — kalıcı. Durumu <code>/olcum?k=…</code> içindeki <code>kota</code> alanından bak.)</p>
 
 ${kutu('Özet', `<div class="ozet">
