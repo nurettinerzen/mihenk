@@ -963,7 +963,13 @@ const sunucu = http.createServer(async (req, res) => {
 
   if (url.pathname === '/health') {
     res.writeHead(200, { 'content-type': 'application/json' });
-    return res.end(JSON.stringify({ ok: true, surum: SURUM, hadis: depo.nCorpus, ayet: depo.nAyet, model: MODEL, llm: !!anthropic }));
+    // diskKalici: kalıcı disk gerçekten bağlı mı. Blueprint'teki disk tanımı
+    // Render'da mevcut bir servise her zaman kendiliğinden uygulanmıyor; bağlı
+    // değilse analitik ve kota her deploy'da siliniyor ve bu SESSİZCE oluyor.
+    // Anahtar istemeyen bir uçta durmalı ki her deploy sonrası tek istekle
+    // bakılabilsin — panele girmek için gizli anahtar gerekiyor.
+    return res.end(JSON.stringify({ ok: true, surum: SURUM, hadis: depo.nCorpus, ayet: depo.nAyet,
+      model: MODEL, llm: !!anthropic, diskKalici: existsSync('/veri') }));
   }
 
   // /app-ads.txt KALDIRILDI: uygulamada hiç reklam yok (AdMob SDK'sı da yok).
