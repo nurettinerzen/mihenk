@@ -2,7 +2,7 @@
  "amac": "Konuya göre hadis aramasının SIRALAMA kalitesini ölçmek. Sıralama formülü (hadis-api.mjs, konu()) ölçüm seti olmadan körlemesine ayarlanamaz; bu dosya o ölçümün sabit girdisidir.",
  "nasil": "node degerlendirme-calistir.mjs [port]  → her sorgu için ilk 10 sonucu ve anahtar-kelime isabetini basar, temelCizgi ile karşılaştırır. anahtarIsabet KABA bir vekildir (gerçek alaka insan kararıdır); formülü değiştirdikten sonra ilk3 metinlerini gözle de oku.",
  "olcut": "anahtarIsabetIlk5 (ilk 5 sonuçta konu kelimesi geçen kayıt sayısı) — ana gösterge. Toplam skor: tüm sorguların anahtarIsabetIlk5 toplamı. Bir değişiklik bu toplamı düşürüyorsa geri al.",
- "uyari": "temelCizgi 2026-07-28 tarihli koddan alınmıştır (matn ayıklama + normalize önbellek düzeltmeleri SONRASI). Korpus ya da metin ayıklama değişirse temel çizgi yeniden üretilmelidir.",
+ "uyari": "temelCizgi 2026-07-28 tarihli koddan alınmıştır (matn ayıklama + normalize önbellek düzeltmeleri SONRASI). Korpus ya da metin ayıklama değişirse temel çizgi yeniden üretilmelidir. — GÜNCEL SEVİYE (8 Ağu 2026, KAVRAM_HADIS kavram sözlüğü eklendikten sonra): ilk5 137/150, ilk10 271/300. Aynı kodun 8 Ağu ölçümünde temel çizgi 132/150 çıkıyordu (tr-giybet 3→2 kaymıştı). YENİ DEĞİŞİKLİK 137/150 ALTINA DÜŞÜRMEMELİ.",
  "sorgular": [
   {
    "id": "tr-komsuluk",

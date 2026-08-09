@@ -22,5 +22,245 @@
     "derece": "mevzu",
     "referans": "Diyanet / TDV kaynaklarında halk arasında hadis sanılan sözler arasında; hadisle ilgisi yoktur",
     "aciklama": "Halk arasında hadis diye dolaşsa da hadisle ilgisi olmayan, mana bakımından da İslam'ın ruhuyla bağdaşmayan bir sözdür."
+  },
+  {
+    "metin": "Vatan sevgisi imandandır",
+    "derece": "mevzu",
+    "referans": "Halk arasında hadis diye yayılan sözlerin toplandığı literatürde \"aslı yoktur\" kaydıyla geçer (Sagānî; Aclûnî, Keşfü'l-hafâ)",
+    "aciklama": "Hadis mecmualarında bu sözün sahih ya da zayıf bir senedi bulunmamaktadır; hadis âlimleri Peygamber'e ait olmadığını belirtmiştir. Doğduğu yeri, ailesini ve yaşadığı toplumu sevmek İslam'ın onayladığı bir duygudur — nitekim Peygamber'in Mekke'den ayrılırken duyduğu hasret rivayetlerde geçer — ancak bu cümle bir hadis değildir."
+  },
+  {
+    "metin": "İlim Çin'de de olsa gidip alınız",
+    "derece": "mevzu",
+    "referans": "İbnü'l-Cevzî el-Mevzûât'ta, sonraki muhaddisler de \"bâtıl/aslı yok\" değerlendirmesiyle zikreder",
+    "aciklama": "Çok meşhur olmasına rağmen senedi hadis âlimlerince kabul edilmemiş, uydurma sayılmıştır. İlim öğrenmenin fazileti ise sahih rivayetlerle sabittir (ör. \"Kim ilim aramak için bir yola girerse Allah ona cennete giden yolu kolaylaştırır\" — Müslim). Yani teşvik doğru, bu lafız hadis değil."
+  },
+  {
+    "metin": "Beşikten mezara kadar ilim öğrenin",
+    "derece": "mevzu",
+    "referans": "Hadis kaynaklarında senedi bulunmayan, halk arasında hadis diye dolaşan sözlerden",
+    "aciklama": "Bu ifadenin hadis mecmualarında bir senedi yoktur; hadis olarak nakledilmesi doğru değildir. Ömür boyu ilim öğrenme fikri İslam'ın teşvik ettiği bir şeydir, ama bu cümle Peygamber sözü olarak sabit değildir."
+  },
+  {
+    "metin": "Nefsini bilen Rabbini bilir",
+    "derece": "mevzu",
+    "referans": "Nevevî ve İbn Teymiyye bu sözün Peygamber'e ait sabit bir hadis olmadığını belirtmiştir",
+    "aciklama": "Tasavvufî literatürde çok kullanılan bu söz, hadis usulü açısından Peygamber'e nispet edilemez; sahih bir senedi yoktur. Hikmetli bir söz olarak nakledilebilir, hadis olarak değil."
+  },
+  {
+    "metin": "Ben gizli bir hazineydim, bilinmek istedim ve mahlûkatı yarattım",
+    "derece": "mevzu",
+    "referans": "İbn Teymiyye ve sonraki muhaddisler: \"Peygamber'in sözü değildir, senedi yoktur\"",
+    "aciklama": "Kudsî hadis diye yaygın biçimde nakledilir; oysa hadis kaynaklarında hiçbir senedi yoktur ve âlimler Peygamber'e ait olmadığını açıkça söylemiştir."
+  },
+  {
+    "metin": "Sen olmasaydın felekleri yaratmazdım",
+    "derece": "mevzu",
+    "referans": "Hadis âlimlerince uydurma kabul edilen meşhur sözlerden",
+    "aciklama": "Senedi bulunmayan, muhaddislerce uydurma sayılan bir sözdür. Peygamber'in Allah katındaki değeri sahih rivayetlerle zaten sabittir; bu söze dayanmaya ihtiyaç yoktur."
+  },
+  {
+    "metin": "Âlimin uykusu cahilin ibadetinden hayırlıdır",
+    "derece": "mevzu",
+    "referans": "Uydurma rivayet derlemelerinde \"aslı yoktur\" kaydıyla geçer",
+    "aciklama": "Hadis olarak sabit değildir. İlmin fazileti sahih rivayetlerle sabittir, fakat ibadeti küçümseyen bu kalıp Peygamber'e nispet edilemez."
+  },
+  {
+    "metin": "Temizlik imandan gelir",
+    "derece": "mevzu",
+    "referans": "Bu lafzın senedi yoktur; sahih olan rivayet \"Temizlik imanın yarısıdır\" şeklindedir (Müslim)",
+    "aciklama": "Yaygın kullanılan bu cümle bir hadis lafzı değildir. Sahih olan rivayet Müslim'de geçen \"Temizlik imanın yarısıdır\" (et-tuhûru şatru'l-îmân) sözüdür. Yani mana doğru kaynağa dayanır; bu spesifik cümle hadis olarak nakledilmemelidir."
+  },
+  {
+    "metin": "Dünya ahiretin tarlasıdır",
+    "derece": "mevzu",
+    "referans": "Aclûnî, Keşfü'l-hafâ: halk arasında hadis diye bilinen, senedi bulunmayan sözlerden",
+    "aciklama": "Hadis kaynaklarında senedi yoktur; hikmetli bir söz olarak dolaşmaktadır. Dünyanın ahiret için bir imtihan yeri olduğu Kur'an'la sabittir, ancak bu cümle hadis değildir."
+  },
+  {
+    "metin": "Kadınlara danışın, sonra tersini yapın",
+    "derece": "mevzu",
+    "referans": "Uydurma rivayet literatüründe \"aslı yoktur\" kaydıyla geçen sözlerden",
+    "aciklama": "Uydurma kabul edilen sözlerdendir; Peygamber'in eşleriyle istişare edip görüşlerine uyduğu sahih rivayetlerde açıkça geçer (ör. Hudeybiye'de Ümmü Seleme'nin tavsiyesine uyması). Bu söz hem senetsizdir hem de sahih uygulamaya aykırıdır."
+  },
+  {
+    "metin": "Ümmetimin ihtilafı rahmettir",
+    "derece": "mevzu",
+    "referans": "Sübkî: \"Bu söze sahih, zayıf ya da uydurma hiçbir sened bulamadım\"; sonraki muhaddisler de aynı kanaattedir",
+    "aciklama": "Hadis olarak bir senedi tespit edilememiştir. Fıkhî görüş ayrılıklarının genişlik sağladığı fikri âlimlerce savunulmuştur, ancak bu cümle Peygamber sözü olarak nakledilemez."
+  },
+  {
+    "metin": "Bir saat tefekkür bir yıl ibadetten hayırlıdır",
+    "derece": "mevzu",
+    "referans": "Hadis olarak senedi bulunmayan, selef büyüklerine nispet edilen sözlerden",
+    "aciklama": "Peygamber'e ait sahih bir senedi yoktur; bazı âlimlere ait bir söz olarak nakledilir. Tefekkürün değeri Kur'an'da teşvik edilir, ancak bu cümle hadis değildir."
+  },
+  {
+    "metin": "Küçük cihattan büyük cihada döndük",
+    "derece": "mevzu",
+    "referans": "Beyhakī senedinin zayıf olduğunu belirtir; İbn Hacer bunun Peygamber'in değil İbrâhim b. Ebî Able'nin sözü olduğunu kaydeder",
+    "aciklama": "Hadis olarak sabit değildir. Nefisle mücadelenin önemi sahih rivayetlerle desteklenir, fakat bu cümlenin Peygamber'e nispeti hadis âlimlerince kabul edilmemiştir."
+  },
+  {
+    "metin": "İşlerinizde şaşırdığınızda kabir ehlinden yardım isteyin",
+    "derece": "mevzu",
+    "referans": "Muhaddislerce uydurma kabul edilen sözlerden",
+    "aciklama": "Hadis kaynaklarında aslı olmayan, uydurma sayılan bir sözdür. İçeriği de yalnız Allah'tan yardım istemeyi emreden âyetlerle (Fâtiha 5) bağdaşmaz."
+  },
+  {
+    "metin": "Ashabım yıldızlar gibidir, hangisine uyarsanız hidayeti bulursunuz",
+    "derece": "mevzu",
+    "referans": "İbn Hazm ve birçok muhaddis: senedi sağlam değildir, uydurma/çok zayıf kabul edilmiştir",
+    "aciklama": "Meşhur olmakla birlikte hadis âlimlerinin çoğunluğuna göre sabit değildir. Sahâbenin değeri sahih rivayetlerle ayrıca sabittir; bu lafız delil olarak kullanılamaz."
+  },
+  {
+    "metin": "Fakirlik övüncümdür",
+    "derece": "mevzu",
+    "referans": "Sagānî ve İbn Teymiyye başta olmak üzere âlimlerce uydurma kabul edilmiştir",
+    "aciklama": "Uydurma sayılan meşhur sözlerdendir. Peygamber'in fakirlikten Allah'a sığındığı dualar ise sahih kaynaklarda yer alır — yani bu söz sahih rivayetlerle de uyuşmaz."
+  },
+  {
+    "metin": "İki günü birbirine eşit olan ziyandadır",
+    "derece": "mevzu",
+    "referans": "Hadis mecmualarında sahih bir senedi tespit edilememiştir; hikmetli söz olarak nakledilir",
+    "aciklama": "Peygamber'e ait sağlam bir senedi yoktur. Kendini geliştirmeye teşvik eden güzel bir söz olarak aktarılabilir, hadis olarak değil."
+  },
+  {
+    "metin": "Ölmeden önce ölünüz",
+    "derece": "mevzu",
+    "referans": "Hadis kaynaklarında senedi bulunmayan, tasavvufî literatürde yaygınlaşmış sözlerden",
+    "aciklama": "Hadis olarak sabit değildir. Nefis terbiyesini anlatan bir tasavvuf sözü olarak nakledilmiştir; Peygamber'e nispet edilmesi doğru değildir."
+  },
+  {
+    "metin": "Bana bir harf öğretenin kırk yıl kölesi olurum",
+    "derece": "mevzu",
+    "referans": "Hadis kaynaklarında yoktur; halk arasında yaygınlaşmış bir özdeyiştir",
+    "aciklama": "Bu söz hadis mecmualarında yer almaz. Öğretmene saygıyı anlatan bir halk sözüdür; Peygamber'e nispet edilerek nakledilmemelidir."
+  },
+  {
+    "metin": "Rızkın onda dokuzu ticarettedir",
+    "derece": "mevzu",
+    "referans": "Sahih bir senedi tespit edilememiş, hadis âlimlerince kabul görmemiş sözlerden",
+    "aciklama": "Hadis olarak sabit değildir. Helal kazancın ve ticaretin teşviki sahih rivayetlerde vardır, ancak bu oran cümlesi Peygamber sözü olarak nakledilemez."
+  },
+  {
+    "metin": "Namaz dinin direğidir",
+    "derece": "mevzu",
+    "referans": "Bu lafzın sahih bir senedi tespit edilememiştir; namazın yeri Kur'an ve sahih hadislerle sabittir",
+    "aciklama": "Çok yaygın kullanılan bu cümlenin hadis olarak sağlam bir senedi bulunmamaktadır. Namazın dindeki merkezî yeri ise Kur'an'la ve \"İslam beş temel üzerine kurulmuştur\" (Buhârî, Müslim) gibi sahih hadislerle zaten sabittir. Yani muhteva doğru, bu lafız hadis değildir."
+  },
+  {
+    "metin": "Dünya sevgisi bütün hataların başıdır",
+    "derece": "mevzu",
+    "referans": "Muhaddisler bunun Peygamber'e ait olmadığını, önceki nesillere ait bir söz olduğunu belirtir",
+    "aciklama": "Hadis olarak sabit değildir; selef büyüklerine nispet edilen bir söz olarak nakledilmiştir. Dünyaya aşırı bağlanmanın zararı ise âyet ve sahih hadislerle ayrıca anlatılmıştır."
+  },
+  {
+    "metin": "Kedi sevmek imandandır",
+    "derece": "mevzu",
+    "referans": "Hadis kaynaklarında böyle bir rivayet yoktur; halk arasında üretilmiş bir sözdür",
+    "aciklama": "Hadis mecmualarında yeri yoktur. Hayvanlara merhamet sahih rivayetlerle teşvik edilir (ör. susuz köpeğe su veren kişinin bağışlanması — Buhârî), fakat bu cümle hadis değildir."
+  },
+  {
+    "metin": "Misafir on kısmetle gelir, birini yer dokuzunu bırakır",
+    "derece": "mevzu",
+    "referans": "Hadis kaynaklarında yoktur; Anadolu'da yaygın bir halk sözüdür",
+    "aciklama": "Hadis mecmualarında böyle bir rivayet bulunmamaktadır. Misafire ikram sahih hadislerle teşvik edilmiştir, ancak bu söz halk arasında üretilmiş bir deyiştir."
+  },
+  {
+    "metin": "Nikâhta keramet vardır",
+    "derece": "mevzu",
+    "referans": "Hadis kaynaklarında yoktur; Türkçe bir halk sözüdür",
+    "aciklama": "Hadis değildir; hadis mecmualarında geçmez. Evliliğin teşviki sahih rivayetlerde vardır, fakat bu cümle bir atasözüdür."
+  },
+  {
+    "metin": "Bir kalp kırmak Kâbe'yi yıkmaktan beterdir",
+    "derece": "mevzu",
+    "referans": "Hadis kaynaklarında yoktur; tasavvuf/halk edebiyatında yaygınlaşmış bir sözdür",
+    "aciklama": "Hadis mecmualarında böyle bir rivayet yoktur. Gönül kırmanın ağırlığı ahlâkî olarak vurgulanabilir, fakat bu söz Peygamber'e nispet edilemez."
+  },
+  {
+    "metin": "Kanaat tükenmez bir hazinedir",
+    "derece": "mevzu",
+    "referans": "Peygamber'e ait sahih bir senedi bulunmayan, hikmet sözü olarak nakledilen ifadelerden",
+    "aciklama": "Hadis olarak sabit değildir. Kanaatin değeri sahih rivayetlerde başka lafızlarla anlatılır (ör. \"Zenginlik mal çokluğu değil, gönül tokluğudur\" — Buhârî, Müslim)."
+  },
+  {
+    "metin": "Çocuklarınıza yüzme ve atıcılık öğretin",
+    "derece": "zayif",
+    "referans": "Peygamber'e nispetle rivayet edilir; muhaddisler senedini zayıf bulmuş, sözün Hz. Ömer'e ait olduğunu kaydetmişlerdir",
+    "aciklama": "Merfû (Peygamber'e ait) olarak senedi zayıftır; daha sağlam olan nakil bunun Hz. Ömer'in sözü olduğu yönündedir. Tavsiyenin kendisi güzeldir, ancak hadis olarak delil gösterilmesi doğru değildir."
+  },
+  {
+    "metin": "Ümmetime dinî konularda kırk hadis ezberleten kimseyi Allah fakihler arasında diriltir",
+    "derece": "zayif",
+    "referans": "Pek çok yolla rivayet edilmiş; hadis âlimleri bu yolların tamamını zayıf bulmuştur (Nevevî, Erbaûn mukaddimesi)",
+    "aciklama": "Meşhur \"kırk hadis\" derlemelerinin dayanağı olan bu rivayetin bütün tarikleri zayıf kabul edilmiştir. Nevevî bile kendi kırk hadisinin girişinde bu rivayete dayanmadığını, hadis öğrenmenin faziletiyle ilgili sahih delillere dayandığını belirtir."
+  },
+  {
+    "metin": "Allah'ım! Recep ve Şaban'ı bize mübarek kıl ve bizi Ramazan'a ulaştır",
+    "derece": "zayif",
+    "referans": "Rivayet kaynaklarda geçer; senedi muhaddislerce zayıf kabul edilmiştir",
+    "aciklama": "Bu duanın Peygamber'e nispeti zayıf bir senetle gelmiştir. Dua etmek her hâlükârda serbesttir; ancak bu lafzın sahih bir hadis olduğu söylenemez."
+  },
+  {
+    "metin": "Ramazan'ın ilk on günü rahmet, ikinci on günü mağfiret, son on günü cehennemden kurtuluştur",
+    "derece": "zayif",
+    "referans": "Rivayeti nakleden İbn Huzeyme dahi senedi hakkında ihtiyat kaydı düşmüştür; muhaddisler zayıf/münker saymıştır",
+    "aciklama": "Ramazan'ı üçe bölen bu meşhur taksim zayıf bir rivayete dayanır. Ramazanın tamamının rahmet ve mağfiret ayı olduğu ise sahih rivayetlerle sabittir."
+  },
+  {
+    "metin": "Kim kırk gün ihlâsla Allah'a yönelirse kalbinden diline hikmet pınarları akar",
+    "derece": "zayif",
+    "referans": "Merfû olarak senedi zayıf kabul edilmiştir; sözün Eyyûb es-Sahtiyânî gibi selef âlimlerine ait olduğu da nakledilir",
+    "aciklama": "Peygamber'e nispeti zayıftır. İhlâsın değeri sahih rivayetlerle sabittir; ancak bu lafız hadis delili olarak kullanılmamalıdır."
+  },
+  {
+    "metin": "Müminin ferasetinden sakının, çünkü o Allah'ın nuruyla bakar",
+    "derece": "zayif",
+    "referans": "Tirmizî ve diğer kaynaklarda geçer; senedi zayıf kabul edilmiştir",
+    "aciklama": "Rivayet kaynaklarda mevcuttur fakat senedi zayıftır. Tek başına dinî bir hükme dayanak yapılmamalıdır."
+  },
+  {
+    "metin": "Cuma günü ölen kimse kabir fitnesinden korunur",
+    "derece": "zayif",
+    "referans": "Tirmizî ve Ahmed b. Hanbel'in naklettiği rivayetin senedi zayıf kabul edilmiştir",
+    "aciklama": "Rivayet kaynaklarda geçer, ancak senedindeki kopukluk sebebiyle zayıf sayılmıştır. Kesin bir müjde olarak aktarılması doğru değildir."
+  },
+  {
+    "metin": "Dua ibadetin özüdür",
+    "derece": "zayif",
+    "referans": "Tirmizî'de geçen bu lafzın senedi zayıftır; sahih olan rivayet \"Dua ibadetin ta kendisidir\" şeklindedir (Ebû Dâvûd, Tirmizî)",
+    "aciklama": "\"Duâ mü'minin silahıdır\" gibi yaygın lafızlarla birlikte anılan bu cümlenin senedi zayıftır. Duanın değeri, sahih olan \"Dua ibadetin kendisidir\" rivayetiyle ve Mü'min sûresi 60. âyetle zaten sabittir."
+  },
+  {
+    "metin": "Acele şeytandan, teenni Allah'tandır",
+    "derece": "zayif",
+    "referans": "Tirmizî'de rivayet edilmiştir; senedi zayıf kabul edilir",
+    "aciklama": "Kaynaklarda yer alan fakat senedi zayıf bulunan rivayetlerdendir. Aceleciliğin zararı başka sahih rivayetlerle de anlatılır; bu lafız tek başına delil sayılmaz."
+  },
+  {
+    "metin": "Cömert kişi Allah'a, cennete ve insanlara yakın, cehennemden uzaktır",
+    "derece": "zayif",
+    "referans": "Tirmizî'de rivayet edilmiştir; senedi zayıf kabul edilmiştir",
+    "aciklama": "Rivayet kaynaklarda geçer ancak senedi zayıftır. Cömertliğin fazileti sahih rivayetlerle ayrıca sabittir."
+  },
+  {
+    "metin": "Sabah uykusu rızka engeldir",
+    "derece": "zayif",
+    "referans": "Senedi zayıf kabul edilen rivayetlerdendir; bazı âlimler aslının bulunmadığını söylemiştir",
+    "aciklama": "Peygamber'e nispeti sağlam değildir. Sabahın bereketiyle ilgili başka rivayetler bulunsa da bu lafız zayıftır; kesin bir hüküm olarak aktarılmamalıdır."
+  },
+  {
+    "metin": "Hiçbir baba çocuğuna güzel terbiyeden daha üstün bir hediye vermemiştir",
+    "derece": "zayif",
+    "referans": "Tirmizî'de rivayet edilmiştir; senedi zayıf kabul edilmiştir",
+    "aciklama": "Rivayet kaynaklarda mevcuttur fakat senedi zayıftır. Çocuk terbiyesinin önemi Kur'an ve sahih hadislerle ayrıca vurgulanmıştır."
+  },
+  {
+    "metin": "Çalışan, Allah'ın sevgilisidir",
+    "derece": "zayif",
+    "referans": "Senedi çok zayıf kabul edilen, bazı âlimlerce aslı olmadığı söylenen rivayetlerden",
+    "aciklama": "Peygamber'e nispeti sağlam değildir. Helal kazanç için çalışmanın fazileti ise sahih rivayetlerle sabittir (ör. \"Hiç kimse elinin emeğinden daha hayırlı bir lokma yememiştir\" — Buhârî)."
   }
 ]

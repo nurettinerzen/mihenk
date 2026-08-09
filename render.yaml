@@ -6,14 +6,24 @@ services:
   - type: web
     name: mihenk-api
     runtime: docker
-    plan: free              # RSS ~280 MB → 512 MB'a sığar. Kullanıcı kararı (5 Ağu 2026):
-                            # gider sıfırlansın; uyku/cold-start + kalıcı disk kaybı kabul.
+    plan: starter           # 8 Ağu 2026: free'den dönüldü ($7/ay). Üç sorunu birden çözüyor:
+                            # (1) kota artık /veri diskinde kalıcı, (2) analitik olayları da
+                            # kalıcı, (3) uyku yok → 32,8 sn'lik soğuk açılış bitti.
+                            # RSS ~280 MB, 512 MB'a sığıyor (kod 440 MB'ta uyarıyor).
     healthCheckPath: /health
     autoDeploy: true
-    # ⚠️ Kalıcı disk KALDIRILDI (free instance disk desteklemiyor). Analitik (olay)
-    # ve cihaz kotası artık ./veri'ye (konteyner FS) yazılır: uyanık kaldığı sürece
-    # birikir, uyku/deploy'da SIFIRLANIR. Panel geçmişi 5 Ağu 2026'da yerel yedeğe
-    # alındı (hadis/veri-yedek/). Ölçüm ciddileşince Starter'a dönüp diski geri koy.
+    disk:
+      name: veri
+      mountPath: /veri      # kota.mjs ve olay.mjs '/veri' varsa onu kullanır.
+      sizeGB: 1
+    #
+    # KOTA: cihaz başına toplam ücretsiz sorgu sayacı /veri/kota/kullanim.jsonl'da.
+    # Konteyner FS'ine yazıldığı sürece "toplam 5 sorgu" fiilen "her uyanışta 5"
+    # oluyordu (ölçüm 7 Ağu: kota tüketildi → 45 dk uyku → kalan:5) ve paywall HİÇ
+    # tetiklenmiyordu. Disk bunu kapatıyor. Supabase yolu (supabase-kota.sql) kodda
+    # duruyor ama gerekmiyor: SUPABASE_URL girilmezse dosya yolu kullanılır.
+    #
+    # ANALİTİK (olay): artık /veri'de, uyku/deploy'da SIFIRLANMIYOR.
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false          # Render panelinden gir
@@ -33,6 +43,14 @@ services:
         value: "300"
       - key: FREE_LIMIT
         value: "5"
+      # Ücretsiz kotanın KALICI deposu (Kahve Falı ile aynı Supabase projesi olabilir;
+      # tablo adı çakışmasın diye "mihenk_" öneki var). Tanımlı değilse sunucu açılışta
+      # uyarı basar ve kota yalnız bellekte tutulur → uyanışta sıfırlanır.
+      # Şema: supabase-kota.sql (Supabase → SQL Editor'de bir kez çalıştır).
+      - key: SUPABASE_URL
+        sync: false          # https://xxxx.supabase.co
+      - key: SUPABASE_SERVICE_KEY
+        sync: false          # service_role anahtarı (RLS'i aşar; istemciye ASLA verme)
       # Render'ın kenar proxy'si arkasındayız: istemci IP'si X-Forwarded-For'dan
       # okunur. Bu bayrak olmadan herkes tek kovada toplanır ve IP tavanına
       # takılınca TÜM kullanıcılar birden 429 yer.

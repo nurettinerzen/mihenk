@@ -113,6 +113,14 @@
   .bugun-etk{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--zumrut);font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:8px}
   .bugun-selam{font-family:'Sora',sans-serif;font-weight:600;font-size:20px;color:var(--metin);margin:2px 0 20px;letter-spacing:-.4px}
 
+  /* "Sunucu uyanıyor" şeridi. Render free instance uykudan 30+ sn'de kalkıyor;
+     o süre boyunca ekranda hiçbir şey olmuyordu ve kullanıcı uygulamayı bozuk
+     sanıyordu. İstek 4 sn'yi geçerse bu şerit çıkar. */
+  .uyanma{display:none;margin:8px auto 0;max-width:520px;padding:7px 12px;border-radius:10px;
+    border:1px solid var(--cizgi);background:var(--yuzey);color:var(--soluk);font-size:12.5px;text-align:center}
+  .uyanma.acik{display:block}
+  .bayat-not{margin:0 0 10px;font-size:12px;color:var(--soluk);text-align:center}
+
   /* --- Üst navigasyon --- */
   .ust-nav{display:flex;gap:7px;justify-content:center;margin:18px 0 6px}
   .unav{padding:8px 15px;border:1px solid var(--cizgi);background:var(--yuzey);color:var(--soluk);
@@ -319,6 +327,9 @@
     <button class="unav" data-bol="ezan" data-i18n="nav_ezan">Ezan</button>
   </div>
 
+  <!-- Sunucu uykudan kalkarken (Render free: ölçülen 32,8 sn) gösterilir. -->
+  <div id="uyanmaSerit" class="uyanma" data-i18n="uyaniyor">Sunucu uyanıyor, birkaç saniye sürebilir…</div>
+
   <div id="miniCalar" class="mini-calar">
     <div class="mini-bilgi"><b id="miniAd"></b><span id="miniKari"></span></div>
     <button id="miniDurdur" class="mini-btn" aria-label="Durdur">‖</button>
@@ -440,18 +451,21 @@
           <!-- Fiyat StoreKit'ten gelir (mağazaya göre para birimi değişir). Sabit ₺ değeri
                yazılıydı: ürünler yüklenemezse ABD'li kullanıcıya Türk Lirası fiyat
                gösteriliyordu = yanlış fiyat beyanı. Gelene kadar tire gösterilir. -->
-          <span class="plan-fiyat" id="fiyatYillik">—</span>
+          <span class="plan-fiyat" id="fiyatYillik" style="display:none"></span>
         </button>
         <!-- Deneme metni StoreKit'ten okunur (introPrice). Koda "3 gün" yazmak,
              Apple'da süre değişirse yanlış vaat olur; teklif hiç yoksa satır gizli. -->
         <div class="plan-deneme" id="planDeneme" style="display:none"></div>
         <button class="plan-btn" id="planAylik" data-urun="mihenk_plus_aylik">
           <span class="plan-sol"><span class="plan-ad" data-i18n="pw_aylik">Aylık</span></span>
-          <span class="plan-fiyat" id="fiyatAylik">—</span>
+          <span class="plan-fiyat" id="fiyatAylik" style="display:none"></span>
         </button>
       </div>
       <button class="btn" id="paywallSatinAl" data-i18n="pw_devam" style="margin-top:14px">Devam et</button>
       <div class="paywall-mesaj" id="lisansMesaj" style="text-align:center"></div>
+      <!-- Mağaza ürünleri yüklenemediğinde çıkar. Eskiden kullanıcıya sadece
+           "yakında" deniyordu ve yapabileceği hiçbir şey yoktu. -->
+      <button class="restore-link" id="pwTekrarBtn" data-i18n="pw_tekrar" style="display:none">Tekrar dene</button>
       <button class="restore-link" id="restoreBtn" data-i18n="pw_restore">Satın almaları geri yükle</button>
       <div class="paywall-yasal">
         <div data-i18n="pw_yenileme">Abonelik, dönem bitiminden en az 24 saat önce iptal edilmedikçe kendini yeniler. Yönetim ve iptal App Store hesap ayarlarından yapılır.</div>
@@ -599,6 +613,8 @@ const L = {
     selam:'Selâmün aleyküm', gun_ayet:'Günün Ayeti', gun_hadis:'Günün Hadisi',
     pw_yillik:'Yıllık', pw_aylik:'Aylık', pw_deneme:(s)=>`İlk ${s} ücretsiz`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'gün':'gün',WEEK:'hafta',MONTH:'ay',YEAR:'yıl'}[b]||''),pw_avantaj:(p)=>`%${p} avantajlı`, pw_devam:'Devam et', pw_restore:'Satın almaları geri yükle',
     pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
+    pw_urun_yok:'Mağazaya şu an bağlanamadık. İnternetini kontrol edip tekrar dene.', pw_tekrar:'Tekrar dene', pw_yukleniyor:'Bağlanılıyor…',
+    uyaniyor:'Sunucu uyanıyor, birkaç saniye sürebilir…', gunun_bayat:'Kayıtlı içerik gösteriliyor, güncelleniyor…',
   },
   en: {
     indir_plus:'Offline listening comes with Mihenk Plus. Online listening with Alafasy stays free.',indir_teklif:'Download this reciter to listen offline (~800 MB).',indir_et:'Download',indir_iptal:'Cancel',indir_kaldir:'Remove',indir_hazir:'{k} is available offline.',indir_basliyor:'Preparing…',indir_bitti:'Recitation downloaded. You can now listen offline.',indir_iptal_oldu:'Download stopped. You can resume where you left off.',indir_kaldir_onay:'Delete the downloaded recitation from your device?',
@@ -640,6 +656,8 @@ const L = {
     selam:'As-salamu alaykum', gun_ayet:'Verse of the Day', gun_hadis:'Hadith of the Day',
     pw_yillik:'Yearly', pw_aylik:'Monthly', pw_deneme:(s)=>`First ${s} free`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'days':'day',WEEK:n>1?'weeks':'week',MONTH:n>1?'months':'month',YEAR:n>1?'years':'year'}[b]||''),pw_avantaj:(p)=>`Save ${p}%`, pw_devam:'Continue', pw_restore:'Restore purchases',
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
+    pw_urun_yok:'We couldn\'t reach the store right now. Check your connection and try again.', pw_tekrar:'Try again', pw_yukleniyor:'Connecting…',
+    uyaniyor:'Waking the server, this may take a few seconds…', gunun_bayat:'Showing saved content, refreshing…',
   },
   fr: {
     indir_plus:'L’écoute hors ligne est incluse dans Mihenk Plus. L’écoute en ligne avec Alafasy reste gratuite.',indir_teklif:'Télécharge ce récitateur pour écouter hors ligne (~800 Mo).',indir_et:'Télécharger',indir_iptal:'Annuler',indir_kaldir:'Supprimer',indir_hazir:'{k} est disponible hors ligne.',indir_basliyor:'Préparation…',indir_bitti:'Récitation téléchargée. Tu peux écouter hors ligne.',indir_iptal_oldu:'Téléchargement arrêté. Tu peux reprendre plus tard.',indir_kaldir_onay:'Supprimer la récitation téléchargée de l\'appareil ?',
@@ -681,6 +699,8 @@ const L = {
     selam:'As-salâmu alaykum', gun_ayet:'Verset du jour', gun_hadis:'Hadith du jour',
     pw_yillik:'Annuel', pw_aylik:'Mensuel', pw_deneme:(s)=>`${s} offerts`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'jours':'jour',WEEK:n>1?'semaines':'semaine',MONTH:'mois',YEAR:n>1?'ans':'an'}[b]||''),pw_avantaj:(p)=>`-${p} %`, pw_devam:'Continuer', pw_restore:'Restaurer les achats',
     pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
+    pw_urun_yok:'Impossible de joindre la boutique. Vérifiez votre connexion et réessayez.', pw_tekrar:'Réessayer', pw_yukleniyor:'Connexion…',
+    uyaniyor:'Le serveur se réveille, cela peut prendre quelques secondes…', gunun_bayat:'Contenu enregistré affiché, actualisation…',
   },
   id: {
     indir_plus:'Mendengarkan offline tersedia di Mihenk Plus. Mendengarkan online dengan Alafasy tetap gratis.',indir_teklif:'Unduh qari ini untuk mendengarkan tanpa internet (~800 MB).',indir_et:'Unduh',indir_iptal:'Batal',indir_kaldir:'Hapus',indir_hazir:'{k} tersedia offline.',indir_basliyor:'Menyiapkan…',indir_bitti:'Tilawah terunduh. Kini bisa didengarkan tanpa internet.',indir_iptal_oldu:'Unduhan dihentikan. Bisa dilanjutkan nanti.',indir_kaldir_onay:'Hapus tilawah yang diunduh dari perangkat?',
@@ -722,6 +742,8 @@ const L = {
     selam:'Assalamu\'alaikum', gun_ayet:'Ayat Hari Ini', gun_hadis:'Hadis Hari Ini',
     pw_yillik:'Tahunan', pw_aylik:'Bulanan', pw_deneme:(s)=>`${s} pertama gratis`,pw_sure:(n,b)=>n+' '+({DAY:'hari',WEEK:'minggu',MONTH:'bulan',YEAR:'tahun'}[b]||''),pw_avantaj:(p)=>`Hemat ${p}%`, pw_devam:'Lanjutkan', pw_restore:'Pulihkan pembelian',
     pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
+    pw_urun_yok:'Kami tidak dapat menghubungi toko saat ini. Periksa koneksi lalu coba lagi.', pw_tekrar:'Coba lagi', pw_yukleniyor:'Menghubungkan…',
+    uyaniyor:'Server sedang dibangunkan, mungkin butuh beberapa detik…', gunun_bayat:'Menampilkan konten tersimpan, memperbarui…',
   },
   ar: {
     indir_plus:'الاستماع دون اتصال متاح مع مِحَك بلس. يبقى الاستماع إلى العفاسي عبر الإنترنت مجانيًا.',indir_teklif:'نزّل هذا القارئ للاستماع دون إنترنت (≈800 ميغابايت).',indir_et:'تنزيل',indir_iptal:'إلغاء',indir_kaldir:'إزالة',indir_hazir:'{k} متاح دون إنترنت.',indir_basliyor:'جارٍ التحضير…',indir_bitti:'تم تنزيل التلاوة. يمكنك الاستماع دون إنترنت.',indir_iptal_oldu:'تم إيقاف التنزيل. يمكنك المتابعة لاحقًا.',indir_kaldir_onay:'هل تريد حذف التلاوة المنزَّلة من جهازك؟',
@@ -763,6 +785,8 @@ const L = {
     selam:'السلام عليكم', gun_ayet:'آية اليوم', gun_hadis:'حديث اليوم',
     pw_yillik:'سنوي', pw_aylik:'شهري', pw_deneme:(s)=>`${s} مجانًا`,pw_sure:(n,b)=>n+' '+({DAY:n>2?'أيام':'أيام',WEEK:'أسابيع',MONTH:'أشهر',YEAR:'سنوات'}[b]||''),pw_avantaj:(p)=>`توفير ${p}%`, pw_devam:'متابعة', pw_restore:'استعادة المشتريات',
     pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
+    pw_urun_yok:'تعذّر الاتصال بالمتجر الآن. تحقّق من اتصالك ثم حاول مجددًا.', pw_tekrar:'حاول مجددًا', pw_yukleniyor:'جارٍ الاتصال…',
+    uyaniyor:'يجري تشغيل الخادم، قد يستغرق بضع ثوانٍ…', gunun_bayat:'يُعرض محتوى محفوظ، ويجري التحديث…',
   },
   ur: {
     indir_plus:'آف لائن سماعت مِحک پلس میں دستیاب ہے۔ عفاسی کے ساتھ آن لائن سماعت مفت رہے گی۔',indir_teklif:'انٹرنیٹ کے بغیر سننے کے لیے یہ قاری ڈاؤن لوڈ کریں (≈800 MB)۔',indir_et:'ڈاؤن لوڈ',indir_iptal:'منسوخ',indir_kaldir:'ہٹائیں',indir_hazir:'{k} آف لائن دستیاب ہے۔',indir_basliyor:'تیاری جاری…',indir_bitti:'تلاوت ڈاؤن لوڈ ہو گئی۔ اب آف لائن سن سکتے ہیں۔',indir_iptal_oldu:'ڈاؤن لوڈ رک گیا۔ بعد میں جاری رکھ سکتے ہیں۔',indir_kaldir_onay:'کیا ڈاؤن لوڈ شدہ تلاوت آلے سے حذف کریں؟',
@@ -804,6 +828,8 @@ const L = {
     selam:'السلام علیکم', gun_ayet:'آج کی آیت', gun_hadis:'آج کی حدیث',
     pw_yillik:'سالانہ', pw_aylik:'ماہانہ', pw_deneme:(s)=>`پہلے ${s} مفت`,pw_sure:(n,b)=>n+' '+({DAY:'دن',WEEK:'ہفتے',MONTH:'ماہ',YEAR:'سال'}[b]||''),pw_avantaj:(p)=>`${p}% بچت`, pw_devam:'جاری رکھیں', pw_restore:'خریداری بحال کریں',
     pw_hata:'مکمل نہ ہوسکا۔ دوبارہ کوشش کریں۔', pw_restore_yok:'بحال کرنے کو کوئی سبسکرپشن نہیں۔',
+    pw_urun_yok:'اس وقت اسٹور سے رابطہ نہ ہوسکا۔ اپنا انٹرنیٹ دیکھ کر دوبارہ کوشش کریں۔', pw_tekrar:'دوبارہ کوشش کریں', pw_yukleniyor:'رابطہ ہو رہا ہے…',
+    uyaniyor:'سرور بیدار ہو رہا ہے، چند سیکنڈ لگ سکتے ہیں…', gunun_bayat:'محفوظ مواد دکھایا جا رہا ہے، اپ ڈیٹ ہو رہا ہے…',
   },
 };
 window.addEventListener('error', e=>{ try{ console.error('MIHENK hata:', e.message, e.filename+':'+e.lineno); }catch(_){} });
@@ -878,7 +904,12 @@ async function istek(yol, govde){
   const onceki = _sonIstek.get(imza);
   if (onceki && Date.now() - onceki.t < 6000) return onceki.veri;
   const cihaz = await cihazAl();   // kalıcı kimlik hazır olmadan istek atma
-  const r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil, cihaz})});
+  // Sunucu uykudaysa ilk istek 30 sn'yi bulabiliyor; 4 sn'yi geçerse kullanıcıya
+  // sebebini söyle (aşağıdaki finally şeridi kapatır).
+  uyanmaBaslat();
+  let r;
+  try{ r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil, cihaz})}); }
+  finally{ uyanmaBitir(); }
   if(r.status===429){ const e=new Error('limit'); e.yogun=true; throw e; }   // 'bağlanamadım' demek yanıltıcıydı
   if(r.status===402){ const j=await r.json(); if(j.checkout) checkoutUrl=j.checkout; paywallGoster('kota-bitti'); throw {paywall:true}; }
   if(!r.ok) throw new Error('sunucu '+r.status);
@@ -1253,13 +1284,26 @@ function hakGoster(){
         : `<span class="plus-bag" data-plus>${T.pw_satinal}</span>`);
   document.querySelectorAll('[data-hak]').forEach(el=>{
     el.innerHTML = metin;
-    el.querySelector('[data-plus]')?.addEventListener('click', paywallGoster);
+    // DİKKAT: doğrudan `paywallGoster` bağlanıyordu → fonksiyona `kaynak` olarak
+    // MouseEvent geçiyor ve ölçüme çöp değer düşüyordu. Kaynağı açıkça ver.
+    el.querySelector('[data-plus]')?.addEventListener('click', ()=>paywallGoster('sayac'));
   });
   const b=document.getElementById('plusBtn');
   if(b){ const serit=b.parentElement; if(serit) serit.style.display='none'; }  // üstteki şerit kalktı
 }
 
-function paywallGoster(kaynak){ document.getElementById('paywall').classList.add('acik'); olay('paywall',{kaynak:kaynak||'sayac'}); }
+// HUNİNİN GİRİŞİ. `sebep` = paywall neden açıldı (kota bitti / premium kâri /
+// indirme / rozet), `kalan` = o andaki ücretsiz hak, `urunHazir` = StoreKit
+// ürünleri yüklü mü. Sonuncusu kritik: ürünler yüklenmemişse kullanıcı satın
+// alamıyor ve bunu şimdiye kadar hiç ölçemiyorduk.
+function paywallGoster(kaynak){
+  document.getElementById('paywall').classList.add('acik');
+  const k = (typeof kaynak==='string' && kaynak) ? kaynak : 'sayac';
+  const urunHazir = !!(rcUrunler && rcUrunler[seciliUrun]);
+  olay('paywall',{ kaynak:k, sebep:k, kalan: premium ? -1 : (typeof kalan==='number' ? kalan : -2), urunHazir });
+  // Ürünler yoksa kullanıcı düğmeye basmadan da bunu görsün + tekrar deneyebilsin.
+  if(YERLI && !urunHazir) urunYokGoster('acilis'); else urunYokGizle();
+}
 function paywallGizle(){ document.getElementById('paywall').classList.remove('acik'); }
 // --- Mihenk Plus / mağaza IAP (RevenueCat) ---
 // Apple anahtarını Android'de kullanmak sessizce yanlış projeye bağlanmaktan da
@@ -1315,10 +1359,30 @@ async function iapBaslat(){
     await iapPremiumKontrol();
     const { products } = await Purchases.getProducts({ productIdentifiers: Object.values(URUNLER) });
     rcUrunler = {}; (products||[]).forEach(p=>{ rcUrunler[p.identifier]=p; });
-    if(rcUrunler[URUNLER.yillik]) document.getElementById('fiyatYillik').textContent = rcUrunler[URUNLER.yillik].priceString;
-    if(rcUrunler[URUNLER.aylik]) document.getElementById('fiyatAylik').textContent = rcUrunler[URUNLER.aylik].priceString;
+    fiyatCiz();
     avantajCiz(); denemeCiz();
-  }catch(e){ console.warn('IAP başlatılamadı', e); }
+    // ÖLÇÜM: ürünler hiç gelmediyse kullanıcı satın ALAMAZ. Bu şimdiye kadar
+    // sessiz bir kayıptı; artık panelde `satinalma/urun-yok` olarak görünür.
+    if(!rcUrunler[URUNLER.yillik] && !rcUrunler[URUNLER.aylik]) olay('satinalma',{durum:'urun-yok', sebep:'baslangic-bos'});
+    else urunYokGizle();
+  }catch(e){
+    console.warn('IAP başlatılamadı', e);
+    olay('satinalma',{durum:'urun-yok', sebep:'baslangic-hata'});
+    fiyatCiz();
+  }
+}
+// Fiyat SADECE StoreKit'ten gelir. Eskiden HTML'de "₺249,99 / ₺49,99" gömülüydü:
+// ürünler yüklenmese bile ekranda fiyat duruyor, kullanıcı ürünün satışta olduğunu
+// sanıp düğmeye basıyor ve "yakında" duvarına çarpıyordu. Fiyat yoksa satır boş
+// kalmasın diye gizlenir — uydurma rakam gösterilmez.
+function fiyatCiz(){
+  const cift = [[URUNLER.yillik,'fiyatYillik'],[URUNLER.aylik,'fiyatAylik']];
+  for(const [urun,id] of cift){
+    const el=document.getElementById(id); if(!el) continue;
+    const p = rcUrunler && rcUrunler[urun];
+    if(p && p.priceString){ el.textContent=p.priceString; el.style.display=''; }
+    else { el.textContent=''; el.style.display='none'; }
+  }
 }
 // Yıllık plandaki tasarruf rozeti. "%58" KODA GÖMÜLÜYDÜ: fiyatlar mağazadan gelir
 // (ülke, para birimi, fiyat güncellemesi) ve sabit yüzde ilk değişiklikte yalan
@@ -1380,9 +1444,39 @@ function planSec(urun){
   document.getElementById('planYillik').classList.toggle('secili', urun===URUNLER.yillik);
   document.getElementById('planAylik').classList.toggle('secili', urun===URUNLER.aylik);
 }
+// --- Ürünler yüklenemedi çıkmazı ------------------------------------------
+// Eskiden bu durumda tek yapılan "Satın alma yakında (App Store)" yazmaktı:
+// kullanıcı ürünün henüz satışa açılmadığını sanıp vazgeçiyordu, oysa sorun
+// geçici (ağ/StoreKit/RC) olabiliyordu. Üstelik biz bunu HİÇ ölçemiyorduk.
+function urunYokGoster(nereden){
+  const m=document.getElementById('lisansMesaj'), b=document.getElementById('pwTekrarBtn');
+  if(!YERLI){ if(m){ m.textContent=T.pw_yakinda; m.className='paywall-mesaj'; } return; }  // tarayıcı önizlemesi
+  if(m){ m.textContent=T.pw_urun_yok; m.className='paywall-mesaj hata'; }
+  if(b){ b.style.display=''; b.disabled=false; b.textContent=T.pw_tekrar; }
+  if(nereden==='acilis') return;   // olay paywallGoster içinde zaten yazıldı
+}
+function urunYokGizle(){
+  const b=document.getElementById('pwTekrarBtn'); if(b) b.style.display='none';
+  const m=document.getElementById('lisansMesaj'); if(m && m.className.indexOf('hata')>=0){ m.textContent=''; m.className='paywall-mesaj'; }
+}
+async function urunleriTekrarDene(){
+  const m=document.getElementById('lisansMesaj'), b=document.getElementById('pwTekrarBtn');
+  if(b){ b.disabled=true; b.textContent=T.pw_yukleniyor; }
+  if(m){ m.textContent=''; m.className='paywall-mesaj'; }
+  await iapBaslat();
+  if(rcUrunler && rcUrunler[seciliUrun]){ urunYokGizle(); olay('satinalma',{durum:'urun-geldi', plan:seciliUrun}); }
+  else { olay('satinalma',{durum:'urun-yok', plan:seciliUrun, sebep:'tekrar-basarisiz'}); urunYokGoster('tekrar'); }
+}
 async function satinAl(){
   const m=document.getElementById('lisansMesaj');
-  if(!YERLI || !rcUrunler || !rcUrunler[seciliUrun]){ m.textContent=T.pw_yakinda; m.className='paywall-mesaj'; return; }
+  if(!YERLI || !rcUrunler || !rcUrunler[seciliUrun]){
+    // ⚠️ HUNİNİN EN KARANLIK NOKTASIYDI: ürünler yüklenmediğinde kullanıcı sessizce
+    // düşüyordu ve sebebini ölçemiyorduk. Artık `urun-yok` olayı yazılıyor.
+    olay('satinalma',{ durum:'urun-yok', plan:seciliUrun,
+      sebep: !YERLI ? 'tarayici' : (!RC_KEY ? 'rc-anahtar-yok' : (rcUrunler ? 'urun-listede-yok' : 'urun-yuklenmedi')) });
+    urunYokGoster('dugme');
+    return;
+  }
   try{
     const { Purchases } = CapEklenti(); m.textContent='';
     // Satın alma yanıtı zaten customerInfo taşır; onu kullan. Ayrıca getCustomerInfo'ya
@@ -1413,7 +1507,42 @@ async function restore(){
     else { olay('geri_yukle',{durum:'yok'}); m.textContent=T.pw_restore_yok; m.className='paywall-mesaj'; }
   }catch(e){ olay('geri_yukle',{durum:'hata'}); m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; }
 }
+// --- Soğuk açılış: önbellek + "sunucu uyanıyor" göstergesi -----------------
+// ÖLÇÜM (7 Ağu 2026): Render free instance 15 dk hareketsizlikte uyuyor, uyanış
+// 32,8 sn sürüyor. durumYukle() ve gununYukle() açılışta doğrudan sunucuya
+// gidiyordu; o yarım dakika boyunca "Bugün" ekranı BOŞTU ve kullanıcı uygulamayı
+// bozuk sanıyordu. Artık son bilinen durum ve içerik localStorage'dan ANINDA
+// çizilir, sunucu yanıtı gelince sessizce güncellenir.
+const OB = {
+  oku(k){ try{ return JSON.parse(localStorage.getItem('ob_'+k)||'null'); }catch(e){ return null; } },
+  yaz(k,v){ try{ localStorage.setItem('ob_'+k, JSON.stringify(v)); }catch(e){} },
+};
+const bugunAnahtar = () => new Date().toISOString().slice(0,10);
+// 4 sn'yi geçen istekte "sunucu uyanıyor" şeridi. Sayaç tutuyoruz çünkü açılışta
+// durumYukle/gununYukle paralel koşuyor; ilki bitince şerit kapanmamalı.
+let _bekleyenIstek=0, _uyanmaZaman=null;
+function uyanmaBaslat(){
+  _bekleyenIstek++;
+  if(_uyanmaZaman) return;
+  _uyanmaZaman=setTimeout(()=>{ const e=document.getElementById('uyanmaSerit'); if(e) e.classList.add('acik'); }, 4000);
+}
+function uyanmaBitir(){
+  _bekleyenIstek=Math.max(0,_bekleyenIstek-1);
+  if(_bekleyenIstek>0) return;
+  clearTimeout(_uyanmaZaman); _uyanmaZaman=null;
+  const e=document.getElementById('uyanmaSerit'); if(e) e.classList.remove('acik');
+}
+
+// Premium ASLA önbellekten verilmez: localStorage düzenleyerek abonelik açılmasın
+// (aynı sebeple açılışta localStorage.premium siliniyor). Yalnız kalan ücretsiz
+// hak ve checkout adresi önbelleklenir — ikisi de sır değil.
+function durumOnbellektenCiz(){
+  const o=OB.oku('durum');
+  if(!o || typeof o.kalan!=='number' || o.kalan<0) return;
+  kalan=o.kalan; checkoutUrl=o.checkout||''; hakGoster();
+}
 async function durumYukle(){
+  uyanmaBaslat();
   try{
     const c = await cihazAl();
     const r=await fetch(API+'/api/durum',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz:c})});
@@ -1424,18 +1553,42 @@ async function durumYukle(){
     // varsa sunucunun geç gelen "premium:false" yanıtı onu geçersiz kılmaz.
     premium = !!j.premium || iapDogrulandi;
     kalan = premium ? null : j.kalan; checkoutUrl=j.checkout||''; hakGoster();
+    if(!premium && typeof j.kalan==='number') OB.yaz('durum',{kalan:j.kalan, checkout:checkoutUrl});
   }catch(e){}
+  finally{ uyanmaBitir(); }
 }
 
 // --- Bugün (günün ayeti + hadisi) ---
 let gununVeri=null;
+function gununBayatNotu(){
+  const el=document.getElementById('gununIcerik');
+  if(el && !el.querySelector('.bayat-not')) el.insertAdjacentHTML('afterbegin', `<div class="bayat-not">${esc(T.gunun_bayat||'')}</div>`);
+}
+// Önbellekten çizer; çizdiyse true döner (hata yolunda ekranı ezmemek için).
+function gununOnbellektenCiz(){
+  const o=OB.oku('gunun');
+  if(!o || o.dil!==dil || !o.veri) return false;
+  gununVeri=o.veri; gununCiz();
+  // Farklı güne aitse içerik yine de boş ekrandan iyidir; ama "günün ayeti" adı
+  // altında sessizce eski içerik göstermek yanlış olur → açıkça söyle.
+  if(o.gun!==bugunAnahtar()) gununBayatNotu();
+  return true;
+}
 async function gununYukle(){
+  const onbellekVar = gununOnbellektenCiz();   // ÖNCE çiz, sonra sunucuya git
+  uyanmaBaslat();
   try{
     const r=await fetch(API+'/api/gunun',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({dil})});
     // r.ok kontrol edilmiyordu: 429 gövdesi "veri" sanılıp ekran sessizce boş kalıyordu.
     if(!r.ok){ const e=new Error('gunun'); e.yogun = r.status===429; throw e; }
     gununVeri=await r.json(); gununCiz();
-  }catch(e){ document.getElementById('gununIcerik').innerHTML=`<div class="kart uyari-kart"><div class="anlam">${e&&e.yogun?T.yogun:T.err_body}</div></div>`; }
+    OB.yaz('gunun',{dil, gun:bugunAnahtar(), veri:gununVeri});
+  }catch(e){
+    // Önbellekten bir şey çizdiysek hata kartıyla ÜSTÜNE YAZMA: eldeki içerik
+    // (bayat olsa bile, notuyla birlikte) boş ekrandan iyidir.
+    if(!onbellekVar) document.getElementById('gununIcerik').innerHTML=`<div class="kart uyari-kart"><div class="anlam">${e&&e.yogun?T.yogun:T.err_body}</div></div>`;
+  }
+  finally{ uyanmaBitir(); }
 }
 function gununCiz(){
   if(!gununVeri) return;
@@ -2071,6 +2224,7 @@ document.getElementById('paywallSatinAl').onclick=satinAl;
 document.getElementById('planYillik').onclick=()=>planSec(URUNLER.yillik);
 document.getElementById('planAylik').onclick=()=>planSec(URUNLER.aylik);
 document.getElementById('restoreBtn').onclick=restore;
+document.getElementById('pwTekrarBtn').onclick=urunleriTekrarDene;
 // Eski sürümün doğrulanmamış yerel premium bayrağını temizle. Premium yalnız
 // RevenueCat veya sunucu doğrulamasıyla açılır; localStorage değiştirerek kâri
 // kilidi aşılamaz.
@@ -2088,8 +2242,11 @@ localStorage.removeItem('premium');
 })();
 
 dilUygula(dil); // başlangıç
+// ÖNCE önbellekten çiz (0 ms), SONRA sunucuya git. Render free instance uykudan
+// 32,8 sn'de kalkıyor; eskiden bu süre boyunca ekran boştu.
+durumOnbellektenCiz();
 durumYukle();   // premium/kalan durumunu çek
-gununYukle();   // Bugün: günün ayeti + hadisi
+gununYukle();   // Bugün: günün ayeti + hadisi (önbellek varsa anında çizer)
 iapBaslat();    // RevenueCat (native + RC_KEY varsa): fiyatları çek + premium kontrol
 
 // Ölçüm başlangıcı. "ilk": bu cihazda uygulamanın ilk açılışı — kurulum sayısını

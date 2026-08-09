@@ -32,13 +32,28 @@ ezan_bildirim · kari_indir · oynat · dil_degis · hata`
 Kimlik: cihazın zaten kullandığı rastgele UUID. İsim, e-posta, IDFA, konum, IP yok.
 Üçüncü taraf SDK yok — bu yüzden App Store'da "Tracking" beyanı gerekmiyor.
 
+### Paywall hunisi (8 Ağu 2026'da tamamlandı)
+`paywall` olayı artık `sebep` (kota-bitti / kari-dinle / kari-sec / kari-indir /
+buton / sayac), `kalan` (o andaki ücretsiz hak) ve **`urunHazir`** taşıyor.
+`satinalma` olayına `urun-yok` durumu eklendi: StoreKit ürünleri yüklenmediği
+için kullanıcı satın **alamadığında** yazılır, `sebep` alanı nedenini söyler
+(`tarayici` / `rc-anahtar-yok` / `urun-yuklenmedi` / `urun-listede-yok` /
+`baslangic-bos` / `baslangic-hata` / `tekrar-basarisiz`). Panelde ayrı bir kutu
+ve huninin altında kırmızı uyarı olarak görünür.
+
+⚠️ `kalan` alanı 28 Tem'de istemcide gönderilmeye başlanmıştı ama `olay.mjs`
+beyaz listesinde olmadığı için **diske hiç inmiyordu** — 8 Ağu'da düzeltildi.
+
 ## ⚠️ Senin yapman gerekenler
-1. **Render → mihenk-api → Disks**: `veri` adında 1 GB disk `/veri` yolunda bağlı mı?
-   `render.yaml`'a yazıldı ama Render disk eklemeyi bazen elle onaylatıyor.
-   **Bağlı değilse panel en üstte kırmızıyla söyler** ve her deploy ölçümü sıfırlar.
-   (Not: disk bağlı bir serviste Render sıfır kesintili deploy yapamaz; deploy
-   sırasında ~30 sn kesinti olur. Kabul edilebilir.)
-2. Paneli bir kez aç, kırmızı uyarı var mı bak.
+1. **Supabase → SQL Editor → `supabase-kota.sql`'i çalıştır**, sonra Render'a
+   `SUPABASE_URL` ve `SUPABASE_SERVICE_KEY` gir. Ücretsiz kota sayacı artık orada
+   duruyor; girilmezse sunucu açılışta uyarı basar ve kota her uyanışta sıfırlanır
+   (yani paywall hiç tetiklenmez — 7 Ağu'da ölçülen hata buydu).
+2. `/olcum?k=…` çıktısındaki `kota.kalici` alanı **true** olmalı.
+3. **Analitik (olay) hâlâ kalıcı DEĞİL**: Render free planında disk yok, olaylar
+   konteyner FS'ine yazılıyor ve sunucu uyuyunca siliniyor. Panel bunu en üstte
+   kırmızıyla söyler. Kalıcı olması için ya Starter'a dönüp `/veri` diski takılmalı
+   ya da olaylar da Supabase'e taşınmalı.
 
 ## Henüz ölçülemeyen
 - **Paylaşım**: uygulamada paylaş butonu YOK. Olay tanımlı, buton eklenince dolar.

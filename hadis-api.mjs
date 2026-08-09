@@ -88,6 +88,12 @@ const kuranVek = { tr: vekYukle('vektor-kuran-tr.f32'), en: vekYukle('vektor-kur
 // (depo.hadisEslesen: dil başına ayrı hnorm_* tablosu, ~20 MB okuma); JS’e yalnız
 // eşleşen satır numaraları döner. Puanlama eski davranışla birebir:
 // n = kelimenin (varyantlarından biriyle) geçtiği corpus kaydı sayısı, out[i] = Σ idf.
+// DENENDİ VE ATILDI (8 Ağu 2026 ölçümü, degerlendirme-calistir.mjs): (a) "kapsam" çarpanı — kaydın sorgunun
+// kaç farklı kelimesini içerdiği ayrı bir kanal olarak eklendi; kavram sözlüğü
+// olmadan ilk5 132→133 getiriyordu ama sözlükle birlikte ilk5'i değiştirmeyip
+// ilk10'u 271→268'e DÜŞÜRDÜ (gıybet 3/5→2/5). (b) Yaygın kelimeleri (df > %15)
+// lexical kanaldan elemek — ilk5 hiç değişmedi, %5 eşiğinde ilk10 bir puan düştü.
+// İkisi de kaldırıldı; kazanç kavram sözlüğünden (KAVRAM_HADIS) geldi.
 function lexHadis(dil, qw) {
   const N = depo.nCorpus;
   const arMi2 = dil === 'ar';
@@ -290,13 +296,21 @@ async function eslestir(metin, adaylar, dil = 'tr') {
   // İsnad zinciri ("Bize A tahdis etti… O B'den…") 300 karakterin tamamını yiyip
   // asıl sözü listeden dışarıda bırakıyordu; model karşılaştıramadığı için hem
   // eşleşmeyi kaçırıyor hem anlam farkını göremiyordu. Matn'ı gönder.
-  const liste = adaylar.map((a) => `[${a.id}] ${(hadisMatn(metinAl(a, dil)) || '').slice(0, 420)}`).join('\n\n');
+  // Mevzuat kayıtları AÇIKÇA işaretlenir. İşaretsizken model bunları "Peygamber
+  // sözü" saymayıp eşleştirmeyi reddedebiliyordu ("Temizlik imandandır" → aday
+  // listede olduğu hâlde eşleşme yok). Oysa ürünün asıl işi tam da bu: kullanıcı
+  // halk arasında dolaşan bir sözü yapıştırıyor ve karşılığını arıyor.
+  const liste = adaylar.map((a) => `[${a.id}]${a.mevzuat ? ' (HALK ARASINDA HADİS DİYE DOLAŞAN SÖZ)' : ''} ${(hadisMatn(metinAl(a, dil)) || '').slice(0, 420)}`).join('\n\n');
   const r = await anthropic.messages.create({
     model: MODEL,
     max_tokens: 300,
     system: 'Sen bir hadis METİN EŞLEŞTİRME aracısın. Görevin SADECE metin ilişkilendirmek — sahihlik/uydurma/hüküm KARARI VERME, bu senin işin değil.\n' +
-      '- eslesenId: Yapıştırılan metinle AYNI hadis (aynı Peygamber sözü) olan adayın id\'si. Net karşılık yoksa null.\n' +
+      '- eslesenId: Yapıştırılan metinle AYNI sözü ifade eden adayın id\'si. Net karşılık yoksa null.\n' +
       '  Lafız/çeviri farkı normaldir. ANLAM farkı DEĞİLDİR.\n' +
+      '  "(HALK ARASINDA HADİS DİYE DOLAŞAN SÖZ)" işaretli adaylar da tam olarak bu amaçla listededir:\n' +
+      '  kullanıcı böyle bir sözü yapıştırdıysa ve aday aynı sözün bir varyantıysa ONU eşleştir\n' +
+      '  ("Temizlik imandandır" ↔ "Temizlik imandan gelir" aynı sözdür). Sözün sahih olup olmadığına\n' +
+      '  yine KARAR VERME; derece kayıttan gelir.\n' +
       '- anlamFarki: Kullanıcının metni, eşleşen adayın MANASINI değiştiriyorsa true. Bunlar anlam farkıdır:\n' +
       '  • olumsuzlama eklenmiş/kaldırılmış ("niyetlere göredir" ↔ "niyetlere göre DEĞİLDİR")\n' +
       '  • sayı/miktar değişmiş ("beş şey" ↔ "üç şey")\n' +
@@ -350,6 +364,45 @@ function arapcaAra(sorgu, k = 10) {
   return puan.slice(0, k).map(([, i]) => depo.hadisAl(i));
 }
 
+// --- Mevzuat (halk arasında hadis sanılan sözler) adayları -----------------
+// ÜRÜNÜN ANA VAADİ BURASI: "bu söz gerçekten hadis mi?". Adaylar yalnız BM25'ten
+// geliyordu ve mevzuat kayıtları 30.483 hadisin arasında ilk 8'e giremiyordu:
+// "temizlik imandan gelir" ve "ashabım yıldızlar gibidir" korpusta KAYITLI OLDUĞU
+// HÂLDE bulunamıyordu (ölçüldü). Liste 44 satır — hepsini doğrudan puanlayıp
+// en iyilerini adayların BAŞINA koymak hem ucuz hem kesin.
+// Not: karar yine LLM'in; burada yalnız aday havuzuna giriyoruz.
+const MEVZUAT_KAYIT = (() => {
+  const out = [];
+  for (let i = depo.nCorpus + 1; i <= depo.nHadisAll; i++) {
+    const h = depo.hadisAl(i);
+    if (!h) continue;
+    const tok = new Set(trNorm(h.tr || '').split(' ').filter(w => w.length > 2));
+    if (tok.size) out.push({ h, tok });
+  }
+  return out;
+})();
+// Türkçe eklerini kaçırmamak için önek eşleşmesi (kodun geri kalanıyla aynı
+// mantık): "imandandır" ↔ "imandan", "öğrenin" ↔ "öğreniniz".
+const mvEsles = (a, b) => a === b || (a.length >= 4 && b.length >= 4 && (a.startsWith(b) || b.startsWith(a)));
+// Dice katsayısı: mevzuat metinleri 3-12 kelime; kesişim oranı uzunluk farkından
+// bağımsız çalışır. EŞİK 0,45 ÖLÇÜMLE seçildi: 38 gerçekçi kullanıcı lafzında
+// recall 38/38, 8 SAHİH hadis metninde yanlış pozitif 0. (0,30'da iki sahih metin
+// yanlışlıkla mevzuat adayı çekiyordu: "Temizlik imanın yarısıdır" → "Temizlik
+// imandan gelir".) Eşiği düşürmeden önce bu iki sayıyı yeniden ölç.
+function mevzuatAdaylar(metin, esik = 0.45, k = 2) {
+  const qt = [...new Set(trNorm(metin).split(' ').filter(w => w.length > 2))];
+  if (!qt.length) return [];
+  const puan = [];
+  for (const { h, tok } of MEVZUAT_KAYIT) {
+    let kesisim = 0;
+    for (const w of tok) { for (const q of qt) if (mvEsles(w, q)) { kesisim++; break; } }
+    const dice = (2 * kesisim) / (tok.size + qt.length);
+    if (dice >= esik) puan.push([dice, h]);
+  }
+  puan.sort((a, b) => b[0] - a[0]);
+  return puan.slice(0, k).map(([, h]) => h);
+}
+
 async function dogrula(metin, dil = 'tr') {
   let adaylar;
   if (dil !== 'tr' && dil !== 'en' && hadisVek) {
@@ -368,6 +421,11 @@ async function dogrula(metin, dil = 'tr') {
   } else {
     adaylar = depo.hadisAra(dil, metin, 8);
   }
+  // Mevzuat kayıtlarını havuzun BAŞINA ekle (tekrarları at). BM25 sıralamasında
+  // 30k hadisin arasında kaybolduklarından ürünün asıl sorusu ("bu söz hadis mi?")
+  // cevapsız kalıyordu.
+  const mv = mevzuatAdaylar(metin);
+  if (mv.length) adaylar = [...mv, ...adaylar].filter((h, i, a) => a.findIndex(x => x.id === h.id) === i);
   if (!adaylar.length) return { bulundu: false, yakin: null, benzerler: [] };
   const { eslesenId, anlamFarki, farkNotu, yakinId, yakinGuven, guven } = await eslestir(metin, adaylar, dil);
   const es = eslesenId && guven >= 0.45 ? adaylar.find(a => a.id === eslesenId) : null;
@@ -403,11 +461,34 @@ async function genislet(konu, dil) {
   } catch { return konu; }
 }
 
+// HADİSE ÖZGÜ kavram sözlüğü. Türkçe hadis çevirileri Arapça terimi değil sade
+// karşılığını kullanıyor: "tevazu" kelimesi 30.483 kaydın yalnız 14'ünde geçerken
+// "kibir" 42, "büyüklen" 24 kayıtta geçiyor. Terim genişletilmezse tek-terim
+// kapısı (o kelime metinde geçmeli) sorguyu bu 14 kayda hapsediyor ve konu
+// tamamen kaçıyordu (ölçüm: tevazu ilk5 = 0/5).
+// Buradaki karşılıklar SADECE arama metnidir — gösterilen hadis, derece ve
+// kaynak her zaman veriden gelir, üretilmez.
+// Yalnızca terimin KENDİSİ korpusta nadir olan kavramlar buraya girer (ölçülen
+// kayıt sayısı yanlarında). Zaten iyi çalışan sorgulara (sabır 5/5, öfke 5/5)
+// DOKUNULMADI: ölçülmeden yapılan genişletme sessiz regresyon üretir.
+const KAVRAM_HADIS = {
+  tevazu: 'alçakgönüllülük, kibirlenmemek, büyüklenmemek, mütevazı olmak',   // "tevazu" 14 kayıt
+  giybet: 'gıybet, çekiştirmek, arkasından konuşmak',                        // "gıybet" 9 kayıt
+  dedikodu: 'gıybet, çekiştirmek, arkasından konuşmak, koğuculuk',           // "dedikodu" 13 kayıt
+  hased: 'haset, kıskançlık, çekememek',                                     // "haset" 9 kayıt
+  haset: 'haset, kıskançlık, çekememek',
+};
 async function konu(sorgu, dil = 'tr') {
   // Kur'an'daki gibi: metinlerde karşılığı olmayan terimi aç ("alkol" hadis
   // metinlerinde hiç geçmez, "içki/şarap" geçer).
+  // KAVRAM_HADIS önceliklidir: hadis çevirilerindeki kelime dağarcığı meâlden
+  // farklı; aynı sözlüğü iki tarafa da dayatmak birini bozuyordu.
   let aramaK = sorgu;
-  if (dil === 'tr') { const k = KAVRAM[kavramAnahtar(sorgu)]; if (k) aramaK = `${sorgu} — ${k}`; }
+  if (dil === 'tr') {
+    const a = kavramAnahtar(sorgu);
+    const k = KAVRAM_HADIS[a] || KAVRAM[a];
+    if (k) aramaK = `${sorgu} — ${k}`;
+  }
   // Alaka kapısı: konu hadis metinlerinde hiç geçmiyorsa dürüstçe boş dön.
   // (Saf semantik "bilgisayar"a da 10 hadis buluyordu.)
   // Arapça'da harekeleri yok sayan normalizasyon gerekir: harekesiz sorgu (الصبر)
@@ -740,7 +821,7 @@ setInterval(() => {
   console.log('[OLCUM]', JSON.stringify({
     istek: olcum.istek, dil: olcum.dil, hata: olcum.hata,
     bulunamadi: olcum.bulunamadi, anlamFarki: olcum.anlamFarki,
-    kotaCihaz: toplamKota.cihazSayisi(),
+    kotaCihaz: toplamKota.cihazSayisi(), kota: toplamKota.durum(),
     bosSorgu: olcum.bosSorgu.slice(-25).map(x => `${x.yol}/${x.dil}: ${x.sorgu}`),
   }));
 }, 1800_000).unref();
@@ -822,11 +903,12 @@ async function premiumMi(cihaz) {
     gecerli: now + (sonuc ? PREMIUM_TTL : PREMIUM_YOK_TTL) });
   return sonuc;
 }
-function kalanHak(c, prem) {
+// Kota artık Supabase'de (kota.mjs) — ağ çağrısı içerir, bu yüzden async.
+async function kalanHak(c, prem) {
   if (prem) return Infinity;
   return toplamKota.kalan(c);
 }
-function hakKullan(c) {
+async function hakKullan(c) {
   return toplamKota.kullan(c);
 }
 
@@ -855,6 +937,9 @@ const sunucu = http.createServer(async (req, res) => {
       ...olcum,
       toplamIstek: Object.values(olcum.istek).reduce((a, b) => a + b, 0),
       kotaCihaz: toplamKota.cihazSayisi(),
+      // Kotanın gerçekten kalıcı olup olmadığı buradan görülür (kalici:false ise
+      // her uyanışta ücretsiz hak sıfırlanıyor demektir).
+      kota: toplamKota.durum(),
       // Kalıcı bir premium kaydı yok; bu yalnızca RevenueCat yanıtlarının önbelleği.
       premiumOnbellek: premiumCihaz.size,
       premiumOnbellekAbone: [...premiumCihaz.values()].filter(v => v.premium).length,
@@ -975,10 +1060,10 @@ const sunucu = http.createServer(async (req, res) => {
       // Durum: premium mi + kalan hak
       if (url.pathname === '/api/durum') {
         res.writeHead(200, { 'content-type': 'application/json' });
-        return res.end(JSON.stringify({ premium: prem, kalan: prem ? -1 : kalanHak(cihaz, prem), limit: FREE_LIMIT, checkout: CHECKOUT_URL }));
+        return res.end(JSON.stringify({ premium: prem, kalan: prem ? -1 : await kalanHak(cihaz, prem), limit: FREE_LIMIT, checkout: CHECKOUT_URL }));
       }
       // AI-sorgu limiti (namaz hariç, sadece native)
-      if (AI_YOLLAR.includes(url.pathname) && !prem && kalanHak(cihaz, prem) <= 0) {
+      if (AI_YOLLAR.includes(url.pathname) && !prem && await kalanHak(cihaz, prem) <= 0) {
         res.writeHead(402, { 'content-type': 'application/json' });
         return res.end(JSON.stringify({ hata: 'limit', premium: false, limit: FREE_LIMIT, checkout: CHECKOUT_URL }));
       }
@@ -1013,8 +1098,8 @@ const sunucu = http.createServer(async (req, res) => {
       }
       // AI sorgusu başarılı → hak düş + kalan bilgisini ekle
       if (AI_YOLLAR.includes(url.pathname)) {
-        if (!prem) hakKullan(cihaz);
-        out.kalan = prem ? -1 : kalanHak(cihaz, prem);
+        if (!prem) await hakKullan(cihaz);
+        out.kalan = prem ? -1 : await kalanHak(cihaz, prem);
         out.premium = prem;
         out.limit = FREE_LIMIT;
       }

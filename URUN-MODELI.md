@@ -4,7 +4,7 @@
 
 **Üyelik: yok, direkt açılıp kullanılıyor. Bu doğru.** Bir hadis arama uygulamasına giriş duvarı koymak kullanıcıyı ilk 10 saniyede kaybetmek demek ve karşılığında hiçbir şey kazanmıyorsun — sunucuda tutulacak kişisel bir durum yok. Değiştirme.
 
-**Ücretsiz kota: cihaz başına toplam 5 AI sorgusu.** Dini arama düşük sıklıklı bir ihtiyaç; günlük 5 sorgu paywall'ı çoğu kullanıcı için görünmez yapıyordu. Sayaç `kota.mjs` ile Render kalıcı diskinde tutulur, deploy/restart kotayı sıfırlamaz.
+**Ücretsiz kota: cihaz başına toplam 5 AI sorgusu.** Dini arama düşük sıklıklı bir ihtiyaç; günlük 5 sorgu paywall'ı çoğu kullanıcı için görünmez yapıyordu. Sayaç `kota.mjs` ile **Supabase'de** (`mihenk_kota`, şema `supabase-kota.sql`) tutulur; deploy/restart/uyku kotayı sıfırlamaz. (5 Ağu'da free plana geçilince kalıcı disk kaldırılmış ve sayaç konteyner FS'ine düşmüştü: 7 Ağu ölçümünde kota tüketildikten 45 dk sonra `kalan:5` dönüyordu — yani "toplam 5" fiilen "her uyanışta 5"ti ve paywall hiç tetiklenmiyordu. 8 Ağu'da Supabase'e taşındı ve `kill -9` + konteyner FS silme testiyle doğrulandı.)
 
 **Ücretsiz deneme: yok.**
 
@@ -14,7 +14,7 @@
 
 ## NASIL OLMALI
 
-### 1. Paywall hunisi ekle — bu ilk iş
+### 1. Paywall hunisi ekle — bu ilk iş ✅ (8 Ağu 2026'da yapıldı, ayrıntı OLCUM.md)
 Ember'de kurulu desen (`App.js:552`, `components/Paywall.js:74`) buraya taşınmalı:
 - `paywall_view {sebep}` — kota dolduğu için mi, premium bir özelliğe dokunduğu için mi
 - `purchase_start {plan}`, `purchase_done {plan}`, `purchase_fail {plan, neden}`

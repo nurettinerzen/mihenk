@@ -25,6 +25,13 @@ function huniCiz(h) {
     ['Satın almayı başlattı', h.satinAlmaBaslatan],
     ['Abone oldu', h.abone],
   ];
+  // Ürünleri yükleyemediği için satın ALAMAYAN cihaz sayısı huninin dışında ama
+  // hemen yanında durmalı: bu bir dönüşüm sorunu değil, arızadır.
+  const uyari = h.urunYok
+    ? `<p class="uyari">⚠️ ${h.urunYok} cihaz mağaza ürünlerini yükleyemedi (satın alma denemesi bile yapamadı).</p>`
+    : '';
+  const oran = h.oranPaywallAbone !== null && h.oranPaywallAbone !== undefined
+    ? `<p class="alt">Paywall gören → abone: <b>%${h.oranPaywallAbone}</b> (hedef %1–3)</p>` : '';
   return `<div class="huni">${adim.map(([ad, n], i) => {
     const yuzde = Math.round(n / en * 100);
     const onceki = i ? adim[i - 1][1] : n;
@@ -32,7 +39,7 @@ function huniCiz(h) {
     return `<div class="h-satir"><div class="h-ad">${esc(ad)}</div>
       <div class="h-bar"><div style="width:${Math.max(yuzde, 1)}%"></div></div>
       <div class="h-sayi">${n} <span>· %${yuzde}${i ? ` · bir öncekinden %${gecis}` : ''}</span></div></div>`;
-  }).join('')}</div>`;
+  }).join('')}</div>${oran}${uyari}`;
 }
 
 export function panelHtml(o) {
@@ -60,6 +67,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}
 th{text-align:left;color:var(--soluk);font-weight:500;font-size:12px;padding:4px 6px;border-bottom:1px solid var(--cizgi)}
 td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.04)}td.s{text-align:right;color:var(--pirinc);font-variant-numeric:tabular-nums}
 .bos{color:var(--soluk);font-size:13px;margin:2px 0}
+.uyari{color:#ffb4a2;font-size:13px;margin:10px 0 0}
 .ozet{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
 .ozet div{background:#0e1613;border:1px solid var(--cizgi);border-radius:10px;padding:10px 12px}
 .ozet b{display:block;font-size:22px;color:var(--pirinc);font-variant-numeric:tabular-nums}
@@ -79,7 +87,8 @@ td{padding:5px 6px;border-bottom:1px solid rgba(255,255,255,.04)}td.s{text-align
   .h-ad{grid-area:ad}.h-bar{grid-area:bar}.h-sayi{grid-area:sayi;text-align:left}}
 </style></head><body>
 <h1>Mihenk — kullanım paneli</h1>
-<p class="alt">${esc(o.aralik)} · ${o.toplamOlay} olay · veri ${o.disk?.kalici ? 'kalıcı diskte' : '<b style="color:#e88">GEÇİCİ — disk bağlı değil, yeniden başlatınca silinir</b>'}</p>
+<p class="alt">${esc(o.aralik)} · ${o.toplamOlay} olay · analitik ${o.disk?.kalici ? 'kalıcı diskte' : '<b style="color:#e88">GEÇİCİ — disk bağlı değil, sunucu uyuyunca/yeniden başlayınca silinir</b>'}
+<br>(Ücretsiz kota sayacı ayrı yerde: Supabase <code>mihenk_kota</code> — kalıcı. Durumu <code>/olcum?k=…</code> içindeki <code>kota</code> alanından bak.)</p>
 
 ${kutu('Özet', `<div class="ozet">
   <div><b>${o.toplamCihaz}</b><span>cihaz</span></div>
@@ -105,9 +114,17 @@ ${kutu('Sonuç', dagilim(o.sonucTur, 'tür/durum'))}
 </div>
 
 <div class="ikili">
-${kutu('Paywall nereden açıldı', dagilim(o.paywallKaynak, 'kaynak'))}
+${kutu('Paywall nereden açıldı', dagilim(o.paywallKaynak, 'sebep'))}
 ${kutu('Satın alma akışı', dagilim(o.satinalma, 'durum'))}
 </div>
+
+<div class="ikili">
+${kutu('Satın alma düşme sebebi (urun-yok ayrıntısı)', dagilim(o.satinalmaSebep, 'sebep'))}
+${kutu('Paywall açıldığında ürünler yüklü müydü', tablo(['durum', 'adet'],
+    [['Yüklü', o.paywallUrun?.hazir ?? 0], ['YÜKLÜ DEĞİL (satın alınamaz)', o.paywallUrun?.yok ?? 0]]))}
+</div>
+
+${kutu('Sorgu anındaki kalan ücretsiz hak (-1 = premium)', dagilim(o.kalanDagilim, 'kalan'))}
 
 <div class="ikili">
 ${kutu('Plan', dagilim(o.plan, 'plan'))}

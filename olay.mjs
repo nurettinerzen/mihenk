@@ -23,9 +23,12 @@ export const OLAYLAR = new Set([
   'acilis',          // uygulama açıldı            { ilk:bool, dil, tz, surum }
   'ekran',           // ekrandan ayrıldı           { ad, sn }
   'sorgu',           // AI sorgusu gönderildi      { tur, dil }
-  'sonuc',           // sorgu sonuçlandı           { tur, bulundu:bool, ms }
-  'paywall',         // paywall açıldı             { kaynak }
-  'satinalma',       // satın alma akışı           { plan, durum: basladi|tamam|iptal|hata }
+  'sonuc',           // sorgu sonuçlandı           { tur, bulundu:bool, ms, kalan }
+  'paywall',         // paywall açıldı             { kaynak/sebep, kalan, urunHazir }
+  // durum: basladi | tamam | iptal | hata | urun-yok | urun-geldi
+  // `urun-yok` KRİTİK: StoreKit ürünleri yüklenmediği için kullanıcı satın
+  // ALAMADI. Bunu ölçmeden dönüşüm oranı yorumlanamaz (paydası yanlış olur).
+  'satinalma',       // satın alma akışı           { plan, durum, sebep }
   'geri_yukle',      // satın almaları geri yükle  { durum }
   'paylas',          // paylaş                     { tur }
   'ezan_bildirim',   // ezan bildirimi anahtarı    { acik:bool }
@@ -37,8 +40,11 @@ export const OLAYLAR = new Set([
 
 // Panelde sayı olarak toplanacak alanlar dışındaki her şey atılır: istemci ne
 // gönderirse göndersin diske yalnız bilinen anahtarlar iner.
+// ⚠️ Beyaz listede OLMAYAN alan sessizce düşer. `kalan` istemcide 28 Tem'de
+// gönderilmeye başlanmıştı ama buraya eklenmediği için diske hiç inmedi —
+// "kaç kullanıcı 5 ücretsiz sorguyu gerçekten tüketiyor" sorusu ölçülemedi.
 const ALANLAR = ['ilk', 'dil', 'tz', 'surum', 'ad', 'sn', 'tur', 'bulundu', 'ms', 'kaynak',
-  'plan', 'durum', 'acik', 'kari', 'sure', 'yer'];
+  'plan', 'durum', 'acik', 'kari', 'sure', 'yer', 'kalan', 'sebep', 'urunHazir'];
 
 function temizle(v) {
   if (typeof v === 'boolean') return v;
@@ -102,7 +108,9 @@ export function ozet(gun = 30) {
   const ekranSure = {};         // ekran -> { sn, kez }
   const dil = {}, tz = {}, surum = {};
   const sorguTur = {}, sonucTur = {};
-  const paywallKaynak = {}, satinalma = {}, plan = {};
+  const paywallKaynak = {}, satinalma = {}, satinalmaSebep = {}, plan = {};
+  const kalanDagilim = {};      // sorgu sonucundaki kalan hak → kaç kez
+  let paywallUrunHazir = 0, paywallUrunYok = 0;
   const paylas = {}, kariIndir = {}, oynat = {}, hata = {};
   let bildirimAc = 0, bildirimKapa = 0, geriYukle = 0;
 
@@ -121,10 +129,21 @@ export function ozet(gun = 30) {
         break;
       }
       case 'sorgu': say(sorguTur, e.tur); G.sorgu++; break;
-      case 'sonuc': say(sonucTur, `${e.tur}/${e.bulundu ? 'bulundu' : 'boş'}`); break;
-      case 'paywall': say(paywallKaynak, e.kaynak); G.paywall++; break;
+      case 'sonuc':
+        say(sonucTur, `${e.tur}/${e.bulundu ? 'bulundu' : 'boş'}`);
+        // Ücretsiz hakkın nerede tükendiğini gösterir: dağılım 5'e yığılıyorsa
+        // kullanıcılar ürünü hiç denemiyor, 0'a yığılıyorsa paywall gerçekten
+        // tetikleniyor demektir. (premium = -1)
+        if (e.kalan !== undefined) say(kalanDagilim, String(e.kalan));
+        break;
+      case 'paywall':
+        say(paywallKaynak, e.kaynak || e.sebep); G.paywall++;
+        if (e.urunHazir === true) paywallUrunHazir++;
+        else if (e.urunHazir === false) paywallUrunYok++;
+        break;
       case 'satinalma':
         say(satinalma, e.durum); say(plan, e.plan);
+        if (e.sebep) say(satinalmaSebep, e.sebep);
         if (e.durum === 'tamam') G.satis++;
         break;
       case 'geri_yukle': geriYukle++; break;
@@ -143,9 +162,14 @@ export function ozet(gun = 30) {
     acan: acan.size,
     sorguYapan: kume('sorgu').size,
     paywallGoren: kume('paywall').size,
+    // Ürünler yüklenmediği için satın ALAMAYAN cihaz. Bu sayı büyükse dönüşüm
+    // düşüklüğü fiyat/mesaj sorunu değil, ARIZA demektir.
+    urunYok: new Set(ev.filter(e => e.a === 'satinalma' && e.durum === 'urun-yok').map(e => e.c)).size,
     satinAlmaBaslatan: new Set(ev.filter(e => e.a === 'satinalma' && e.durum === 'basladi').map(e => e.c)).size,
     abone: new Set(ev.filter(e => e.a === 'satinalma' && e.durum === 'tamam').map(e => e.c)).size,
   };
+  // Asıl hedef oran: paywall gören → abone olan.
+  huni.oranPaywallAbone = huni.paywallGoren ? Math.round(huni.abone / huni.paywallGoren * 1000) / 10 : null;
 
   // Elde tutma: ilk günü D olan cihazlardan kaçı D+1 / D+7'de geri geldi.
   const eldeTutma = (n) => {
@@ -174,7 +198,8 @@ export function ozet(gun = 30) {
     eldeTutma: { d1: eldeTutma(1), d7: eldeTutma(7) },
     ekran: Object.fromEntries(Object.entries(ekranSure).map(([k, v]) =>
       [k, { kez: v.kez, ortSn: Math.round(v.sn / v.kez * 10) / 10, toplamDk: Math.round(v.sn / 60) }])),
-    dil, tz, surum, sorguTur, sonucTur, paywallKaynak, satinalma, plan,
+    dil, tz, surum, sorguTur, sonucTur, paywallKaynak, satinalma, satinalmaSebep, plan,
+    kalanDagilim, paywallUrun: { hazir: paywallUrunHazir, yok: paywallUrunYok },
     paylas, kariIndir, oynat, hata, geriYukle,
     bildirim: { acan: bildirimAc, kapatan: bildirimKapa },
     disk: diskDurumu(),
