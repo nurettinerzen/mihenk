@@ -1,5 +1,8 @@
 {
   "appId": "com.nurettinerzen.mihenk",
   "appName": "Mihenk",
-  "webDir": "www"
+  "webDir": "www",
+  "android": {
+    "adjustMarginsForEdgeToEdge": "auto"
+  }
 }
