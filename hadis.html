@@ -534,9 +534,19 @@
 
 <script>
 const BACKEND = 'https://mihenk-api.onrender.com'; // canlı backend
-const API = (location.hostname === 'localhost' && location.protocol.startsWith('http')) ? 'http://localhost:8788' // yerel geliştirme
-          : location.protocol.startsWith('http') ? location.origin   // web: aynı origin
-          : BACKEND;                                                  // iOS/Capacitor (capacitor:// / file:) → uzak backend
+// DİKKAT — burada URL koklamak Android'i tamamen kırmıştı:
+// Capacitor'da iOS'un origin'i capacitor://localhost, ANDROID'inki https://localhost.
+// Eski koşul (hostname==='localhost' && protocol.startsWith('http')) Android'de
+// TUTUYORDU ('https'.startsWith('http') === true) ve API'yi http://localhost:8788'e
+// çeviriyordu. Telefonda öyle bir sunucu yok → Bugün, hadis doğrulama, konu
+// araması, ölçüm; sunucuya giden HER ŞEY sessizce ölüyordu. iOS'ta protokol
+// 'capacitor:' olduğu için fark edilmedi.
+// Artık platformu tahmin etmiyoruz, Capacitor'a soruyoruz.
+const YERLI_PLATFORM = (() => { try { return !!window.Capacitor?.isNativePlatform?.(); } catch (e) { return false; } })();
+const API = YERLI_PLATFORM ? BACKEND                                  // iOS + Android → uzak backend
+          : (location.hostname === 'localhost' && location.protocol === 'http:') ? 'http://localhost:8788'  // yerel geliştirme (düz http)
+          : location.protocol.startsWith('http') ? location.origin    // web: aynı origin
+          : BACKEND;
 const APP_KEY = "mihenk_dd4e1cc82891921d3fa559e8";
 // Ölçümde sürüm ayrımı: hangi hatanın/davranışın hangi sürümden geldiğini görmek
 // için. Ayarlardaki etiketten okunur, tek yerde güncellensin.
