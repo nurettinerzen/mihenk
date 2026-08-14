@@ -1574,12 +1574,33 @@ function gununOnbellektenCiz(){
   if(o.gun!==bugunAnahtar()) gununBayatNotu();
   return true;
 }
+// /api/gunun'u en fazla üç kez dener: 0,9 sn ve 2,5 sn bekleyerek. Yalnız ağ
+// hatası ve sunucu (5xx) hatalarında; 4xx'te ve 429'da anında pes eder.
+async function gununIste(){
+  const bekle = (ms)=>new Promise(r=>setTimeout(r,ms));
+  const gecikme = [0, 900, 2500];
+  let son = null;
+  for(let i=0;i<gecikme.length;i++){
+    if(gecikme[i]) await bekle(gecikme[i]);
+    try{
+      const r = await fetch(API+'/api/gunun',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({dil})});
+      if(r.ok || r.status===429 || (r.status>=400 && r.status<500)) return r;
+      son = r;                                  // 5xx → tekrar dene
+    }catch(e){ son = null; }                    // ağ hatası → tekrar dene
+  }
+  return son || { ok:false, status:0 };
+}
+
 async function gununYukle(){
   const onbellekVar = gununOnbellektenCiz();   // ÖNCE çiz, sonra sunucuya git
   uyanmaBaslat();
   try{
-    const r=await fetch(API+'/api/gunun',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({dil})});
-    // r.ok kontrol edilmiyordu: 429 gövdesi "veri" sanılıp ekran sessizce boş kalıyordu.
+    // Tek bir geçici kesinti (deploy penceresi, ağ dalgalanması) ilk açılışta
+    // doğrudan hata kartına dönüyordu: önbellek henüz boş olduğu için gösterecek
+    // bir şey yok. Yeni kullanıcının gördüğü ilk ekran bu — iki kısa yeniden
+    // deneme, o ekranı kurtarmaya değer.
+    // 429'da DENEMEYİZ: hız sınırına takılmışken tekrar vurmak durumu kötüleştirir.
+    const r = await gununIste();
     if(!r.ok){ const e=new Error('gunun'); e.yogun = r.status===429; throw e; }
     gununVeri=await r.json(); gununCiz();
     OB.yaz('gunun',{dil, gun:bugunAnahtar(), veri:gununVeri});
