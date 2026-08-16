@@ -133,7 +133,12 @@ function lexPuan(dil, qw, kati = false) {
   const arMi = dil === 'ar';
   const N = depo.nAyet;
   const idf = new Map();
-  const esles = (k, v) => arMi ? k.includes(v) : k.startsWith(v);
+  // Endonezce'de ek kelimenin BAŞINA gelir (tawakal→bertawakal, sedekah→bersedekah,
+  // adil→keadilan): önek eşleşmesi bu dilde sorguyu tam ters yönden kaçırıyor ve
+  // meâlde apaçık geçen konu "alakasız" dönüyordu. 4+ harfte içerme ara — kısa
+  // kelimede içerme gürültü yapıyor.
+  const icMi = dil === 'id';
+  const esles = (k, v) => (arMi || (icMi && v.length >= 4)) ? k.includes(v) : k.startsWith(v);
   for (const w of qw) {
     let n = 0; const vs = arMi ? arVaryant(w) : kokVaryant(w, kati);
     for (const [k, c] of df) if (vs.some(v => esles(k, v))) n += c;
@@ -495,10 +500,16 @@ async function konu(sorgu, dil = 'tr') {
   // harekeli metinde (الصَّبْرُ) hiçbir zaman eşleşmiyordu → ar konu araması ölüydü.
   const norm = dil === 'ar' ? arNorm : trNorm;
   const qwK = [...new Set(norm(aramaK).split(' '))].filter(w => w.length > 2);
-  if (qwK.length) {
+  // Kapı, PUANLAYICIYLA aynı varyantları görmeli. Arapça'da harf-i tarifli kelime
+  // korpusta geçmez, kökü geçer (الزواج yok — زواج var). Kapı ham kelimeye baktığı
+  // için NORMAL yazılmış her Arapça isim "alakasız" dönüyordu; oysa kapıyı geçse
+  // lexHadis arVaryant ile onu zaten buluyordu. Kendi önerdiğimiz iki Arapça çip
+  // (الزواج, الوالدان) bu yüzden boş dönüyordu.
+  const qwKapi = dil === 'ar' ? [...new Set(qwK.flatMap(arVaryant))] : qwK;
+  if (qwKapi.length) {
     // Kapı SQL'de koşar (LIKE '%kelime%' + LIMIT 1): substring semantiği eski
     // norms[i].includes(w) davranışıyla birebir, ama C tarafında erken çıkışlı.
-    if (!depo.hadisKapiVar(dil, qwK)) return { konu: sorgu, sonuclar: [], alakasiz: true };
+    if (!depo.hadisKapiVar(dil, qwKapi)) return { konu: sorgu, sonuclar: [], alakasiz: true };
   }
   // Semantik + lexical harman (Kur'an tarafındaki ile aynı mantık): saf semantik
   // "içki" sorgusunda alakasız hadisleri öne çıkarıyordu.
