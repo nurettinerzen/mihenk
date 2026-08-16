@@ -453,6 +453,41 @@ async function dogrula(metin, dil = 'tr') {
 // geçebilecek eş anlamlılara açar. SADECE arama terimi — dinî içerik/hüküm üretmez.
 // Sorgu genişletme (sadece TR lexical hadis konu araması için): kavram terimini
 // sade Türkçe çeviride geçebilecek eş anlamlılara açar. SADECE arama terimi.
+// --- Sorgu dinî bir konu mu? ---
+// Alakasızlık kapısı OR çalışıyor ve puan eşiği de tek başına yetmiyor: "computer
+// game" sorgusunda "game" hadiste GERÇEKTEN geçiyor (av hayvanı), o yüzden hem
+// kapıyı hem tabanı aşıyor. Ayırt edici soru puan değil, sorgunun kendisi:
+// bu, kaynaklarda ele alınan bir konu mu?
+//
+// Bu sınıflandırıcı DİNÎ İÇERİK ÜRETMEZ — yalnızca "arama yapılsın mı" kararını
+// verir. Gösterilen hadis, ayet, derece ve kaynak her zaman veriden gelir.
+//
+// Üç emniyet: (1) yalnız puan bandın ALTINDAysa sorulur, net alakalı sorgu
+// gecikme görmez; (2) hata/anahtar yoksa CEVAP EVET sayılır, yani ürün asla
+// sınıflandırıcıya bağlı kalmaz; (3) istem "emin değilsen KONU de" diyor —
+// yanlış eleme, yanlış gösterimden daha pahalı.
+const ACIK_ESIK = 0.45;                  // bu puanın üstü zaten net alakalı
+const konuMuOnbellek = new Map();        // `dil|sorgu` → bool
+const KONU_ONBELLEK_SINIR = 3000;
+async function konuMu(sorgu, dil) {
+  if (!anthropic) return true;
+  const k = `${dil}|${String(sorgu || '').toLowerCase().trim().slice(0, 80)}`;
+  if (konuMuOnbellek.has(k)) return konuMuOnbellek.get(k);
+  let sonuc = true;
+  try {
+    const r = await anthropic.messages.create({
+      model: MODEL, max_tokens: 5,
+      system: 'Bir İslamî kaynak uygulamasında kullanıcı konu araması yapıyor. Tek görevin şunu ayırmak: bu sorgu Kur\'an ve hadislerde ele alınan bir konu mu (inanç, ibadet, ahlak, aile, akrabalık, komşuluk, duygular, ticaret ve geçim, hukuk, sağlık, hayat ve ölüm, insan ilişkileri…), yoksa kaynaklarda karşılığı olmayan modern bir nesne, marka, teknoloji ürünü ya da spor müsabakası mı (yazılım, bilgisayar oyunu, futbol maçı, araba tamiri…)? Gündelik hayata dair konular DİNÎ KONUDUR. Bir konunun modern bir kelimeyle ifade edilmesi onu dışarıda bırakmaz: "spor" → yarışma, güç, bedenin hakkı; "misafir" → misafirperverlik; "kedi" → hayvana merhamet; "iş görüşmesi" → dürüstlük ve kazanç. DEGIL yalnızca somut bir ürün, marka, cihaz, yazılım ya da belirli bir müsabaka/fiyat sorgusu içindir. EMİN DEĞİLSEN "KONU" de. Sorgu hangi dilde olursa olsun tek kelimeyle cevap ver: KONU veya DEGIL.',
+      messages: [{ role: 'user', content: String(sorgu || '').slice(0, 120) }],
+    });
+    const t = (r.content.find(c => c.type === 'text')?.text || '').trim().toUpperCase();
+    if (t.startsWith('DEGIL') || t.startsWith('DE\u011eIL')) sonuc = false;
+  } catch { sonuc = true; }              // sınıflandırıcı düşerse ürün eski gibi çalışır
+  if (konuMuOnbellek.size >= KONU_ONBELLEK_SINIR) konuMuOnbellek.clear();
+  konuMuOnbellek.set(k, sonuc);
+  return sonuc;
+}
+
 async function genislet(konu, dil) {
   if (!anthropic || dil !== 'tr') return konu; // genişletme sadece TR lexical fallback için
   try {
@@ -551,6 +586,9 @@ async function konu(sorgu, dil = 'tr') {
       if (gor.has(imza)) continue;
       gor.add(imza); sec.push(i);
     }
+    // Puan bandın altındaysa: sorgu gerçekten dinî bir konu mu?
+    if (sec.length && (puan[0]?.[1] ?? 0) < ACIK_ESIK && !(await konuMu(sorgu, dil)))
+      return { konu: sorgu, sonuclar: [], alakasiz: true };
     return { konu: sorgu, sonuclar: sec.map(i => derecele(kayit.get(i), dil)) };
   }
   // Fallback: lexical + sorgu genişletme
@@ -725,6 +763,10 @@ async function kuranKonu(sorgu, dil = 'tr') {
     puan[i] = [i, s];
   }
   puan.sort((a, b) => b[1] - a[1]);
+  // Kur'an yolunda puan eşiği kullanılamıyor (gerçek konular çöple aynı bantta),
+  // ayırt etmeyi tamamen sınıflandırıcı yapıyor.
+  if ((puan[0]?.[1] ?? 0) > 0 && puan[0][1] < ACIK_ESIK && !(await konuMu(sorgu, dil)))
+    return { konu: sorgu, sonuclar: [], alakasiz: true };
   return {
     konu: sorgu,
     sonuclar: (() => {
