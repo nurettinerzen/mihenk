@@ -1103,9 +1103,15 @@ const sunucu = http.createServer(async (req, res) => {
         out = await konu(k, dil);
         if (!(out.sonuclar || []).length) bosKaydet('konu', dil, k);
       }
-      // AI sorgusu başarılı → hak düş + kalan bilgisini ekle
+      // AI sorgusu başarılı → hak düş + kalan bilgisini ekle.
+      // BOŞ SONUÇ HAK YEMEZ. Konu aramasında hiçbir şey dönmediyse kullanıcı
+      // beş ücretsiz hakkından birini hiçbir şey karşılığında kaybediyordu —
+      // ilk kullanıcı şikâyeti tam olarak buydu ("hakkım gitti, bir şey
+      // getirmedi"). Doğrulamada "bulunamadı" bir cevaptır (aradığı bilgi:
+      // bu metin kaynaklarda yok), o yüzden orada hak düşmeye devam eder.
+      const bosDondu = url.pathname !== '/api/dogrula' && !(out.sonuclar || []).length;
       if (AI_YOLLAR.includes(url.pathname)) {
-        if (!prem) await hakKullan(cihaz);
+        if (!prem && !bosDondu) await hakKullan(cihaz);
         out.kalan = prem ? -1 : await kalanHak(cihaz, prem);
         out.premium = prem;
         out.limit = FREE_LIMIT;

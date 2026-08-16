@@ -571,14 +571,16 @@ const KONULAR = {
   en: ['lying','marriage','trade','neighbors','patience','prayer','parents','anger','humility','charity'],
   fr: ['mensonge','mariage','commerce','voisinage','patience','prière','parents','colère','humilité','aumône'],
   id: ['dusta','pernikahan','perdagangan','tetangga','sabar','salat','orang tua','amarah','kerendahan hati','sedekah'],
-  ar: ['الكذب','الزواج','التجارة','الجوار','الصبر','الصلاة','الوالدان','الغضب','التواضع','الصدقة'],
+  // النكاح / الوالدين: الزواج ve الوالدان korpusta kelime olarak geçmiyor, ikisi de
+  // BOŞ dönüyordu — kendi önerdiğimiz çipe basan Arapça kullanıcı hiçbir şey almıyordu.
+  ar: ['الكذب','النكاح','التجارة','الجوار','الصبر','الصلاة','الوالدين','الغضب','التواضع','الصدقة'],
   ur: ['جھوٹ','نکاح','تجارت','ہمسائیگی','صبر','نماز','والدین','غصہ','عاجزی','صدقہ'],
 };
 const KKONULAR = {
   tr: ['sabır','anne-baba','faiz','tevekkül','adalet','şükür','namaz','infak','tövbe','ölüm'],
   en: ['patience','parents','interest','trust in God','justice','gratitude','prayer','giving','repentance','death'],
   fr: ['patience','parents','usure','confiance en Dieu','justice','gratitude','prière','aumône','repentir','mort'],
-  id: ['sabar','orang tua','riba','tawakal','keadilan','syukur','salat','sedekah','tobat','kematian'],
+  id: ['sabar','orang tua','riba','bertawakal','keadilan','syukur','salat','sedekah','tobat','kematian'],   // 'tawakal' meâlde geçmiyor, boş dönüyordu
   ar: ['الصبر','الوالدان','الربا','التوكل','العدل','الشكر','الصلاة','الإنفاق','التوبة','الموت'],
   ur: ['صبر','والدین','سود','توکل','عدل','شکر','نماز','صدقہ','توبہ','موت'],
 };
@@ -608,7 +610,7 @@ const L = {
     nf_title:'Bu söz kanonik kaynaklarda geçmiyor',
     nf_body:'Girdiğin metin <b>Kütüb-i Sitte\'de</b> (Buhârî, Müslim, Tirmizî, Ebû Dâvûd, Nesâî, İbn Mâce) bu haliyle yer almıyor — bu kaynaklarda sağlam bir dayanağı görünmüyor. <span style="opacity:.75">(Başka bir muteber kaynakta farklı lafızla geçme ihtimali ayrıca araştırılmalı; bu yüzden "kesinlikle uydurma" değil, "sağlam kaynağı gösterilemedi" diyoruz.)</span>',
     similar:'Benzer / ilgili hadisler', meal:'Meâl: Diyanet İşleri',
-    konu_bos:'Bu konuda sahih hadis bulunamadı. Farklı bir kelime dene.', kuran_bos:'Bu konuda ayet bulunamadı. Farklı bir kelime dene.',
+    bos_hak:'Bir şey getiremediğimiz için ücretsiz hakkın harcanmadı.', konu_bos:'Bu konuda sahih hadis bulunamadı. Farklı bir kelime dene.', kuran_bos:'Bu konuda ayet bulunamadı. Farklı bir kelime dene.',
     konu_bul:(n)=>`${n} sahih/hasen hadis`, kuran_bul:(n)=>`${n} ayet`,
     nav_ezan:'Ezan', ezan_intro:'Namaz vakitleri ve kıble için konumuna ihtiyacım var.', ezan_btn:'Konumumu kullan',
     ezan_sonraki:'Sonraki vakit', ezan_kaldi:'kaldı', ezan_konum_hata:'Konum alınamadı. Tarayıcı izni gerekli.',
@@ -651,7 +653,7 @@ const L = {
     nf_title:'This saying is not found in the canonical sources',
     nf_body:'Your text does not appear in this form in the <b>Six Books</b> (Bukhari, Muslim, Tirmidhi, Abu Dawud, Nasa\'i, Ibn Majah) — it has no sound basis in these sources. <span style="opacity:.75">(It may exist with different wording in another reputable source, which should be checked separately; hence "no sound source shown" rather than "certainly fabricated".)</span>',
     similar:'Similar / related hadiths', meal:'Translation: Abdel Haleem',
-    konu_bos:'No authentic hadith found for this topic. Try another word.', kuran_bos:'No verse found for this topic. Try another word.',
+    bos_hak:'Nothing was found, so this did not use one of your free searches.', konu_bos:'No authentic hadith found for this topic. Try another word.', kuran_bos:'No verse found for this topic. Try another word.',
     konu_bul:(n)=>`${n} authentic hadiths`, kuran_bul:(n)=>`${n} verses`,
     nav_ezan:'Prayer', ezan_intro:'I need your location for prayer times and qibla.', ezan_btn:'Use my location',
     ezan_sonraki:'Next prayer', ezan_kaldi:'left', ezan_konum_hata:'Could not get location. Browser permission needed.',
@@ -694,7 +696,7 @@ const L = {
     nf_title:'Cette parole ne figure pas dans les sources canoniques',
     nf_body:'Votre texte n\'apparaît pas sous cette forme dans les <b>Six Livres</b> (Bukhari, Muslim, Tirmidhi, Abu Dawud, Nasa\'i, Ibn Majah) — il n\'a aucun fondement solide dans ces sources. <span style="opacity:.75">(Il peut exister sous une autre formulation dans une source fiable, à vérifier séparément ; d\'où « aucune source solide montrée » plutôt que « certainement forgé ».)</span>',
     similar:'Hadiths similaires / liés', meal:'Traduction : Hamidullah',
-    konu_bos:'Aucun hadith authentique trouvé pour ce thème. Essayez un autre mot.', kuran_bos:'Aucun verset trouvé. Essayez un autre mot.',
+    bos_hak:'Rien n\'a été trouvé : cette recherche gratuite n\'a pas été décomptée.', konu_bos:'Aucun hadith authentique trouvé pour ce thème. Essayez un autre mot.', kuran_bos:'Aucun verset trouvé. Essayez un autre mot.',
     konu_bul:(n)=>`${n} hadiths authentiques`, kuran_bul:(n)=>`${n} versets`,
     nav_ezan:'Prière', ezan_intro:'J\'ai besoin de votre position pour les horaires de prière et la qibla.', ezan_btn:'Utiliser ma position',
     ezan_sonraki:'Prochaine prière', ezan_kaldi:'restant', ezan_konum_hata:'Position indisponible. Autorisation requise.',
@@ -737,7 +739,7 @@ const L = {
     nf_title:'Perkataan ini tidak ditemukan dalam sumber kanonik',
     nf_body:'Teks Anda tidak muncul dalam bentuk ini di <b>Kutubus Sittah</b> (Bukhari, Muslim, Tirmidzi, Abu Dawud, Nasa\'i, Ibnu Majah) — tidak ada dasar yang kuat dalam sumber-sumber ini. <span style="opacity:.75">(Mungkin ada dengan redaksi berbeda di sumber tepercaya lain, yang perlu diperiksa terpisah; karena itu "tidak ada sumber kuat" bukan "pasti palsu".)</span>',
     similar:'Hadis serupa / terkait', meal:'Terjemahan: Kemenag RI',
-    konu_bos:'Tidak ada hadis sahih untuk topik ini. Coba kata lain.', kuran_bos:'Tidak ada ayat ditemukan. Coba kata lain.',
+    bos_hak:'Karena tidak ada hasil, kuota pencarian gratismu tidak berkurang.', konu_bos:'Tidak ada hadis sahih untuk topik ini. Coba kata lain.', kuran_bos:'Tidak ada ayat ditemukan. Coba kata lain.',
     konu_bul:(n)=>`${n} hadis sahih/hasan`, kuran_bul:(n)=>`${n} ayat`,
     nav_ezan:'Salat', ezan_intro:'Saya butuh lokasi Anda untuk waktu salat dan kiblat.', ezan_btn:'Gunakan lokasi saya',
     ezan_sonraki:'Salat berikutnya', ezan_kaldi:'lagi', ezan_konum_hata:'Lokasi tidak tersedia. Izin diperlukan.',
@@ -780,7 +782,7 @@ const L = {
     nf_title:'هذا القول غير موجود في المصادر المعتمدة',
     nf_body:'نصّك لا يرد بهذه الصيغة في <b>الكتب الستة</b> (البخاري، مسلم، الترمذي، أبو داود، النسائي، ابن ماجه) — ولا أصل ثابت له فيها. <span style="opacity:.75">(قد يرد بلفظ آخر في مصدر معتبر آخر ويُتحقّق منه على حدة؛ لذا نقول «لم يُظهَر له مصدر ثابت» لا «موضوع قطعًا».)</span>',
     similar:'أحاديث مشابهة / ذات صلة', meal:'المصحف: رواية حفص',
-    konu_bos:'لم يُعثر على حديث صحيح لهذا الموضوع. جرّب كلمة أخرى.', kuran_bos:'لم يُعثر على آية. جرّب كلمة أخرى.',
+    bos_hak:'لم نجد شيئًا، لذلك لم يُخصم من بحثك المجاني.', konu_bos:'لم يُعثر على حديث صحيح لهذا الموضوع. جرّب كلمة أخرى.', kuran_bos:'لم يُعثر على آية. جرّب كلمة أخرى.',
     konu_bul:(n)=>`${n} حديثًا صحيحًا/حسنًا`, kuran_bul:(n)=>`${n} آية`,
     nav_ezan:'الصلاة', ezan_intro:'أحتاج موقعك لأوقات الصلاة والقبلة.', ezan_btn:'استخدم موقعي',
     ezan_sonraki:'الصلاة التالية', ezan_kaldi:'متبقٍّ', ezan_konum_hata:'تعذّر تحديد الموقع. يلزم الإذن.',
@@ -823,7 +825,7 @@ const L = {
     nf_title:'یہ قول مستند مآخذ میں موجود نہیں',
     nf_body:'آپ کا متن اس شکل میں <b>کتبِ ستّہ</b> (بخاری، مسلم، ترمذی، ابو داؤد، نسائی، ابن ماجہ) میں نہیں ملتا — ان مآخذ میں اس کی کوئی مضبوط بنیاد نہیں۔ <span style="opacity:.75">(ممکن ہے کسی اور معتبر ماخذ میں مختلف الفاظ سے ہو، جس کی الگ تصدیق ضروری ہے؛ اسی لیے "مضبوط ماخذ نہیں ملا" کہتے ہیں، "یقیناً من گھڑت" نہیں۔)</span>',
     similar:'ملتی جلتی / متعلقہ احادیث', meal:'ترجمہ: احمد علی',
-    konu_bos:'اس موضوع پر کوئی صحیح حدیث نہیں ملی۔ کوئی اور لفظ آزمائیں۔', kuran_bos:'کوئی آیت نہیں ملی۔ کوئی اور لفظ آزمائیں۔',
+    bos_hak:'کچھ نہیں ملا، اس لیے آپ کی مفت تلاش کم نہیں ہوئی۔', konu_bos:'اس موضوع پر کوئی صحیح حدیث نہیں ملی۔ کوئی اور لفظ آزمائیں۔', kuran_bos:'کوئی آیت نہیں ملی۔ کوئی اور لفظ آزمائیں۔',
     konu_bul:(n)=>`${n} صحیح/حسن احادیث`, kuran_bul:(n)=>`${n} آیات`,
     nav_ezan:'نماز', ezan_intro:'نماز کے اوقات اور قبلہ کے لیے مجھے آپ کا محلِ وقوع درکار ہے۔', ezan_btn:'میرا محلِ وقوع استعمال کریں',
     ezan_sonraki:'اگلی نماز', ezan_kaldi:'باقی', ezan_konum_hata:'محلِ وقوع دستیاب نہیں۔ اجازت درکار ہے۔',
@@ -1022,7 +1024,7 @@ async function calistirKonu(){
     const j=await istek('/api/konu',{konu});
     olay('sonuc',{tur:'konu',bulundu:!!(j.sonuclar&&j.sonuclar.length),ms:Date.now()-_t0,kalan:j.kalan});
     if(!j.sonuclar.length){
-      el.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.konu_bos}</div></div>`;
+      el.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.konu_bos}</div>${bosHakNotu()}</div>`;
     }else{
       el.innerHTML=`<div class="benzer-baslik">“${esc(konu)}” — ${T.konu_bul(j.sonuclar.length)}</div>`+
         j.sonuclar.map(h=>`<div class="mini">${hadisKarti(h,false)}</div>`).join('');
@@ -1030,6 +1032,13 @@ async function calistirKonu(){
     el.className='sonuc gorunur';
   }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el,e); }
   document.getElementById('btnKonu').disabled=false;
+}
+
+// Boş sonuçta "hakkın gitmedi" notu. Sunucu artık boş sorguda hak düşmüyor;
+// kullanıcının bunu GÖRMESİ gerek, yoksa sayacın yerinde durduğunu fark etmeden
+// "beleşe hakkım gitti" diye çıkıyor (ilk kullanıcı şikâyeti buydu).
+function bosHakNotu(){
+  return (premium || !T.bos_hak) ? '' : `<div class="kaynak" style="margin-top:8px">${T.bos_hak}</div>`;
 }
 
 // --- Kur'an ---
@@ -1043,7 +1052,7 @@ async function calistirKuran(){
     const j=await istek('/api/kuran-konu',{konu});
     olay('sonuc',{tur:'kuran',bulundu:!!(j.sonuclar&&j.sonuclar.length),ms:Date.now()-_t0,kalan:j.kalan});
     if(!j.sonuclar.length){
-      el.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.kuran_bos}</div></div>`;
+      el.innerHTML=`<div class="kart uyari-kart"><div class="anlam">${T.kuran_bos}</div>${bosHakNotu()}</div>`;
     }else{
       el.innerHTML=`<div class="benzer-baslik">“${esc(konu)}” — ${T.kuran_bul(j.sonuclar.length)}</div>`+
         j.sonuclar.map(a=>`<div class="mini">${ayetKarti(a)}</div>`).join('');
