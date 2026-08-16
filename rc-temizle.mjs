@@ -126,15 +126,26 @@ const silUrl = (id) => v2Mi
   ? `https://api.revenuecat.com/v2/projects/${PROJE}/customers/${encodeURIComponent(id)}`
   : `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(id)}`;
 
-let silinen = 0, yok = 0, hata = 0, islenen = 0;
-for (const id of hedef) {
-  try {
-    const r = await iste(silUrl(id), { method: 'DELETE' });
-    if (r.ok) silinen++;
-    else if (r.status === 404) yok++;
-    else { hata++; if (hata <= 3) console.error(`\n${id} → ${r.status} ${await r.text()}`); }
-  } catch (e) { hata++; if (hata <= 3) console.error('\n' + e.message); }
-  if (++islenen % 25 === 0 || islenen === hedef.length)
-    process.stdout.write(`\rilerleme: ${islenen}/${hedef.length} · silinen: ${silinen} · zaten yok: ${yok}${hata ? ` · hata: ${hata}` : ''}`);
+// Tek tek gitmek 4800 istekte ~20 dakika sürüyordu. 8 paralel yeterli: RC hız
+// sınırına takılırsa iste() zaten bekleyip tekrar deniyor.
+// İlerleme \r ile DEĞİL ayrı satırlarla yazılıyor — tek satır güncellemesi
+// kayıt/kopyalama sırasında kayboluyor ve iş durmuş gibi görünüyor.
+const ESZAMANLI = 8;
+let silinen = 0, yok = 0, hata = 0, islenen = 0, sonraki = 0;
+
+async function isci() {
+  while (sonraki < hedef.length) {
+    const id = hedef[sonraki++];
+    try {
+      const r = await iste(silUrl(id), { method: 'DELETE' });
+      if (r.ok) silinen++;
+      else if (r.status === 404) yok++;
+      else { hata++; if (hata <= 3) console.error(`${id} → ${r.status} ${await r.text()}`); }
+    } catch (e) { hata++; if (hata <= 3) console.error(e.message); }
+    if (++islenen % 200 === 0 || islenen === hedef.length)
+      console.log(`  ${islenen}/${hedef.length} · silinen: ${silinen} · zaten yok: ${yok}${hata ? ` · hata: ${hata}` : ''}`);
+  }
 }
+console.log(`Siliniyor (${ESZAMANLI} paralel)…`);
+await Promise.all(Array.from({ length: ESZAMANLI }, isci));
 console.log(`\nBitti. Silinen: ${silinen} · zaten yok: ${yok} · hata: ${hata}`);
