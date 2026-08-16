@@ -35,8 +35,15 @@ const RC_API = process.env.RC_API || 'https://api.revenuecat.com/v1';
 // DÖNÜŞ: true = abone, false = KESİN abone değil, null = DOĞRULANAMADI.
 // null ile false'u ayırmak şart: ağ/RC kesintisinde "false" dönmek ödeyen
 // kullanıcıyı anında paywall'a düşürürdü.
+// RevenueCat'in GET /subscribers/{id} ucu, olmayan kimliği SESSİZCE OLUŞTURUR.
+// Yani her sorgu RC'de bir "müşteri" doğuruyor. 16 Ağu 2026'da arama düzeltmelerini
+// canlı API'ye karşı ölçerken ~950 ayrı test kimliği kullanıldı ve RC panelinde
+// 837 sahte müşteri belirdi — bir günde patlayan kullanıcı grafiği tamamen buydu.
+// Ölçüm kimlikleri RC'ye HİÇ sorulmaz (analitikteki elemeyle aynı desen).
+const TEST_KIMLIK = /^(test-|ekran-goruntusu-|teshis-)/;
+
 async function rcPremiumMi(cihaz) {
-  if (!RC_SECRET) return null;
+  if (!RC_SECRET || TEST_KIMLIK.test(String(cihaz || ''))) return null;
   try {
     const r = await fetch(`${RC_API}/subscribers/${encodeURIComponent(cihaz)}`,
       { headers: { Authorization: `Bearer ${RC_SECRET}` }, signal: AbortSignal.timeout(8000) });
