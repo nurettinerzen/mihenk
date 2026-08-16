@@ -483,6 +483,16 @@ const KAVRAM_HADIS = {
   hased: 'haset, kıskançlık, çekememek',                                     // "haset" 9 kayıt
   haset: 'haset, kıskançlık, çekememek',
 };
+// Konu sonucu için asgari alaka. Alakasızlık kapısı OR çalışıyor: çok kelimeli
+// bir sorguda TEK bir kelimenin korpusta geçmesi tüm ifadeyi içeri alıyor
+// ("futbol maçı" → "maçı" râvi adı Mâcişûn'a takılıyor) ve arama, konuyla ilgisi
+// olmayan bir sorguya sıralamanın en iyisini döndürüyor.
+// Taban 0,20: ölçüldü — 60 gerçek konu sorgusunun en düşük tepe puanı 0,26
+// (ar الوالدان), 17 çöp sorgunun 8'i tamamen eleniyor, kalanların listesi kısalıyor.
+// DAHA YUKARI ÇEKİLMEZ: gerçek Arapça/Urduca konular çöple aynı bantta duruyor,
+// eşiği 0,26'nın üstüne almak onları sessizce boşa düşürür.
+const ALAKA_TABANI = 0.20;
+
 async function konu(sorgu, dil = 'tr') {
   // Kur'an'daki gibi: metinlerde karşılığı olmayan terimi aç ("alkol" hadis
   // metinlerinde hiç geçmez, "içki/şarap" geçer).
@@ -535,7 +545,7 @@ async function konu(sorgu, dil = 'tr') {
     // Kayıtlar teker teker depodan çekilir (yalnız aday olanlar — tipik 10-40 kayıt).
     const gor = new Set(), sec = [], kayit = new Map();
     for (const [i, sk] of puan) {
-      if (sec.length >= 10 || sk <= 0) break;
+      if (sec.length >= 10 || sk < ALAKA_TABANI) break;
       const h = kayit.get(i) || depo.hadisAl(i + 1); kayit.set(i, h);
       const imza = trNorm(hadisMetni(metinAl(h, dil))).slice(0, 90);
       if (gor.has(imza)) continue;
