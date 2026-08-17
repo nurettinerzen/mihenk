@@ -298,6 +298,40 @@
 </style>
 </head>
 <body>
+<script>
+/* ===== Paylaşılan Puanlama Kapısı — B→A deseni (parametreli) ===== */
+(function(){
+  var LS=window.localStorage, C=null;
+  function k(p){return C.onek+'_rate_'+p;}
+  function surum(){return C.surum||'1';}
+  function otur(){return +(LS.getItem(k('oturum'))||0);}
+  function soruldu(){return LS.getItem(k('soruldu'))===surum();}
+  function kur(cfg){ C=Object.assign({onek:'app',ad:'Uygulama',soru:'',surum:'1',minOturum:3,iosId:'',paket:'',mail:'',kart:'#1a1410',yazi:'#f2e6d0',renk:'#c8912f',kenar:'#4a3826'},cfg); LS.setItem(k('oturum'),String(otur()+1)); }
+  function belkiSor(){ if(!C||soruldu()||otur()<C.minOturum) return; LS.setItem(k('soruldu'),surum()); setTimeout(kapiGoster,700); }
+  function kapiGoster(){
+    if(document.getElementById('ratingKapi')) return;
+    var o=document.createElement('div'); o.id='ratingKapi';
+    o.setAttribute('style','position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:24px');
+    o.innerHTML='<div role="dialog" aria-modal="true" style="max-width:340px;width:100%;background:'+C.kart+';color:'+C.yazi+';border:1px solid '+C.kenar+';border-radius:16px;padding:22px 20px;text-align:center;font-family:inherit;box-shadow:0 20px 60px rgba(0,0,0,.35)">'
+      +'<div style="font-size:19px;font-weight:700;margin-bottom:6px">'+(C.soru||C.ad+"'yı beğendin mi?")+'</div>'
+      +'<div style="font-size:14px;opacity:.75;margin-bottom:18px">Fikrin bizim için önemli.</div>'
+      +'<div style="display:flex;gap:10px">'
+        +'<button id="rkHayir" style="flex:1;padding:12px;border-radius:10px;border:1px solid '+C.kenar+';background:transparent;color:'+C.yazi+';font:inherit;font-size:15px;cursor:pointer">Pek değil</button>'
+        +'<button id="rkEvet" style="flex:1;padding:12px;border-radius:10px;border:0;background:'+C.renk+';color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer">Beğendim 👍</button>'
+      +'</div></div>';
+    document.body.appendChild(o);
+    o.addEventListener('click',function(e){ if(e.target===o) kapat(); });
+    document.getElementById('rkEvet').onclick=function(){ kapat(); nativeIstem(); };
+    document.getElementById('rkHayir').onclick=function(){ kapat(); geriBildirim(); };
+  }
+  function kapat(){ var e=document.getElementById('ratingKapi'); if(e) e.remove(); }
+  async function nativeIstem(){ try{ var P=window.Capacitor&&window.Capacitor.Plugins; if(P&&P.InAppReview&&P.InAppReview.requestReview){ await P.InAppReview.requestReview(); return; } }catch(e){} magazaAc(); }
+  function magazaAc(){ var ios=(window.Capacitor&&Capacitor.getPlatform&&Capacitor.getPlatform()==='ios')||/iP(hone|ad|od)/.test(navigator.userAgent); var url=ios&&C.iosId?'https://apps.apple.com/app/id'+C.iosId+'?action=write-review':'https://play.google.com/store/apps/details?id='+C.paket; var B=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Browser; if(B&&B.open) B.open({url:url}); else window.open(url,'_blank'); }
+  function geriBildirim(){ if(!C.mail) return; location.href='mailto:'+C.mail+'?subject='+encodeURIComponent(C.ad+' geri bildirim ('+surum()+')'); }
+  window.RatingKapisi={kur:kur,belkiSor:belkiSor,magazaAc:magazaAc};
+  kur({onek:'mihenk',ad:'Mihenk',soru:"Mihenk'i beğendin mi?",surum:'1.3',iosId:'6793343627',paket:'com.nurettinerzen.mihenk',mail:'nurettinerzen@gmail.com',minOturum:3,kart:'#123028',yazi:'#eaf5f0',renk:'#57c4a3',kenar:'#24463c'});
+})();
+</script>
 <div class="wrap">
   <header>
     <svg class="amblem" viewBox="0 0 48 48" fill="none">
@@ -995,6 +1029,8 @@ async function calistirDogrula(){
         <div class="anlam">${esc(j.farkNotu||'')} ${T.fark_body||''}</div>
       </div>` : '';
       el.innerHTML=fark+`<div class="kart">${hadisKarti(j.hadis,true)}</div>`+benzerBlok(j.benzerler);
+      if(window.RatingKapisi) RatingKapisi.belkiSor();   // hadis bulundu = olumlu an
+
     }else{
       el.innerHTML=`<div class="kart uyari-kart">
         <div class="uyari-baslik">${T.nf_title}</div>
