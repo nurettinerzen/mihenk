@@ -8,7 +8,8 @@
 //
 // Depolama: günlük JSONL dosyası (append-only) — Render diskinde kalıcı. Veritabanı
 // yok çünkü yazma deseni saf ekleme, okuma ise günde birkaç kez panel açılışı.
-import { appendFileSync, readFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
+import { appendFileSync, readFileSync, existsSync, mkdirSync, readdirSync, statSync, unlinkSync, accessSync, constants, statfsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
 const DIZIN = process.env.VERI_DIZIN || (existsSync('/veri') ? '/veri/olay' : './veri/olay');
@@ -16,6 +17,28 @@ try { mkdirSync(DIZIN, { recursive: true }); } catch { /* salt-okunur disk: yazm
 
 const gunAdi = (d = new Date()) => d.toISOString().slice(0, 10);
 const dosyaYolu = (g) => join(DIZIN, `${g}.jsonl`);
+const GUNLUK_MAX_BAYT = Math.max(1, Number(process.env.OLAY_GUNLUK_MAX_MB || 20)) * 1048576;
+const SAKLAMA_GUN = Math.max(7, Number(process.env.OLAY_SAKLAMA_GUN || 90));
+const TEST_CIHAZ = [/^kurulum-testi$/, /^ekran-goruntusu-/, /^test-/];
+const testMi = (c) => TEST_CIHAZ.some((r) => r.test(String(c || '')));
+const cihazOzet = (c) => {
+  const ham = String(c || 'anon').slice(0, 128);
+  // Test kimlikleri panel filtresi için görünür kalır; gerçek UUID tek yönlü
+  // özetlenir. Sunucudaki kota/RevenueCat kimliği analitik dosyasına girmez.
+  return testMi(ham) ? ham : `u_${createHash('sha256').update(ham).digest('hex').slice(0, 24)}`;
+};
+let sonBakim = '';
+function eskiyiTemizle() {
+  const bugun = gunAdi(); if (sonBakim === bugun) return;
+  sonBakim = bugun;
+  const esik = Date.now() - SAKLAMA_GUN * 86400_000;
+  try {
+    for (const f of readdirSync(DIZIN)) {
+      const m = f.match(/^(\d{4}-\d{2}-\d{2})\.jsonl$/); if (!m) continue;
+      if (new Date(`${m[1]}T00:00:00Z`).getTime() < esik) unlinkSync(join(DIZIN, f));
+    }
+  } catch (e) { console.warn('[OLAY] saklama bakımı yapılamadı:', e.message); }
+}
 
 // Uygulamanın gönderebileceği olaylar. Beyaz liste: istemciden gelen serbest metin
 // diske sınırsız yazılmasın (hem disk hem panel gürültüsü).
@@ -55,7 +78,7 @@ function temizle(v) {
 /** Bir cihazın olay yığınını diske yazar. Dönen sayı: kabul edilen olay adedi. */
 export function olayYaz(cihaz, olaylar) {
   if (!Array.isArray(olaylar) || !olaylar.length) return 0;
-  const c = String(cihaz || 'anon').slice(0, 64);
+  const c = cihazOzet(cihaz);
   const satirlar = [];
   // Tek istekte 100'den fazlası kabul edilmiyor: bozuk/kötü niyetli istemci diski
   // doldurmasın. İstemci zaten 20'lik yığınlar gönderiyor.
@@ -66,7 +89,15 @@ export function olayYaz(cihaz, olaylar) {
     satirlar.push(JSON.stringify(kayit));
   }
   if (!satirlar.length) return 0;
-  try { appendFileSync(dosyaYolu(gunAdi()), satirlar.join('\n') + '\n'); }
+  try {
+    eskiyiTemizle();
+    const y = dosyaYolu(gunAdi()), veri = satirlar.join('\n') + '\n';
+    const mevcut = existsSync(y) ? statSync(y).size : 0;
+    if (mevcut + Buffer.byteLength(veri) > GUNLUK_MAX_BAYT) {
+      console.warn('[OLAY] günlük disk kotası doldu; yığın yazılmadı'); return 0;
+    }
+    appendFileSync(y, veri);
+  }
   catch (e) { console.warn('[OLAY] yazılamadı:', e.message); return 0; }
   return satirlar.length;
 }
@@ -91,8 +122,12 @@ export function diskDurumu() {
   try {
     const d = readdirSync(DIZIN);
     const bayt = d.reduce((a, f) => a + statSync(join(DIZIN, f)).size, 0);
-    return { dizin: DIZIN, dosya: d.length, mb: Math.round(bayt / 1048576 * 100) / 100, kalici: DIZIN.startsWith('/veri') };
-  } catch { return { dizin: DIZIN, dosya: 0, mb: 0, kalici: false }; }
+    accessSync(DIZIN, constants.W_OK);
+    const s = statfsSync(DIZIN);
+    return { dizin: DIZIN, dosya: d.length, mb: Math.round(bayt / 1048576 * 100) / 100,
+      bosMB: Math.round(s.bavail * s.bsize / 1048576), yazilabilir: true,
+      kalici: DIZIN.startsWith('/veri'), saklamaGun: SAKLAMA_GUN, gunlukMaxMB: GUNLUK_MAX_BAYT / 1048576 };
+  } catch { return { dizin: DIZIN, dosya: 0, mb: 0, yazilabilir: false, kalici: false, saklamaGun: SAKLAMA_GUN }; }
 }
 
 // --- Toplama ---------------------------------------------------------------
@@ -105,13 +140,6 @@ export function diskDurumu() {
 // SİLMİYORUZ, sadece özetin dışında tutuyoruz: ham JSONL diskte duruyor, gerekirse
 // `testDahil=true` ile geri alınabilir. Silmek, sonradan "acaba neydi" dediğimizde
 // geri dönülemez olurdu.
-const TEST_CIHAZ = [
-  /^kurulum-testi$/,
-  /^ekran-goruntusu-/,   // mağaza görüntüsü üreteci (ekran-goruntusu.mjs)
-  /^test-/,
-];
-const testMi = (c) => TEST_CIHAZ.some((r) => r.test(String(c || '')));
-
 /** Panel ve /olcum için özet. Ham olay döndürmez; yalnız toplamlar. */
 export function ozet(gun = 30, { testDahil = false } = {}) {
   const hepsi = olayOku(gun);

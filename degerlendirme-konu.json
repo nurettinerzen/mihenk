@@ -2,7 +2,7 @@
  "amac": "Konuya göre hadis aramasının SIRALAMA kalitesini ölçmek. Sıralama formülü (hadis-api.mjs, konu()) ölçüm seti olmadan körlemesine ayarlanamaz; bu dosya o ölçümün sabit girdisidir.",
  "nasil": "node degerlendirme-calistir.mjs [port]  → her sorgu için ilk 10 sonucu ve anahtar-kelime isabetini basar, temelCizgi ile karşılaştırır. anahtarIsabet KABA bir vekildir (gerçek alaka insan kararıdır); formülü değiştirdikten sonra ilk3 metinlerini gözle de oku.",
  "olcut": "anahtarIsabetIlk5 (ilk 5 sonuçta konu kelimesi geçen kayıt sayısı) — ana gösterge. Toplam skor: tüm sorguların anahtarIsabetIlk5 toplamı. Bir değişiklik bu toplamı düşürüyorsa geri al.",
- "uyari": "temelCizgi 2026-07-28 tarihli koddan alınmıştır (matn ayıklama + normalize önbellek düzeltmeleri SONRASI). Korpus ya da metin ayıklama değişirse temel çizgi yeniden üretilmelidir. — GÜNCEL SEVİYE (8 Ağu 2026, KAVRAM_HADIS kavram sözlüğü eklendikten sonra): ilk5 137/150, ilk10 271/300. Aynı kodun 8 Ağu ölçümünde temel çizgi 132/150 çıkıyordu (tr-giybet 3→2 kaymıştı). YENİ DEĞİŞİKLİK 137/150 ALTINA DÜŞÜRMEMELİ.",
+ "uyari": "Mihenk 1.5 yayın adayı, 18 Ağustos 2026: kelime-sınırı ölçümü ve 34 sorguluk altı dil setinde ilk5 158/170, ilk10 312/340. Yeni değişiklik bu çizginin altına düşmemeli; sayı yalnız kaba vekildir, ilk üç sonuç ayrıca insan gözüyle okunmalıdır.",
  "sorgular": [
   {
    "id": "tr-komsuluk",
@@ -14,25 +14,26 @@
    ],
    "redOrnek": "Şuf'a (ön alım) hakkı — arsa/satış fıkhı; komşuluk ahlakı değil",
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h22180",
-      "kaynak": "Ebû Dâvûd 3517",
-      "metin": "Evin komşusu, komşunun evine -veya tarlasına- (tarlanın komşusu, komşunun tarlasına) daha müstahaktır"
+      "id": "h6995",
+      "kaynak": "Buhârî 6976",
+      "metin": "Bir kimse bir ev satın alsa ve komşunun aynı evi şuf'a nedeniyle alacağından korksa önce evinyüzde birini satın alır, sonra da kalanını satın alır. Bu durumda o"
      },
      {
-      "id": "h22181",
+      "id": "h22542",
       "kaynak": "Ebû Dâvûd 3518",
       "metin": "Komşu komşu'nun şüf'a sına daha müstehaktır. Yolları bir olduğu zaman komşu gaipse beklenir"
      },
      {
-      "id": "h6937",
-      "kaynak": "Buhârî 6976",
-      "metin": "Bir kimse bir ev satın alsa ve komşunun aynı evi şuf'a nedeniyle alacağından korksa önce evinyüzde birini satın alır, sonra da kalanını satın alır. Bu"
+      "id": "h22541",
+      "kaynak": "Ebû Dâvûd 3517",
+      "metin": "Evin komşusu, komşunun evine -veya tarlasına- (tarlanın komşusu, komşunun tarlasına) daha müstahaktır"
      }
     ]
    }
@@ -50,25 +51,26 @@
    ],
    "redOrnek": "Mushaf yazımı / istinsah rivayetleri",
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
-    "anahtarIsabetIlk5": 0,
-    "anahtarIsabetIlk10": 0,
+    "anahtarIsabetIlk5": 4,
+    "anahtarIsabetIlk10": 8,
     "ilk3": [
      {
-      "id": "h24606",
-      "kaynak": "İbn Mâce 43",
-      "metin": "Abdurrahman b. Amr es-Selemi’nin, İrbad b. Sariye r.a.'den şöyle söylediğini işittim, dediği rivayet edilmiştir; Resulullah s.a.v. buyurdular ki; “Ben"
+      "id": "h33240",
+      "kaynak": "İbn Mâce 3263",
+      "metin": "Ben (bir kere) Nebi (Sallallahu Aleyhi ve Sellem)'e bir koyun (kesip yemesi için) ikram ettim. Resulullah (Sallallahu Aleyhi ve Sellem) dizleri üstünde oturup y"
      },
      {
-      "id": "h8869",
-      "kaynak": "Müslim 1427",
-      "metin": "Âişe, kendisine bir Mushaf yazmamı bana emretti.. Ve: Şu âyete vardığında, bana haber ver; \"Namazlara ve orta namaza devam edin\" Süre-i Bakara, âyet: "
+      "id": "h17038",
+      "kaynak": "Tirmizî 1998",
+      "metin": "Kalbinde hardal tanesi kadar kibir, büyüklenme olan kişi Cennete giremeyecektir. Yine kalbinde bir hububat ağırlığında iman olan kimse de Cehenneme girmeyecekti"
      },
      {
-      "id": "h19074",
-      "kaynak": "Ebû Dâvûd 410",
-      "metin": "Aişe (r.anha) kendisi için bir mushaf yazmamı emretti ve, \"Namazlara ve orta namazına devam edin\"[Bakara 238] ayetine gelince bana haber ver'' dedi. B"
+      "id": "h23919",
+      "kaynak": "Ebû Dâvûd 4895",
+      "metin": "Yüce Allah bana: Mütevazi olunuz da kimse kimseye zulmetmesin ve büyüklük taslamasın! diye vahyetti"
      }
     ]
    }
@@ -82,26 +84,32 @@
     "sabır",
     "sabr"
    ],
+   "redAnahtar": [
+    "sabır denilen acı",
+    "gözlerinden rahatsız",
+    "sabrah"
+   ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h7335",
+      "id": "h7397",
       "kaynak": "Buhârî 7378",
-      "metin": "Hiçbir kimse (kendisi hakkında) duyduğu eza (verici isnad ve iftira) ya Allah'tan çok sabırlı değildir. İnsanlar Allah'a oğul isnad ederler de sonra A"
+      "metin": "Hiçbir kimse (kendisi hakkında) duyduğu eza (verici isnad ve iftira) ya Allah'tan çok sabırlı değildir. İnsanlar Allah'a oğul isnad ederler de sonra Allah yine "
      },
      {
-      "id": "h15799",
-      "kaynak": "Tirmizî 952",
-      "metin": "Nubeyh b. Vehb (r.a.)’den rivâyete göre, Ömer b. Ubeydullah b. Ma'mer ihramlıyken gözlerinden rahatsızlandı ve Ebân b. Osman’a sordu o da: Acı olan gö"
-     },
-     {
-      "id": "h17224",
+      "id": "h17505",
       "kaynak": "Tirmizî 2464",
-      "metin": "Rasûlullah (s.a.v.) zamanında sıkıntılı günler geçirdik, sabrettik. Sonra bolluk günlere kavuştuk fakat tahammül gösteremedik ve dünyaya kapıldık.” Ti"
+      "metin": "Rasûlullah (s.a.v.) zamanında sıkıntılı günler geçirdik, sabrettik. Sonra bolluk günlere kavuştuk fakat tahammül gösteremedik ve dünyaya kapıldık.” Tirmizî rivâ"
+     },
+     {
+      "id": "h4668",
+      "kaynak": "Buhârî 4653",
+      "metin": "Şimdi, Allah yükünüzü hafifletti; sizde zayıflık olduğunu bildi. O halde sizden sabırlı yüz kişi bulunursa, (onlardan) ikiyüz kişiye galip gelir. \"(EnfaI,66) Al"
      }
     ]
    }
@@ -115,25 +123,26 @@
     "namaz"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h29601",
-      "kaynak": "Muvatta 806",
-      "metin": "Hz. Aişe'den: Hicr'de de, Beyt'te de namaz kılarım, fark etmez"
-     },
-     {
-      "id": "h15388",
+      "id": "h15571",
       "kaynak": "Tirmizî 524",
       "metin": "Her kim namazın bir rek’atına yetişirse o namaza yetişmiş olur.”"
      },
      {
-      "id": "h576",
-      "kaynak": "Buhârî 580",
-      "metin": "Her kim namaz'ın bir rek'atına yetişirse, namaz'a yetişmiş demek­tir"
+      "id": "h15283",
+      "kaynak": "Tirmizî 234",
+      "metin": "Enes’in ninesi Müleyke, Rasûlullah (s.a.v.) için hazırladığı yemeğe çağırmıştı. Yemek yedikten sonra sizinle cemaat olarak namaz kılalım dedi. Enes diyor ki: Ço"
+     },
+     {
+      "id": "h444",
+      "kaynak": "Buhârî 444",
+      "metin": "İçinizden biri Mescid'e girdiği zaman oturmadan önce iki rek'at namaz kılsın!."
      }
     ]
    }
@@ -150,25 +159,26 @@
     "valide"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h21553",
+      "id": "h21914",
       "kaynak": "Ebû Dâvûd 2890",
-      "metin": "Ebû Musa el-Eş'arî ile Selman b. Rabia'ya bir adam gelerek onlara kız(ın mirası) ile oğlun kızı ve anne-baba bir kızkardeş(in mirasını) sordu. Onlar d"
+      "metin": "Ebû Musa el-Eş'arî ile Selman b. Rabia'ya bir adam gelerek onlara kız(ın mirası) ile oğlun kızı ve anne-baba bir kızkardeş(in mirasını) sordu. Onlar da (bir kim"
      },
      {
-      "id": "h20908",
-      "kaynak": "Ebû Dâvûd 2244",
-      "metin": "Râfi b. Sinan'dan rivayet olunduğuna göre, Kendisi müslüman olmuş, karısı ise müslüman olmayı kabul etmemiş ve (hanım)ı Nebi (s.a.v.)'e gelip; (Bu) be"
-     },
-     {
-      "id": "h11716",
+      "id": "h11818",
       "kaynak": "Müslim 4313",
-      "metin": "Bize Ebû Bekir b. Ebî Şeybe rivayet etti. (Dediki): Bize Veki' rivayet etti. (Dediki): Bize A'meş, Ma'rûr b. Süveyd'den naklen rivayet etti. Şöyle dem"
+      "metin": "Bize Ebû Bekir b. Ebî Şeybe rivayet etti. (Dediki): Bize Veki' rivayet etti. (Dediki): Bize A'meş, Ma'rûr b. Süveyd'den naklen rivayet etti. Şöyle demiş: Rabeze"
+     },
+     {
+      "id": "h21268",
+      "kaynak": "Ebû Dâvûd 2244",
+      "metin": "Râfi b. Sinan'dan rivayet olunduğuna göre, Kendisi müslüman olmuş, karısı ise müslüman olmayı kabul etmemiş ve (hanım)ı Nebi (s.a.v.)'e gelip; (Bu) benim kızım "
      }
     ]
    }
@@ -182,25 +192,26 @@
     "yalan"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h24602",
+      "id": "h30019",
+      "kaynak": "İbn Mâce 41",
+      "metin": "El-Muğire b. Şu'be r.a.'den; Resulullah (Sallallahu aleyhi ve Sellem)’in şöyle dediği rivayet edilmiştir; “Kim bir hadisin uydurma olduğunu bildiği veya zan ett"
+     },
+     {
+      "id": "h30017",
       "kaynak": "İbn Mâce 39",
       "metin": "Kim yalan olduğunu bilerek veya zan ederek bir hadisi benden rivayet ederse iki yalancıdan birisi de odur.”"
      },
      {
-      "id": "h24601",
+      "id": "h30016",
       "kaynak": "İbn Mâce 38",
-      "metin": "Ali r.a.'den ; Resulullah s.a.v.’in şöyle dediği rivayet edilmiştir; “Her kim, yalan olduğunu sandığı bir hadisi benim hadisim olmak üzere rivayet ede"
-     },
-     {
-      "id": "h24604",
-      "kaynak": "İbn Mâce 41",
-      "metin": "El-Muğire b. Şu'be r.a.'den; Resulullah (Sallallahu aleyhi ve Sellem)’in şöyle dediği rivayet edilmiştir; “Kim bir hadisin uydurma olduğunu bildiği ve"
+      "metin": "Ali r.a.'den ; Resulullah s.a.v.’in şöyle dediği rivayet edilmiştir; “Her kim, yalan olduğunu sandığı bir hadisi benim hadisim olmak üzere rivayet ederse iki ya"
      }
     ]
    }
@@ -216,25 +227,26 @@
     "kız"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h23443",
-      "kaynak": "Ebû Dâvûd 4782",
-      "metin": "Biriniz ayakta iken öfkelenecek olursa hemen otursun, eğer (oturunca öfkesi) gidecek olursa fmes-i î yoktur; fakat) eğer gitmezse o zaman da (yere) ya"
-     },
-     {
-      "id": "h18170",
+      "id": "h18511",
       "kaynak": "Tirmizî 3452",
-      "metin": "Ben bir kelime biliyorum ki bu kimse onu söylerse öfkesi mutlaka geçecektir. “Euzu billahi mineşşeytanirracim (Allah’ın rahmetinden kovulmuş taşlanmış"
+      "metin": "Ben bir kelime biliyorum ki bu kimse onu söylerse öfkesi mutlaka geçecektir. “Euzu billahi mineşşeytanirracim (Allah’ın rahmetinden kovulmuş taşlanmış şeytanın "
      },
      {
-      "id": "h3261",
+      "id": "h23806",
+      "kaynak": "Ebû Dâvûd 4782",
+      "metin": "Biriniz ayakta iken öfkelenecek olursa hemen otursun, eğer (oturunca öfkesi) gidecek olursa fmes-i î yoktur; fakat) eğer gitmezse o zaman da (yere) yatsın"
+     },
+     {
+      "id": "h3293",
       "kaynak": "Buhârî 3282",
-      "metin": "Nebi Sallallahu Aleyhi ve Sellem'in yanında oturuyordum. Bu sırada iki kişi tartışıyor ve birbirlerine bağırıp çağırıyorlardı. Hatta birisinin öfkeden"
+      "metin": "Nebi Sallallahu Aleyhi ve Sellem'in yanında oturuyordum. Bu sırada iki kişi tartışıyor ve birbirlerine bağırıp çağırıyorlardı. Hatta birisinin öfkeden yüzü kıpk"
      }
     ]
    }
@@ -248,25 +260,26 @@
     "sadaka"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h15363",
-      "kaynak": "Tirmizî 499",
-      "metin": "Kim Cuma günü cünüplük yıkanması gibi yıkanarak mescide ilk vakitlerde giderse; deve kurban etmiş sevâbı gibi sevap kazanır, İkinci saatte giderse; in"
-     },
-     {
-      "id": "h1437",
+      "id": "h1450",
       "kaynak": "Buhârî 1443",
-      "metin": "Cimri ile sadaka veren kimsenin durumu üzerlerinde demir zırh bulunan iki kimsenin durumu gibidir.\" Ebu Hureyre r.a. Resûlullah Sallallahu Aleyhi ve S"
+      "metin": "Cimri ile sadaka veren kimsenin durumu üzerlerinde demir zırh bulunan iki kimsenin durumu gibidir.\" Ebu Hureyre r.a. Resûlullah Sallallahu Aleyhi ve Sellem'i iş"
      },
      {
-      "id": "h315",
+      "id": "h316",
       "kaynak": "Buhârî 317",
-      "metin": "Zilhicce ayının hilalinin görünmesine yakın bir zaman kala Medine'den yola çıktık. Rasûlullah (Sallallahu aleyhi ve Sellem) Umre için telbiye getirip "
+      "metin": "Zilhicce ayının hilalinin görünmesine yakın bir zaman kala Medine'den yola çıktık. Rasûlullah (Sallallahu aleyhi ve Sellem) Umre için telbiye getirip ihrama gir"
+     },
+     {
+      "id": "h15546",
+      "kaynak": "Tirmizî 499",
+      "metin": "Kim Cuma günü cünüplük yıkanması gibi yıkanarak mescide ilk vakitlerde giderse; deve kurban etmiş sevâbı gibi sevap kazanır, İkinci saatte giderse; inek kurban "
      }
     ]
    }
@@ -283,25 +296,26 @@
     "tüccar"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 4,
     "anahtarIsabetIlk10": 8,
     "ilk3": [
      {
-      "id": "h29424",
-      "kaynak": "Muvatta 589",
-      "metin": "Ömer b. Hattıab.'dan: Yetimlerin mallarıyla ticaret yapın ki zekat onları yiyip bitirmesin"
-     },
-     {
-      "id": "h29727",
+      "id": "h35271",
       "kaynak": "Muvatta 956",
-      "metin": "İmâm-ı Mâlik der ki: Hayvan, kumaş ve diğer ticari eşyaları satın alan kimsenin yaptığı alış-veriş caiz değilse, bu kişiye almış olduğu eşyaları sahib"
+      "metin": "İmâm-ı Mâlik der ki: Hayvan, kumaş ve diğer ticari eşyaları satın alan kimsenin yaptığı alış-veriş caiz değilse, bu kişiye almış olduğu eşyaları sahibine iade e"
      },
      {
-      "id": "h22012",
-      "kaynak": "Ebû Dâvûd 3349",
-      "metin": "Külçe olsun, sikke olsun; altın altınla ve gümüş gümüşle (eşit olarak) satılır. Buğday buğdayla müdyü müdyüne, arpa arpayla müdyü müdyüne, hurma hurma"
+      "id": "h22524",
+      "kaynak": "Ebû Dâvûd 3500",
+      "metin": "İbn Ömer (r.a.)'den rivayet edildiğine göre; Bir adam, Hz. Nebi (s.a.v.)'e alışverişlerde aldatıldığını söyledi. Bunun üzerine Nebiimiz (s.a.v.) ona: \"Bir alışv"
+     },
+     {
+      "id": "h16282",
+      "kaynak": "Tirmizî 1232",
+      "metin": "Rasûlullah (s.a.v.)’e geldim ve: “Bana bazen müşteri gelir, elimde olmayan bir malı benden ister bende başkalarından satın alır satarım bu alışveriş doğru mudur"
      }
     ]
    }
@@ -319,25 +333,26 @@
     "kadın"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 9,
     "ilk3": [
      {
-      "id": "h1892",
-      "kaynak": "Buhârî 1905",
-      "metin": "Evlenmeye gücü yeten ve imkanı olan kimse hemen evlensin. Çünkü gözü ve namusu (haramdan) korumada evlilik en etkili yoldur. Evlenmeye gücü yetmeyenle"
-     },
-     {
-      "id": "h2644",
+      "id": "h2671",
       "kaynak": "Buhârî 2660",
-      "metin": "Bir kadınla evlenmiştim. Bir başka kadın gelerek \"Ben sizin ikinizi de emzirmiştir\" dedi. Bunun üzerine Hz. Nebi'e gelerek durumu ona arzettim. Nebi S"
+      "metin": "Bir kadınla evlenmiştim. Bir başka kadın gelerek \"Ben sizin ikinizi de emzirmiştir\" dedi. Bunun üzerine Hz. Nebi'e gelerek durumu ona arzettim. Nebi Sallallahu "
      },
      {
-      "id": "h29835",
+      "id": "h1912",
+      "kaynak": "Buhârî 1905",
+      "metin": "Evlenmeye gücü yeten ve imkanı olan kimse hemen evlensin. Çünkü gözü ve namusu (haramdan) korumada evlilik en etkili yoldur. Evlenmeye gücü yetmeyenler ise oruç"
+     },
+     {
+      "id": "h35402",
       "kaynak": "Muvatta 1091",
-      "metin": "Ebu Hureyre (r.a.)'den: Resulullah Sallallahu Aleyhi ve Sellem: «Hiçbiriniz, (müslüman) kardeşinin evlilik teklif ettiği kadına evlilik teklif etmez» "
+      "metin": "Ebu Hureyre (r.a.)'den: Resulullah Sallallahu Aleyhi ve Sellem: «Hiçbiriniz, (müslüman) kardeşinin evlilik teklif ettiği kadına evlilik teklif etmez» buyurdu."
      }
     ]
    }
@@ -353,25 +368,26 @@
     "misvak"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h23969",
-      "kaynak": "Nesâî 44",
-      "metin": "tuvalet ihtiyacınızı gidereceğinizde yanınızda üç taş götürün ve onlarla temizlenin, bunlar o kimsenin temizliği için yeterlidir.) (Ebû Dâvûd, Tahara:"
-     },
-     {
-      "id": "h24146",
-      "kaynak": "Nesâî 251",
-      "metin": "bez parçası al ve onunla temizlen. Bu sefer kadın: bezle nasıl temizleneceğim) diye tekrar sorunca; Rasûlüllah (sallallahü aleyhi ve sellem): onunla t"
-     },
-     {
-      "id": "h423",
+      "id": "h426",
       "kaynak": "Buhârî 426",
-      "metin": "Temizlik yaparken, taranırken, ayakkabısını giyerken, hasılı bütün işlerinde mümkün olduğu kadar sağ'dan başlamak, Nebi Sallallahu Aleyhi ve Sellem'in"
+      "metin": "Temizlik yaparken, taranırken, ayakkabısını giyerken, hasılı bütün işlerinde mümkün olduğu kadar sağ'dan başlamak, Nebi Sallallahu Aleyhi ve Sellem'in hoşuna gi"
+     },
+     {
+      "id": "h24342",
+      "kaynak": "Nesâî 44",
+      "metin": "tuvalet ihtiyacınızı gidereceğinizde yanınızda üç taş götürün ve onlarla temizlenin, bunlar o kimsenin temizliği için yeterlidir.) (Ebû Dâvûd, Tahara:)"
+     },
+     {
+      "id": "h1878",
+      "kaynak": "Buhârî 1871",
+      "metin": "Ben birçok yerleşim birimini ele geçirecek bir şehre hicret etmekle emrolundum. Bazıları bu şehre Yesrib demişlerdir. Fakat orası \"Medinedir. Medine tıpkı körüğ"
      }
     ]
    }
@@ -388,23 +404,24 @@
     "öğren"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h24814",
+      "id": "h30230",
       "kaynak": "İbn Mâce 252",
-      "metin": "Ebu Hureyre r.a.’den rivayet edildiğine göre Resulullah Sallallahu Aleyhi ve Sellem şöyle buyurmuştur: '' Allah rızasının kazanılması için talep edilm"
+      "metin": "Ebu Hureyre r.a.’den rivayet edildiğine göre Resulullah Sallallahu Aleyhi ve Sellem şöyle buyurmuştur: '' Allah rızasının kazanılması için talep edilmesi gereke"
      },
      {
-      "id": "h24821",
+      "id": "h30237",
       "kaynak": "İbn Mâce 259",
-      "metin": "Huzeyfe r.a.’den rivayet edildiğine göre kendisi: Ben Resulullah Sallallahu Aleyhi ve Sellem’den şöyle buyururken işittim, demiştir: '' Alimlere karşı"
+      "metin": "Huzeyfe r.a.’den rivayet edildiğine göre kendisi: Ben Resulullah Sallallahu Aleyhi ve Sellem’den şöyle buyururken işittim, demiştir: '' Alimlere karşı böbürlene"
      },
      {
-      "id": "h17403",
+      "id": "h17690",
       "kaynak": "Tirmizî 2649",
       "metin": "Her kime öğrendiği dini ilim sorulursa o da çeşitli sebeblerden dolayı o bilgisini gizlerse kıyamet günü o kimseye ateşten bir gem vurulacaktır.”"
      }
@@ -422,23 +439,24 @@
     "tok"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
-    "anahtarIsabetIlk10": 10,
+    "anahtarIsabetIlk10": 9,
     "ilk3": [
      {
-      "id": "h6937",
+      "id": "h6995",
       "kaynak": "Buhârî 6976",
-      "metin": "Bir kimse bir ev satın alsa ve komşunun aynı evi şuf'a nedeniyle alacağından korksa önce evinyüzde birini satın alır, sonra da kalanını satın alır. Bu"
+      "metin": "Bir kimse bir ev satın alsa ve komşunun aynı evi şuf'a nedeniyle alacağından korksa önce evinyüzde birini satın alır, sonra da kalanını satın alır. Bu durumda o"
      },
      {
-      "id": "h22181",
+      "id": "h22542",
       "kaynak": "Ebû Dâvûd 3518",
       "metin": "Komşu komşu'nun şüf'a sına daha müstehaktır. Yolları bir olduğu zaman komşu gaipse beklenir"
      },
      {
-      "id": "h5984",
+      "id": "h6039",
       "kaynak": "Buhârî 6020",
       "metin": "Ben: Ey Allah'ın Rasulü, benim iki komşum var. Hangisine hediye vereyim, diye sordum. O: Kapısı sana daha yakın olanlarına, buyurdu."
      }
@@ -457,25 +475,26 @@
     "iftar"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h29458",
+      "id": "h34951",
       "kaynak": "Muvatta 634",
       "metin": "Abdullah b. Ömer'den: Fecr'den önce kalkıp oruca niyetlenmeyenin o günkü orucu oruç değildir"
      },
      {
-      "id": "h1650",
+      "id": "h1665",
       "kaynak": "Buhârî 1658",
       "metin": "İnsanlar, Hz.Nebi'in arefe günü oruç tutup tutmadığı konusunda şüpheye düştü. Ben Resulullah'a (arefe günü) bir İçecek gönderdim, o da içti.\""
      },
      {
-      "id": "h15624",
-      "kaynak": "Tirmizî 770",
-      "metin": "En değerli oruç kardeşim Dâvûd’un orucudur. Bir gün oruç tutar bir gün yerdi, düşmanla karşı karşıya geldiğinde ise kaçmazdı.” (Buhârî, Savm: 58; Müsl"
+      "id": "h18033",
+      "kaynak": "Tirmizî 2974",
+      "metin": "Rasûlullah (s.a.v.) yanıma geldi ben bir tencerenin altını yakmakta idim. Bitler alnımdan ve kaşlarımdan dökülmekte idi. Bunun üzerine Rasûlullah (s.a.v.), Başı"
      }
     ]
    }
@@ -489,25 +508,26 @@
     "borç"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
-    "anahtarIsabetIlk5": 2,
-    "anahtarIsabetIlk10": 5,
+    "anahtarIsabetIlk5": 3,
+    "anahtarIsabetIlk10": 8,
     "ilk3": [
      {
-      "id": "h2272",
-      "kaynak": "Buhârî 2288",
-      "metin": "Ödeme gücü bulunan kimsenin borcunu geciktirmesi zulümdür. Sizden biri, ödeme gücü bulunan bir kimseye havale edilirse kabul etsin"
+      "id": "h6748",
+      "kaynak": "Buhârî 6731",
+      "metin": "Ben mu'minlere kendi öz nefislerinden daha yakımmdır. Her kim üzerinde borç olduğu halde ölür ve o borcu ödeyecek bir şey bırakmazsa onu ödemek bize aittir. Her"
      },
      {
-      "id": "h29427",
-      "kaynak": "Muvatta 593",
-      "metin": "Saib b. Yezid'den: Osman b. Affan şöyle derdi: «— işte bu zekatınızı verme ayıdır. Kimin borcu varsa alacaklısına ödesin. Böylece tahsil etmiş olduğun"
+      "id": "h17162",
+      "kaynak": "Tirmizî 2122",
+      "metin": "Nebi (s.a.v.), ölen kimsenin borcunun vasiyetten önce ödenmesine hükmetti. Halbuki siz Kur’ân’da vasiyeti borçtan önce okumaktasınız.”"
      },
      {
-      "id": "h2271",
-      "kaynak": "Buhârî 2287",
-      "metin": "Ödeme gücü bulunan kimsenin borcunu geciktirmesi zulümdür. Sizden biri, ödeme gücü bulunan bir kimseye havale edilirse kabul etsin. \""
+      "id": "h2308",
+      "kaynak": "Buhârî 2298",
+      "metin": "Resuılullah Sallallahu Aleyhi ve Sellem'e borcu bulunan bir cenaze getirildiği zaman \"Borcu için (techiz masraflarını) aşan bir mal bıraktı mı?\" diye sorardı. E"
      }
     ]
    }
@@ -523,25 +543,26 @@
     "arkasından"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 3,
     "anahtarIsabetIlk10": 4,
     "ilk3": [
      {
-      "id": "h2443",
-      "kaynak": "Buhârî 2459",
-      "metin": "Dört özellik var ki, bu özellikler her kimde bulunursa münafık olur. Bu özelliklerden birisinin bulunduğu kişide ise münafıklık alametlerinden biri bu"
-     },
-     {
-      "id": "h16706",
+      "id": "h16974",
       "kaynak": "Tirmizî 1934",
-      "metin": "Kardeşini hoşlanmadığı bir şeyi ile hatırlayıp konuşmandır.” Ya söylediğim durum onda mevcud ise dedi. Bunun üzerine Rasûlullah (s.a.v.): “Söylediğin "
+      "metin": "Kardeşini hoşlanmadığı bir şeyi ile hatırlayıp konuşmandır.” Ya söylediğim durum onda mevcud ise dedi. Bunun üzerine Rasûlullah (s.a.v.): “Söylediğin şey onda v"
      },
      {
-      "id": "h23670",
-      "kaynak": "Ebû Dâvûd 5009",
-      "metin": "Hz. Ebu Hureyre'den (rivayet edildiğine göre), RasûlulIah (s.a.v.) şöyle buyurmuştur: \"Birinizin içinin irin ile dolması şiirle dolmasından daha hayır"
+      "id": "h2470",
+      "kaynak": "Buhârî 2459",
+      "metin": "Dört özellik var ki, bu özellikler her kimde bulunursa münafık olur. Bu özelliklerden birisinin bulunduğu kişide ise münafıklık alametlerinden biri bulunur, ta "
+     },
+     {
+      "id": "h7583",
+      "kaynak": "Müslim 1",
+      "metin": "Bazılarına gb're buradaki küfürden murad, bu iki şeyin küf-fann amellerinden ve cahiliyyet devri adetlerinden olmalarıdır. Nitekim Peygamber (sallallahü aleyhi "
      }
     ]
    }
@@ -555,25 +576,26 @@
     "yetim"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 9,
     "ilk3": [
      {
-      "id": "h14814",
-      "kaynak": "Müslim 7469",
-      "metin": "Bana Züheyr b. Harb rivayet etti. (Dediki): Bize ishak h. isa rivayet etti. (Dediki): Bize Mâlik, Sevr b. Zeyd Ed-Dîlî'den rivayet etti, (Demişki): Be"
-     },
-     {
-      "id": "h22191",
+      "id": "h22552",
       "kaynak": "Ebû Dâvûd 3528",
-      "metin": "Umâre b. Umeyr'in, halasından rivayet ettiğine göre; o (Umâre'nin halası); Hz. Âişe (r.anha) ya: Kucağımda bir yetim var, onun malından yiyebilir miyi"
+      "metin": "Umâre b. Umeyr'in, halasından rivayet ettiğine göre; o (Umâre'nin halası); Hz. Âişe (r.anha) ya: Kucağımda bir yetim var, onun malından yiyebilir miyim? diye so"
      },
      {
-      "id": "h13991",
+      "id": "h14127",
       "kaynak": "Müslim 6627",
-      "metin": "Bana Züheyr b. Harb ile Ebû Ma'n Er-Rakâşî rivayet ettiler; Lâfız Züheyr'indir. (Dedilerki): Bize Ömer b. Yûnus rivayet. etti. (Dediki): Bize İkrime b"
+      "metin": "Bana Züheyr b. Harb ile Ebû Ma'n Er-Rakâşî rivayet ettiler; Lâfız Züheyr'indir. (Dedilerki): Bize Ömer b. Yûnus rivayet. etti. (Dediki): Bize İkrime b. Ammar ri"
+     },
+     {
+      "id": "h14963",
+      "kaynak": "Müslim 7469",
+      "metin": "Bana Züheyr b. Harb rivayet etti. (Dediki): Bize ishak h. isa rivayet etti. (Dediki): Bize Mâlik, Sevr b. Zeyd Ed-Dîlî'den rivayet etti, (Demişki): Ben Ebû'l-Ga"
      }
     ]
    }
@@ -587,25 +609,26 @@
     "selam"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
-    "anahtarIsabetIlk5": 3,
-    "anahtarIsabetIlk10": 5,
+    "anahtarIsabetIlk5": 4,
+    "anahtarIsabetIlk10": 9,
     "ilk3": [
      {
-      "id": "h21788",
-      "kaynak": "Ebû Dâvûd 3125",
-      "metin": "Rasûlullah (s.a.v.)'in bir kızı \"Oğlum ya da kızım can vermek üzeredir (acele) yanımıza gel\" diye kendisine elçi gönderdi. (O sırada) Sa'd ile ben de "
+      "id": "h24219",
+      "kaynak": "Ebû Dâvûd 5195",
+      "metin": "Bir adam Nebi (s.a.v.)'e gelip \"Esselamu aleyküm\" dedi (Hz. Nebi de) onun selamına aynı şekilde karşlık verdi ve (selam veren şahıs) oturdu. Bunun üzerine (Peyg"
      },
      {
-      "id": "h12455",
-      "kaynak": "Müslim 5064",
-      "metin": "Bize Ahmed b. Yûnus rivayet etti. (Dediki): Bize Züheyr rivayet etti. (Dediki): Bize Esved b. Kays rivayet etti. H. Bize bu hadîsi Yahya b. Yahya da r"
+      "id": "h12895",
+      "kaynak": "Müslim 5393",
+      "metin": "(Bize İshâk b. İbrahim de rivâyet etti. ki): Bize Yahya b. Âdem ile Amr b. Muhammed rivâyet ettiler. (Dediler ki): Bize Süfyân, Ss'âs b. Ebî'ş-Şa'sa'dan yukarki"
      },
      {
-      "id": "h9203",
-      "kaynak": "Müslim 1763",
-      "metin": "Resûlullah (Sallallahu Aleyhi ve Sellem): «Gece namazı ikişer rek'âtdır. Sabahlamakda olduğunu gördüğün vakit bir rek'âtla vitr yapıver!» buyurdular. "
+      "id": "h24255",
+      "kaynak": "Ebû Dâvûd 5231",
+      "metin": "Babam (ın) bana anlattığına göre) dedem şöyle demiş \"Babam beni Rasûlullah (s.a.v.)'e göndererek Hz. Nebi'e var, kendisine (benden) selam Söyle dedi. Ben de Hz."
      }
     ]
    }
@@ -620,23 +643,24 @@
     "patience"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h15832",
+      "id": "h16036",
       "kaynak": "Tirmidhi 988",
       "metin": "Anas bin Malik narrated that:The Messenger of Alllah said: \"(Real) Patience is at the first stroke of the calamity"
      },
      {
-      "id": "h1296",
+      "id": "h1307",
       "kaynak": "Bukhari 1302",
       "metin": "Narrated Anas:The Prophet (ﷺ) said, \"The real patience is at the first stroke of a calamity"
      },
      {
-      "id": "h15831",
+      "id": "h16035",
       "kaynak": "Tirmidhi 987",
       "metin": "Anas narrated that:The Messenger of Allah said: \"(Real) Patience is at the first stroke of the calamity"
      }
@@ -654,25 +678,26 @@
     "father"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 4,
-    "anahtarIsabetIlk10": 7,
+    "anahtarIsabetIlk10": 8,
     "ilk3": [
      {
-      "id": "h7716",
+      "id": "h7779",
       "kaynak": "Muslim 256",
-      "metin": "It is reported on the authority of 'Abdullah that the Messenger of Allah observed:The best of' the deeds or deed is the (observance of) prayer at its "
+      "metin": "It is reported on the authority of 'Abdullah that the Messenger of Allah observed:The best of' the deeds or deed is the (observance of) prayer at its proper tim"
      },
      {
-      "id": "h20332",
+      "id": "h20692",
       "kaynak": "Abu Dawud 1668",
-      "metin": "Asma‘ said My mother came to me seeking some act of kindness from me during the treaty of the Quraish (at Hudaibiyyah). While she hated Islam and she "
+      "metin": "Asma‘ said My mother came to me seeking some act of kindness from me during the treaty of the Quraish (at Hudaibiyyah). While she hated Islam and she was a poly"
      },
      {
-      "id": "h23804",
+      "id": "h24167",
       "kaynak": "Abu Dawud 5143",
-      "metin": "Ibn ‘Umar reported the Messenger of Allah (May peace be upon him) as saying:One of the finest acts of kindness is for a man to treat his father’s frie"
+      "metin": "Ibn ‘Umar reported the Messenger of Allah (May peace be upon him) as saying:One of the finest acts of kindness is for a man to treat his father’s friends in a k"
      }
     ]
    }
@@ -687,25 +712,26 @@
     "neighbor"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h22180",
+      "id": "h28922",
+      "kaynak": "Nasa'i 4703",
+      "metin": "O Messenger of Allah, not one else has any share in my land, but there are neighbors.\" He said: \"The neighbor has more right to property that is near"
+     },
+     {
+      "id": "h22541",
       "kaynak": "Abu Dawud 3517",
       "metin": "A neighbour has the best claim to the house or land of the neighbour"
      },
      {
-      "id": "h27043",
+      "id": "h32474",
       "kaynak": "Ibn Majah 2496",
-      "metin": "It was narrated that Sharid bin Suwaid said:“I said: 'O Messenger of Allah, (what do you think of) land owned by only one person but this land has nei"
-     },
-     {
-      "id": "h16183",
-      "kaynak": "Tirmidhi 1368",
-      "metin": "The neighbor of a home has more right to the home"
+      "metin": "It was narrated that Sharid bin Suwaid said:“I said: 'O Messenger of Allah, (what do you think of) land owned by only one person but this land has neighbors?' H"
      }
     ]
    }
@@ -723,25 +749,26 @@
     "merchant"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
-    "anahtarIsabetIlk5": 2,
-    "anahtarIsabetIlk10": 4,
+    "anahtarIsabetIlk5": 3,
+    "anahtarIsabetIlk10": 7,
     "ilk3": [
      {
-      "id": "h7045",
+      "id": "h28683",
+      "kaynak": "Nasa'i 4464",
+      "metin": "The two parties to a transaction have the choice so long as they have not separated. If they are honest and open, their transaction will be blessed, but if they"
+     },
+     {
+      "id": "h28676",
+      "kaynak": "Nasa'i 4457",
+      "metin": "It was narrated that Hakim bin Hizam said:\"The Messenger of Allah said: 'The two parties to a transaction have the choice so long as they have not separated. If"
+     },
+     {
+      "id": "h7105",
       "kaynak": "Bukhari 7086",
-      "metin": "Man will go to sleep during which honesty will be taken away from his heart and only its trace will remain in his heart like the trace of a dark spot;"
-     },
-     {
-      "id": "h11475",
-      "kaynak": "Muslim 4071",
-      "metin": "In case the payment is made on the spot, there is no harm in it, and in case (it is 'sold) on loan, it is usury. You better go to Zaid b. Arqam, for h"
-     },
-     {
-      "id": "h6457",
-      "kaynak": "Bukhari 6496",
-      "metin": "Narrated Abu Huraira:Allah's Messenger (ﷺ) said, \"When honesty is lost, then wait for the Hour.\" It was asked, \"How will honesty be lost, O Allah's Me"
+      "metin": "Man will go to sleep during which honesty will be taken away from his heart and only its trace will remain in his heart like the trace of a dark spot; then man "
      }
     ]
    }
@@ -755,25 +782,26 @@
     "صبر"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h15832",
+      "id": "h16036",
       "kaynak": "الترمذي 988",
       "metin": "عَنِ النَّبِيِّ صلى الله عليه وسلم قَالَ ‏ \"‏ الصَّبْرُ عِنْدَ الصَّدْمَةِ الأُولَى ‏\"‏ ‏.‏ قَالَ هَذَا حَدِيثٌ حَسَنٌ صَحِيحٌ ‏.‏"
      },
      {
-      "id": "h1296",
+      "id": "h1307",
       "kaynak": "البخاري 1302",
       "metin": "قَالَ سَمِعْتُ أَنَسًا ـ رضى الله عنه ـ عَنِ النَّبِيِّ صلى الله عليه وسلم قَالَ ‏ \"‏ الصَّبْرُ عِنْدَ الصَّدْمَةِ الأُولَى ‏\"‏‏.‏"
      },
      {
-      "id": "h15831",
+      "id": "h16035",
       "kaynak": "الترمذي 987",
-      "metin": "أَنَّ رَسُولَ اللَّهِ صلى الله عليه وسلم قَالَ ‏ \"‏ الصَّبْرُ فِي الصَّدْمَةِ الأُولَى ‏\"‏ ‏.‏ قَالَ أَبُو عِيسَى هَذَا حَدِيثٌ غَرِيبٌ مِنْ هَذَا الْ"
+      "metin": "أَنَّ رَسُولَ اللَّهِ صلى الله عليه وسلم قَالَ ‏ \"‏ الصَّبْرُ فِي الصَّدْمَةِ الأُولَى ‏\"‏ ‏.‏ قَالَ أَبُو عِيسَى هَذَا حَدِيثٌ غَرِيبٌ مِنْ هَذَا الْوَجْهِ ‏.‏"
      }
     ]
    }
@@ -788,23 +816,24 @@
     "صلو"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h702",
+      "id": "h707",
       "kaynak": "البخاري 706",
       "metin": "قَالَ كَانَ النَّبِيُّ صلى الله عليه وسلم يُوجِزُ الصَّلاَةَ وَيُكْمِلُهَا‏.‏"
      },
      {
-      "id": "h19708",
-      "kaynak": "أبو داود 1044",
-      "metin": "أَنَّ رَسُولَ اللَّهِ صلى الله عليه وسلم قَالَ ‏ \"‏ صَلاَةُ الْمَرْءِ فِي بَيْتِهِ أَفْضَلُ مِنْ صَلاَتِهِ فِي مَسْجِدِي هَذَا إِلاَّ الْمَكْتُوبَةَ ‏"
+      "id": "h19879",
+      "kaynak": "أبو داود 855",
+      "metin": "قَالَ قَالَ رَسُولُ اللَّهِ صلى الله عليه وسلم ‏ \"‏ لاَ تُجْزِئُ صَلاَةُ الرَّجُلِ حَتَّى يُقِيمَ ظَهْرَهُ فِي الرُّكُوعِ وَالسُّجُودِ ‏\"‏ ‏.‏"
      },
      {
-      "id": "h29215",
+      "id": "h34688",
       "kaynak": "الموطأ 369",
       "metin": "أَنَّهُ بَلَغَهُ أَنَّ عَلِيَّ بْنَ أَبِي طَالِبٍ، قَالَ لاَ يَقْطَعُ الصَّلاَةَ شَىْءٌ مِمَّا يَمُرُّ بَيْنَ يَدَىِ الْمُصَلِّي ‏.‏"
      }
@@ -822,25 +851,26 @@
    ],
    "redOrnek": "قص أو مواعظ لا علاقة لها بالربا (الكلمة تظهر داخل أسماء مثل «العرباض»)",
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h24606",
-      "kaynak": "ابن ماجه 43",
-      "metin": "أَنَّهُ سَمِعَ الْعِرْبَاضَ بْنَ سَارِيَةَ، يَقُولُ وَعَظَنَا رَسُولُ اللَّهِ ـ صلى الله عليه وسلم ـ مَوْعِظَةً ذَرَفَتْ مِنْهَا الْعُيُونُ وَوَجِلَتْ"
-     },
-     {
-      "id": "h19331",
-      "kaynak": "أبو داود 667",
-      "metin": "عَنْ رَسُولِ اللَّهِ صلى الله عليه وسلم قَالَ ‏ \"‏ رُصُّوا صُفُوفَكُمْ وَقَارِبُوا بَيْنَهَا وَحَاذُوا بِالأَعْنَاقِ فَوَالَّذِي نَفْسِي بِيَدِهِ إِنّ"
-     },
-     {
-      "id": "h14897",
+      "id": "h15046",
       "kaynak": "مسلم 7560",
-      "metin": "عُمَرَ قَالَ سَمِعْتُ عُمَرَ بْنَ الْخَطَّابِ، عَلَى مِنْبَرِ رَسُولِ اللَّهِ صلى الله عليه وسلم يَقُولُ أَمَّا بَعْدُ أَيُّهَا النَّاسُ فَإِنَّهُ نَز"
+      "metin": "عُمَرَ قَالَ سَمِعْتُ عُمَرَ بْنَ الْخَطَّابِ، عَلَى مِنْبَرِ رَسُولِ اللَّهِ صلى الله عليه وسلم يَقُولُ أَمَّا بَعْدُ أَيُّهَا النَّاسُ فَإِنَّهُ نَزَلَ تَحْرِ"
+     },
+     {
+      "id": "h22565",
+      "kaynak": "أبو داود 3541",
+      "metin": "عَنِ النَّبِيِّ صلى الله عليه وسلم قَالَ ‏ \"‏ مَنْ شَفَعَ لأَخِيهِ بِشَفَاعَةٍ فَأَهْدَى لَهُ هَدِيَّةً عَلَيْهَا فَقَبِلَهَا فَقَدْ أَتَى بَابًا عَظِيمًا مِنْ "
+     },
+     {
+      "id": "h2092",
+      "kaynak": "البخاري 2085",
+      "metin": "عَنْ سَمُرَةَ بْنِ جُنْدُبٍ ـ رضى الله عنه ـ قَالَ قَالَ النَّبِيُّ صلى الله عليه وسلم ‏ \"‏ رَأَيْتُ اللَّيْلَةَ رَجُلَيْنِ أَتَيَانِي، فَأَخْرَجَانِي إِلَى أَر"
      }
     ]
    }
@@ -856,25 +886,26 @@
     "اب"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
-    "sonucSayisi": 10,
-    "anahtarIsabetIlk5": 5,
-    "anahtarIsabetIlk10": 10,
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
+    "sonucSayisi": 5,
+    "anahtarIsabetIlk5": 3,
+    "anahtarIsabetIlk10": 3,
     "ilk3": [
      {
-      "id": "h4549",
+      "id": "h4593",
       "kaynak": "البخاري 4578",
-      "metin": "وَكَانَتِ الْوَصِيَّةُ لِلْوَالِدَيْنِ، فَنَسَخَ اللَّهُ مِنْ ذَلِكَ مَا أَحَبَّ، فَجَعَلَ لِلذَّكَرِ مِثْلَ حَظِّ الأُنْثَيَيْنِ، وَجَعَلَ لِلأَبَوَي"
+      "metin": "وَكَانَتِ الْوَصِيَّةُ لِلْوَالِدَيْنِ، فَنَسَخَ اللَّهُ مِنْ ذَلِكَ مَا أَحَبَّ، فَجَعَلَ لِلذَّكَرِ مِثْلَ حَظِّ الأُنْثَيَيْنِ، وَجَعَلَ لِلأَبَوَيْنِ لِكُلّ"
      },
      {
-      "id": "h6831",
+      "id": "h6887",
       "kaynak": "البخاري 6870",
-      "metin": "وَعُقُوقُ الْوَالِدَيْنِ ‏\"‏‏.‏ أَوْ قَالَ ‏\"‏ الْيَمِينُ الْغَمُوسُ ‏\"‏‏.‏ شَكَّ شُعْبَةُ‏.‏ وَقَالَ مُعَاذٌ حَدَّثَنَا شُعْبَةُ قَالَ ‏\"‏ الْكَبَائِ"
+      "metin": "وَعُقُوقُ الْوَالِدَيْنِ ‏\"‏‏.‏ أَوْ قَالَ ‏\"‏ الْيَمِينُ الْغَمُوسُ ‏\"‏‏.‏ شَكَّ شُعْبَةُ‏.‏ وَقَالَ مُعَاذٌ حَدَّثَنَا شُعْبَةُ قَالَ ‏\"‏ الْكَبَائِرُ الإِشْر"
      },
      {
-      "id": "h21532",
-      "kaynak": "أبو داود 2869",
-      "metin": "‏{‏ إِنْ تَرَكَ خَيْرًا الْوَصِيَّةُ لِلْوَالِدَيْنِ وَالأَقْرَبِينَ ‏}‏ فَكَانَتِ الْوَصِيَّةُ كَذَلِكَ حَتَّى نَسَخَتْهَا آيَةُ الْمِيرَاثِ ‏.‏"
+      "id": "h7779",
+      "kaynak": "مسلم 256",
+      "metin": "عَنِ النَّبِيِّ صلى الله عليه وسلم قَالَ ‏ \"‏ أَفْضَلُ الأَعْمَالِ - أَوِ الْعَمَلِ - الصَّلاَةُ لِوَقْتِهَا وَبِرُّ الْوَالِدَيْنِ ‏\"‏ ‏.‏"
      }
     ]
    }
@@ -888,25 +919,26 @@
     "صبر"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h1296",
-      "kaynak": "بخاری 1302",
-      "metin": "انہوں نے بیان کیا کہ میں نے انس رضی اللہ عنہ سے سنا۔ آپ نبی کریم صلی اللہ علیہ وسلم کے حوالہ سے نقل کرتے تھے کہ آپ صلی اللہ علیہ وسلم نے فرمایا صبر تو"
-     },
-     {
-      "id": "h15832",
+      "id": "h16036",
       "kaynak": "ترمذی 988",
-      "metin": "انس بن مالک رضی الله عنہ سے روایت ہے کہ نبی اکرم صلی اللہ علیہ وسلم نے فرمایا: ”صبر وہی ہے جو پہلے صدمہ کے وقت ہو“۔ امام ترمذی کہتے ہیں: یہ حدیث حسن ص"
+      "metin": "انس بن مالک رضی الله عنہ سے روایت ہے کہ نبی اکرم صلی اللہ علیہ وسلم نے فرمایا: ”صبر وہی ہے جو پہلے صدمہ کے وقت ہو“۔ امام ترمذی کہتے ہیں: یہ حدیث حسن صحیح ہے۔"
      },
      {
-      "id": "h15831",
+      "id": "h1307",
+      "kaynak": "بخاری 1302",
+      "metin": "انہوں نے بیان کیا کہ میں نے انس رضی اللہ عنہ سے سنا۔ آپ نبی کریم صلی اللہ علیہ وسلم کے حوالہ سے نقل کرتے تھے کہ آپ صلی اللہ علیہ وسلم نے فرمایا صبر تو وہی ہے جو"
+     },
+     {
+      "id": "h16035",
       "kaynak": "ترمذی 987",
-      "metin": "انس رضی الله عنہ کہتے ہیں کہ رسول اللہ صلی اللہ علیہ وسلم نے فرمایا: ”صبر وہی ہے جو پہلے صدمے کے وقت ہو“ ۱؎۔ امام ترمذی کہتے ہیں: یہ حدیث اس سند سے غر"
+      "metin": "انس رضی الله عنہ کہتے ہیں کہ رسول اللہ صلی اللہ علیہ وسلم نے فرمایا: ”صبر وہی ہے جو پہلے صدمے کے وقت ہو“ ۱؎۔ امام ترمذی کہتے ہیں: یہ حدیث اس سند سے غریب ہے۔"
      }
     ]
    }
@@ -922,25 +954,26 @@
     "باپ"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h3702",
+      "id": "h3738",
       "kaynak": "بخاری 3725",
-      "metin": "کہا کہ میں نے یحییٰ سے سنا، کہا کہ میں نے سعید بن مسیب سے سنا، کہا کہ میں نے سعد بن ابی وقاص رضی اللہ عنہ سے سنا وہ بیان کرتے تھے کہ جنگ احد کے موقع پ"
+      "metin": "کہا کہ میں نے یحییٰ سے سنا، کہا کہ میں نے سعید بن مسیب سے سنا، کہا کہ میں نے سعد بن ابی وقاص رضی اللہ عنہ سے سنا وہ بیان کرتے تھے کہ جنگ احد کے موقع پر میرے لیے"
      },
      {
-      "id": "h4549",
+      "id": "h4593",
       "kaynak": "بخاری 4578",
-      "metin": "ان سے عطاء نے اور ان سے ابن عباس رضی اللہ عنہما نے بیان کیا کہ ابتداء اسلام میں میت کا سارا مال اولاد کو ملتا تھا، البتہ والدین کو وہ ملتا جو میت ان ک"
+      "metin": "ان سے عطاء نے اور ان سے ابن عباس رضی اللہ عنہما نے بیان کیا کہ ابتداء اسلام میں میت کا سارا مال اولاد کو ملتا تھا، البتہ والدین کو وہ ملتا جو میت ان کے لیے وصیت"
      },
      {
-      "id": "h2729",
-      "kaynak": "بخاری 2747",
-      "metin": "ہم سے محمد بن یوسف فریابی نے بیان کیا ورقاء سے ‘ انہوں نے ابن ابی نجیح سے ‘ ان سے عطاء نے اور ان سے ابن عباس رضی اللہ عنہما نے بیان کیا کہ شروع اسلام "
+      "id": "h14259",
+      "kaynak": "مسلم 6760",
+      "metin": "کہا : یہ احادیث ہیں جو حضرت ابوہریرہ رضی اللہ عنہ نے ہمیں رسول اللہ صلی اللہ علیہ وسلم سے سنائیں ، پھر انہوں نے کئی احادیث بیان کیں ، ان میں سے ایک حدیث یہ ہے :"
      }
     ]
    }
@@ -954,25 +987,26 @@
     "sabar"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h1277",
-      "kaynak": "Bukhari 1283",
-      "metin": "Nabi Shallallahu'alaihiwasallam pernah berjalan melewati seorang wanita yang sedang menangis di sisi kubur. Maka Beliau berkata,: \"Bertakwalah kepada "
-     },
-     {
-      "id": "h26147",
+      "id": "h31574",
       "kaynak": "Ibnu Majah 1596",
       "metin": "Sabar itu adalah saat pertama terkena musibah"
      },
      {
-      "id": "h10760",
-      "kaynak": "Muslim 3345",
-      "metin": "saya telah membacakan kepada [Malik] dari [Qathn bin Wahb bin Uwaimir bin Al Ajda'] dari [Yuhannas] Maula Az Zubair, ia telah mengabarkan kepadanya ba"
+      "id": "h1288",
+      "kaynak": "Bukhari 1283",
+      "metin": "Nabi Shallallahu'alaihiwasallam pernah berjalan melewati seorang wanita yang sedang menangis di sisi kubur. Maka Beliau berkata,: \"Bertakwalah kepada Allah dan "
+     },
+     {
+      "id": "h26166",
+      "kaynak": "Nasa'i 1869",
+      "metin": "Sabar adalah ketika mendapat tekanan (gejolak, hantaman) pertama kali"
      }
     ]
    }
@@ -987,25 +1021,162 @@
     "shadaqah"
    ],
    "temelCizgi": {
-    "tarih": "2026-07-28",
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
     "sonucSayisi": 10,
     "anahtarIsabetIlk5": 5,
     "anahtarIsabetIlk10": 10,
     "ilk3": [
      {
-      "id": "h17371",
+      "id": "h17657",
       "kaynak": "Tirmidzi 2616",
-      "metin": "Maukah kamu aku tunjukkan pada pintu-pintu kebaikan? Puasa adalah perisai dan sedekah akan memadamkan kesalahan sebagaimana air memadamkan api, dan sh"
+      "metin": "Maukah kamu aku tunjukkan pada pintu-pintu kebaikan? Puasa adalah perisai dan sedekah akan memadamkan kesalahan sebagaimana air memadamkan api, dan shalat seora"
      },
      {
-      "id": "h6669",
-      "kaynak": "Bukhari 6708",
-      "metin": "Kalau begitu kamu bayar fidyahmu berupa puasa, sedekah atau binatang kurban.\" Dan telah mengabarkan kepadaku Ibnu 'Aun dari Ayyub dengan redaksi; \"Pua"
+      "id": "h7625",
+      "kaynak": "Muslim 100",
+      "metin": "dalam riwayat yang dibacakan atasnya, dari [Abu Suhail] dari [bapaknya] bahwa dia mendengar [Thalhah bin Ubaidullah] berkata, \"Seorang laki-laki dari penduduk N"
      },
      {
-      "id": "h14620",
-      "kaynak": "Muslim 7268",
-      "metin": "Fitnah seseorang terhadap keluarga, harta dan tetangganya yang (dosanya) bisa dihapus dengan shalat, sedekah, memerintahkan kebaikan dan mencegah kemu"
+      "id": "h20632",
+      "kaynak": "Abu Dawud 1608",
+      "metin": "Rasulullah shallallahu 'alaihi wasallam menemui Kami di masjid dengan membawa tongkat ditangannya, sementara seseorang telah menggantungkan kurma basah yang rus"
+     }
+    ]
+   }
+  },
+  {
+   "id": "fr-patience",
+   "dil": "fr",
+   "sorgu": "patience",
+   "beklenen": "La patience face à l'épreuve",
+   "kabulAnahtar": [
+    "patience",
+    "patient"
+   ],
+   "temelCizgi": {
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
+    "sonucSayisi": 10,
+    "anahtarIsabetIlk5": 5,
+    "anahtarIsabetIlk10": 10,
+    "ilk3": [
+     {
+      "id": "h1307",
+      "kaynak": "Bukhari 1302",
+      "metin": "La vraie patience, c’est au premier choc d’un malheur. »"
+     },
+     {
+      "id": "h26166",
+      "kaynak": "Nasa'i 1869",
+      "metin": "La vraie patience, c'est celle qui se manifeste au premier choc"
+     },
+     {
+      "id": "h31574",
+      "kaynak": "Ibn Majah 1596",
+      "metin": "La patience doit se manifester dès le premier choc. »"
+     }
+    ]
+   }
+  },
+  {
+   "id": "fr-parents",
+   "dil": "fr",
+   "sorgu": "bonté envers les parents",
+   "beklenen": "La bonté envers les parents",
+   "kabulAnahtar": [
+    "parents",
+    "mère",
+    "père"
+   ],
+   "temelCizgi": {
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
+    "sonucSayisi": 10,
+    "anahtarIsabetIlk5": 5,
+    "anahtarIsabetIlk10": 10,
+    "ilk3": [
+     {
+      "id": "h9838",
+      "kaynak": "Muslim 2325",
+      "metin": "Rapporté par Asma’ bint Abu Bakr رضي الله عنها : Ma mère, qui était polythéiste, est venue me voir alors que le Prophète ﷺ avait conclu un traité avec les Quray"
+     },
+     {
+      "id": "h24163",
+      "kaynak": "Abou Dawoud 5139",
+      "metin": "Rapporté par Bahz b. Hakim, d’après son père, d’après son grand-père رضي الله عنهم : « J’ai dit : “Messager d’Allah ! À qui dois-je montrer de la bonté ?” Il ré"
+     },
+     {
+      "id": "h7779",
+      "kaynak": "Muslim 256",
+      "metin": "La meilleure des actions, ou l’une des meilleures, est de prier à l’heure et d’être bienveillant envers ses parents. »"
+     }
+    ]
+   }
+  },
+  {
+   "id": "fr-voisins",
+   "dil": "fr",
+   "sorgu": "droits des voisins",
+   "beklenen": "Les droits et le bon comportement envers les voisins",
+   "kabulAnahtar": [
+    "voisin"
+   ],
+   "temelCizgi": {
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
+    "sonucSayisi": 10,
+    "anahtarIsabetIlk5": 5,
+    "anahtarIsabetIlk10": 10,
+    "ilk3": [
+     {
+      "id": "h6999",
+      "kaynak": "Bukhari 6980",
+      "metin": "Le voisin a plus de droits à l’égard de son voisin (que quiconque d’autre). » Certains hommes ont dit : « Si quelqu’un veut acheter une maison pour 20 000 dirha"
+     },
+     {
+      "id": "h28922",
+      "kaynak": "Nasa'i 4703",
+      "metin": "Ô Messager d’Allah, personne d’autre n’a de part dans mon terrain, mais il y a des voisins.\" Il a répondu : \"Le voisin a plus de droit sur le bien qui est proch"
+     },
+     {
+      "id": "h28924",
+      "kaynak": "Nasa'i 4705",
+      "metin": "Rapporté par Jabir : Le Messager d’Allah ﷺ a établi le principe de la préemption et les droits des voisins"
+     }
+    ]
+   }
+  },
+  {
+   "id": "fr-aumone",
+   "dil": "fr",
+   "sorgu": "aumône",
+   "beklenen": "Le mérite de l'aumône",
+   "kabulAnahtar": [
+    "aumône",
+    "charité"
+   ],
+   "temelCizgi": {
+    "tarih": "2026-08-18",
+    "surum": "1.5-rc",
+    "sonucSayisi": 10,
+    "anahtarIsabetIlk5": 5,
+    "anahtarIsabetIlk10": 10,
+    "ilk3": [
+     {
+      "id": "h6349",
+      "kaynak": "Bukhari 6332",
+      "metin": "Rapporté par Ibn Abi `Aufa : Chaque fois qu’un homme apportait son aumône au Prophète, le Prophète (ﷺ) disait : « Ô Allah ! Accorde Tes bénédictions à la famill"
+     },
+     {
+      "id": "h6376",
+      "kaynak": "Bukhari 6359",
+      "metin": "Rapporté par Ibn Abi `Aufa : Chaque fois que quelqu’un apportait une aumône au Prophète ﷺ, il disait : « Allahumma Salli 'Alaihi (Ô Allah ! Accorde Ta grâce et "
+     },
+     {
+      "id": "h20309",
+      "kaynak": "Abou Dawoud 1285",
+      "metin": "Rapporté par Abu Dharr رضي الله عنه : Le Prophète ﷺ a dit : « Chaque matin, une aumône est due pour chaque articulation du corps humain. Saluer toute personne q"
      }
     ]
    }

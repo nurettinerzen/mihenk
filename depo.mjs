@@ -95,25 +95,30 @@ const likeTemiz = (v) => String(v).replace(/[%_]/g, '');
 const NORM_TABLO = { tr: 'hnorm_tr', en: 'hnorm_en', fr: 'hnorm_fr', id: 'hnorm_idn', ur: 'hnorm_ur', ar: 'hnorm_ar' };
 const tabloAl = (dil) => NORM_TABLO[dil] || NORM_TABLO.tr;
 
-// Alakasızlık kapısı: kelimelerden HERHANGİ biri normalize metinlerde (substring)
-// geçiyor mu? (hadisNormAl + includes davranışının birebir SQL karşılığı.)
+const arOnEk = ['', 'ال', 'وال', 'فال', 'بال', 'كال', 'لل'];
+const desenler = (dil, v, tam = false, arYalin = true) => {
+  if (dil === 'ar') return arOnEk.filter(p => arYalin || p).flatMap(p => [`% ${p}${v} %`, `% ${p}${v}`]);
+  return tam ? [`% ${v} %`, `% ${v}`] : [`% ${v}%`];
+};
+
+// Alakasızlık kapısı kelime sınırından başlar. Arapça kökü kelimenin ortasında
+// aramak "ربا" sorgusunu râvi adı "العرباض" ile eşleştiriyordu.
 export function hadisKapiVar(dil, kelimeler) {
   const ks = kelimeler.map(likeTemiz).filter(Boolean);
   if (!ks.length) return false;
-  const kosul = ks.map(() => 'm LIKE ?').join(' OR ');
-  const args = ks.map(w => `%${w}%`);
+  const args = ks.flatMap(w => desenler(dil, w));
+  const kosul = args.map(() => 'm LIKE ?').join(' OR ');
   return !!db.prepare(`SELECT 1 FROM ${tabloAl(dil)} WHERE ${kosul} LIMIT 1`).get(...args);
 }
 
 // lexHadis satır kümesi: varyantlardan herhangi biri eşleşen kayıtların i listesi.
-// TR tarzı dillerde kelime-başı eşleşme (' '+v — norm metinler baştan boşluklu),
-// Arapça'da substring (kökler eklerin içinde geçer).
-export function hadisEslesen(dil, varyantlar) {
+// Latin dillerde kelime-başı; Arapçada tam kelime + yaygın harf-i tarif/bağlaç
+// önekleri. Hiçbir dilde token ortası substring yok.
+export function hadisEslesen(dil, varyantlar, arYalin = true) {
   const vs = varyantlar.map(likeTemiz).filter(Boolean);
   if (!vs.length) return [];
-  const arMi = dil === 'ar';
-  const kosul = vs.map(() => 'm LIKE ?').join(' OR ');
-  const args = vs.map(v => arMi ? `%${v}%` : `% ${v}%`);
+  const args = vs.flatMap(v => desenler(dil, v, false, arYalin));
+  const kosul = args.map(() => 'm LIKE ?').join(' OR ');
   return db.prepare(`SELECT i FROM ${tabloAl(dil)} WHERE ${kosul}`).raw().all(...args).map(r => r[0]);
 }
 

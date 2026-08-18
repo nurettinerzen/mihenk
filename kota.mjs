@@ -44,6 +44,7 @@ export class ToplamKota {
   }
 
   get uzakAcik() { return Boolean(this.url && this.anahtar); }
+  get diskKalici() { return this.dosya.startsWith('/veri/'); }
 
   #anahtarla(cihaz) {
     return createHash('sha256').update(String(cihaz || 'anon')).digest('hex');
@@ -144,7 +145,9 @@ export class ToplamKota {
   // /olcum ucunda görünür: kalıcılık gerçekten çalışıyor mu, panelden anlaşılsın.
   durum() {
     return {
-      kalici: this.uzakAcik, tablo: this.uzakAcik ? TABLO : null,
+      kalici: this.uzakAcik || this.diskKalici,
+      depo: this.uzakAcik ? 'supabase+disk' : this.diskKalici ? 'disk' : 'gecici-disk',
+      tablo: this.uzakAcik ? TABLO : null,
       cihaz: this.sayac.size, okuma: this.uzakOkuma, yazma: this.uzakYazma, hata: this.uzakHata,
     };
   }
@@ -156,7 +159,7 @@ export const toplamKota = new ToplamKota({
   anahtar: process.env.SUPABASE_SERVICE_KEY || '',
 });
 
-if (!toplamKota.uzakAcik) {
+if (!toplamKota.uzakAcik && !toplamKota.diskKalici) {
   console.warn('[KOTA] ⚠️ SUPABASE_URL/SUPABASE_SERVICE_KEY yok — kota KALICI DEĞİL: '
     + 'sunucu her uyandığında ücretsiz hak sıfırlanır ve paywall tetiklenmez.');
 }

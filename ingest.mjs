@@ -10,7 +10,10 @@
 import { gzipSync } from 'node:zlib';
 import { writeFile } from 'node:fs/promises';
 
-const CDN = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions';
+// Hareketli @1 etiketi aynı komutun farklı günlerde sessizce farklı korpus
+// üretmesine yol açıyordu. Revizyon KAYNAK-MANIFEST.json ile birlikte sabittir.
+const HADITH_REV = 'df57907be35291c91ad6a6691180e22ca9920784';
+const CDN = `https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@${HADITH_REV}/editions`;
 
 // Kütüb-i Sitte + Muvatta + Nevevi 40 + Kudsi.
 // sahihMi: true  → tüm hadisler sahih (Buhârî/Müslim ittifakı).

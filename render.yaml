@@ -43,9 +43,8 @@ services:
         value: "300"
       - key: FREE_LIMIT
         value: "5"
-      # Ücretsiz kotanın KALICI deposu (Kahve Falı ile aynı Supabase projesi olabilir;
-      # tablo adı çakışmasın diye "mihenk_" öneki var). Tanımlı değilse sunucu açılışta
-      # uyarı basar ve kota yalnız bellekte tutulur → uyanışta sıfırlanır.
+      # İsteğe bağlı uzak kota aynası (tablo adı çakışmasın diye "mihenk_" öneki var).
+      # Tanımlı değilse sayaç yukarıdaki /veri kalıcı diskinde tutulur.
       # Şema: supabase-kota.sql (Supabase → SQL Editor'de bir kez çalıştır).
       - key: SUPABASE_URL
         sync: false          # https://xxxx.supabase.co

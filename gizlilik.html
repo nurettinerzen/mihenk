@@ -14,7 +14,7 @@
 </head>
 <body>
   <h1>Gizlilik Politikası</h1>
-  <div class="tar">Mihenk (Hadis &amp; Kur'an) uygulaması · Son güncelleme: Temmuz 2026</div>
+  <div class="tar">Mihenk (Hadis &amp; Kur'an) uygulaması · Son güncelleme: 18 Ağustos 2026</div>
 
   <p>Bu metin, <strong>Mihenk</strong> uygulamasının kişisel verileri nasıl işlediğini açıklar.
   Veri sorumlusu: <strong>Nurettin Erzen</strong> (iletişim: info@selenly.net).</p>
@@ -30,17 +30,21 @@
     <li><strong>Konum:</strong> Yalnızca <strong>namaz vakitleri ve kıble yönü</strong> hesaplanırken, izin
     verdiğiniz anda kullanılır. Konumunuz <strong>sunucuda saklanmaz</strong>; hesap yapılıp anında döndürülür.</li>
     <li><strong>Sorgu metni:</strong> Hadis doğrulama/arama için girdiğiniz metin, eşleştirme yapılması amacıyla
-    sunucumuza; hadis doğrulamada ayrıca yapay zekâ sağlayıcımıza (Anthropic, ABD) iletilir. Bu metinler
-    kimliğinize bağlı olarak saklanmaz.</li>
+    sunucumuza iletilir. Hadis doğrulamada metin eşleştirme; düşük güvenli hadis konu aramalarında ise
+    sorgunun dinî bir konu olup olmadığını ayırma amacıyla yapay zekâ sağlayıcımız Anthropic'e (ABD)
+    iletilebilir. Sorgu metni analitik kaydında açık biçimde tutulmaz; boş sonuçlar yalnız geri döndürülemez
+    kısa özet ve uzunluk olarak sayılır.</li>
     <li><strong>Kullanım olayları:</strong> Uygulamayı geliştirmek için hangi ekranın açıldığı, ne kadar süre
     açık kaldığı, sorgunun sonuç verip vermediği, abonelik ekranının görüldüğü gibi <strong>anonim</strong>
-    olaylar kaydedilir. Bu kayıtlar yukarıdaki rastgele cihaz kimliğine bağlanır; ad, e-posta, telefon,
-    reklam kimliği (IDFA) veya konum içermez ve reklam amacıyla kullanılmaz, üçüncü tarafa satılmaz.</li>
+    olaylar kaydedilir. Rastgele cihaz kimliği analitik dosyasına yazılmadan önce tek yönlü özetlenir;
+    ad, e-posta, telefon, reklam kimliği (IDFA) veya konum içermez. Kayıtlar en çok 90 gün tutulur,
+    reklam amacıyla kullanılmaz ve üçüncü tarafa satılmaz.</li>
   </ul>
 
   <h2>Üçüncü taraflar</h2>
   <ul>
-    <li><strong>Anthropic (Claude):</strong> Hadis metni eşleştirmesi için sorgu metni işlenir (ABD sunucuları).</li>
+    <li><strong>Anthropic (Claude):</strong> Hadis metni eşleştirmesi ve düşük güvenli hadis konu sorgularını
+    sınıflandırmak için metin işlenebilir (ABD sunucuları). Hadis metni, derece veya hüküm üretmek için kullanılmaz.</li>
     <li><strong>Apple ve Google:</strong> Abonelik satın alımları App Store veya Google Play üzerinden yapılır;
     ödeme bilgilerinize <strong>biz erişmeyiz</strong>, ilgili mağaza yönetir.</li>
     <li><strong>RevenueCat:</strong> Aboneliğin etkin olup olmadığını doğrulamak için rastgele uygulama kimliği

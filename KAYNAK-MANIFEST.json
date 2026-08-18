@@ -1,0 +1,28 @@
+{
+  "olusturuldu": "2026-08-18",
+  "kaynaklar": {
+    "hadis": {
+      "depo": "https://github.com/fawazahmed0/hadith-api",
+      "revizyon": "df57907be35291c91ad6a6691180e22ca9920784"
+    },
+    "kuran": {
+      "depo": "https://github.com/fawazahmed0/quran-api",
+      "revizyon": "6be8e17f2a0c13b1f33b1c3057f73cb28d5e848e",
+      "turkceMeal": "tur-diyanetvakfi"
+    }
+  },
+  "uretilenDosyalarSha256": {
+    "corpus.json.gz": "49b425d6ed23ad76e08f7cda7f6b751942e464c02a6fe06135ecb4b22d047a08",
+    "ayat.json": "2b327c08f041dc33906b0d4cb6729339ddebe77183f1f87c6582e01d03079b63",
+    "sure.json": "c562f883a0ab4127a9c70bb59d158d91d3af661681e52208d830659e24b5cbbd",
+    "mevzuat.json": "d9919dd908d02334cd80415981395383593e5fc20a1ef58c11be20a3e1176d8a",
+    "vektor-hadis-tr.f32": "fbc812cb449ff9f0733e6931e2264001a883887a64ece4ab1f2d936ff303ac13",
+    "vektor-hadis-en.f32": "31617149e11816d2df0394ace909543d800ef52ce8a68e5e74e862a317c17175",
+    "vektor-kuran-tr.f32": "8d94e167ed1b5e5db4d1453f64d077851e9296d14ac1fd1f6a6f8ae3a30806eb",
+    "vektor-kuran-en.f32": "8509df5aa849701fe555ba6b9e93b70f794c78e5d9d8ada55748dcce2b2f14f1",
+    "model/vektor-hadis-tr.i8": "f96651ecc5aa46dce70f8c518eb5b9c332c1ade085974074ff8e934546acac6c",
+    "model/vektor-hadis-en.i8": "0cebe07e7d5f70cba492cfa4c65ca4f82762a83e897e846fd74be30460f54120",
+    "mihenk.db": "2be88c39170f513037cf98788b925f589cf84869df5519c7a9d338eb1e43327f"
+  },
+  "not": "mevzuat.json kanonik hadis API verisi değildir; ikincil kaynaklardan elle derlenmiş editoryal inceleme katmanıdır. Kanonik korpustan ayrı işaretlenir."
+}

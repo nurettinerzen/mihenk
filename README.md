@@ -1,6 +1,6 @@
 # Mihenk — Kaynağıyla din rehberi
 
-Hadis doğrulama + Kur'an (meal, semantik arama) + ezan vakti. **TR + EN.**
+Hadis doğrulama + Kur'an (meal, semantik arama) + ezan vakti. **TR, EN, FR, ID, AR, UR.**
 
 ## Temel ilke
 > AI **üretmez, getirir.** Derece (sahih/hasen/zayıf), kaynak ve meal her zaman
@@ -10,7 +10,7 @@ Hadis doğrulama + Kur'an (meal, semantik arama) + ezan vakti. **TR + EN.**
 ## Özellikler
 - **Hadis Doğrula** — bir hadis yapıştır → Kütüb-i Sitte'de eşleşen metin + âlim derecesi + kaynak. Yoksa dürüst "kanonik kaynaklarda geçmiyor".
 - **Konuya Göre (hadis)** — konu/anlam yaz → sahih/hasen hadisler (semantik).
-- **Kur'an** — konu ya da *anlamını* yaz → ilgili ayetler (Arapça + okunuş + Diyanet meali + sayfa/cüz), semantik arama.
+- **Kur'an** — konu ya da *anlamını* yaz → ilgili ayetler (Arapça + okunuş + Diyanet Vakfı meali + sayfa/cüz), semantik arama.
 - **Ezan** — konuma göre namaz vakitleri (Diyanet yöntemi) + geri sayım + kıble.
 - **Mevzuat** — halk arasında yaygın, aslı zayıf/olmayan sözler için atıflı, yumuşak uyarı.
 
@@ -28,8 +28,8 @@ npm start              # backend :8788
 (bkz .gitignore), tek komutla yeniden üretilir.
 
 ## Veri kaynakları
-- Hadis/Kur'an metni + derece: **fawazahmed0/hadith-api & quran-api** (jsDelivr CDN, açık).
-- Meal: **Diyanet İşleri** (TR) · **Abdel Haleem** (EN). Namaz: **adhan** (Türkiye yöntemi) + **tz-lookup**.
+- Hadis/Kur'an metni + derece: **fawazahmed0/hadith-api & quran-api** (sabit Git revizyonları; bkz. `KAYNAK-MANIFEST.json`).
+- Meal: **Diyanet Vakfı** (TR) · **Abdel Haleem** (EN). Namaz: **adhan** (Türkiye yöntemi) + **tz-lookup**.
 - Embedding: **Xenova/paraphrase-multilingual-MiniLM-L12-v2** (yerel, anahtarsız).
 
 ## Dosyalar
@@ -38,9 +38,9 @@ npm start              # backend :8788
 | `ingest.mjs`, `ingest-kuran.mjs` | CDN → corpus.json / ayat.json (TR+EN+Arapça) |
 | `embed.mjs`, `embed-kuran.mjs`, `embed-hadis.mjs` | yerel embedding → vektörler |
 | `motor.mjs` | BM25 lexical retrieval (alan-seçilebilir) |
-| `mevzuat.json` | atıflı uydurma/zayıf söz tohumu |
+| `mevzuat.json` | ikincil kaynak atıflı, elle derlenmiş uydurma/zayıf söz incelemeleri; kanonik hadis korpusundan ayrıdır |
 | `hadis-api.mjs` | backend :8788 (dogrula, konu, kuran-konu, namaz) |
-| `hadis.html` | tek dosya UI (TR/EN, 3 sekme) |
+| `hadis.html` | tek dosya UI (6 dil, 4 ana sekme) |
 
 ## Bilinen sınırlar / sonraki adımlar
 - Fontlar Google Fonts CDN'den (paketleme öncesi yerel bundle şart — offline).

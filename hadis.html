@@ -106,6 +106,8 @@
   .ayar-satir:first-of-type{border-top:none}
   .ayar-satir .sol{display:flex;align-items:center;gap:11px;color:var(--metin)}
   .ayar-satir .ok{color:var(--daha-soluk)}
+  .ayar-kimlik{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    border:0;background:transparent;color:var(--zumrut);font:inherit;font-size:12px;cursor:pointer;padding:7px 2px}
   .ayar-not{font-size:12.5px;color:var(--daha-soluk);line-height:1.6;margin-top:14px;padding-top:14px;border-top:1px solid var(--cizgi)}
   .ayar-surum{font-size:11.5px;color:var(--daha-soluk);text-align:center;margin-top:12px}
 
@@ -113,9 +115,8 @@
   .bugun-etk{font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--zumrut);font-weight:700;margin-bottom:11px;display:flex;align-items:center;gap:8px}
   .bugun-selam{font-family:'Sora',sans-serif;font-weight:600;font-size:20px;color:var(--metin);margin:2px 0 20px;letter-spacing:-.4px}
 
-  /* "Sunucu uyanıyor" şeridi. Render free instance uykudan 30+ sn'de kalkıyor;
-     o süre boyunca ekranda hiçbir şey olmuyordu ve kullanıcı uygulamayı bozuk
-     sanıyordu. İstek 4 sn'yi geçerse bu şerit çıkar. */
+  /* Deploy/bağlantı gecikmesinde ekranda hiçbir şey kalmasın: istek 4 sn'yi
+     geçerse durum şeridi çıkar. */
   .uyanma{display:none;margin:8px auto 0;max-width:520px;padding:7px 12px;border-radius:10px;
     border:1px solid var(--cizgi);background:var(--yuzey);color:var(--soluk);font-size:12.5px;text-align:center}
   .uyanma.acik{display:block}
@@ -298,6 +299,90 @@
 </style>
 </head>
 <body>
+<script>
+/* ===== Paylaşılan Puanlama Kapısı — B→A deseni, DİL-DUYARLI =====
+   Mihenk ALTI DİLLİ (tr/en/fr/id/ar/ur). Sabit Türkçe popup, kullanıcıların
+   çoğuna anlamadığı bir dilde soru sormak demekti. Metin uygulamanın SEÇİLİ
+   diline göre gelir (kullanıcı app içinden Urduca seçtiyse cihaz dili İngilizce
+   olsa bile Urduca görür); seçim yoksa cihaz diline, o da tutmazsa İngilizceye düşer.
+   Arapça VE Urduca sağdan sola. */
+(function(){
+  var LS=window.localStorage, C=null;
+  var DILLER={
+    tr:{soru:"{ad} beğendin mi?",alt:"Fikrin bizim için önemli.",evet:"Beğendim 👍",hayir:"Pek değil"},
+    en:{soru:"Enjoying {ad}?",alt:"Your feedback means a lot.",evet:"I like it 👍",hayir:"Not really"},
+    fr:{soru:"Vous aimez {ad} ?",alt:"Votre avis compte beaucoup.",evet:"J'aime 👍",hayir:"Pas vraiment"},
+    id:{soru:"Suka dengan {ad}?",alt:"Masukanmu berarti.",evet:"Suka 👍",hayir:"Kurang"},
+    ar:{soru:"هل يعجبك {ad}؟",alt:"رأيك يهمنا.",evet:"أعجبني 👍",hayir:"ليس تماماً"},
+    ur:{soru:"کیا آپ کو {ad} پسند آیا؟",alt:"آپ کی رائے ہمارے لیے اہم ہے۔",evet:"پسند آیا 👍",hayir:"زیادہ نہیں"},
+    de:{soru:"Gefällt dir {ad}?",alt:"Dein Feedback ist uns wichtig.",evet:"Gefällt mir 👍",hayir:"Nicht wirklich"},
+    es:{soru:"¿Te gusta {ad}?",alt:"Tu opinión nos importa.",evet:"Me gusta 👍",hayir:"No mucho"},
+    it:{soru:"Ti piace {ad}?",alt:"La tua opinione conta.",evet:"Mi piace 👍",hayir:"Non molto"},
+    pt:{soru:"Curtindo o {ad}?",alt:"Sua opinião é importante.",evet:"Gostei 👍",hayir:"Nem tanto"},
+    ru:{soru:"Нравится {ad}?",alt:"Ваше мнение важно.",evet:"Нравится 👍",hayir:"Не очень"},
+    nl:{soru:"Vind je {ad} leuk?",alt:"Jouw mening telt.",evet:"Leuk 👍",hayir:"Niet echt"},
+    pl:{soru:"Podoba Ci się {ad}?",alt:"Twoja opinia się liczy.",evet:"Podoba mi się 👍",hayir:"Niezbyt"},
+    ja:{soru:"{ad}は気に入りましたか？",alt:"ご意見をお聞かせください。",evet:"気に入った 👍",hayir:"いまいち"},
+    ko:{soru:"{ad}이(가) 마음에 드나요?",alt:"의견을 들려주세요.",evet:"좋아요 👍",hayir:"별로예요"},
+    zh:{soru:"喜欢{ad}吗？",alt:"你的反馈很重要。",evet:"喜欢 👍",hayir:"一般"},
+    sv:{soru:"Gillar du {ad}?",alt:"Din åsikt är viktig.",evet:"Gillar 👍",hayir:"Inte riktigt"}
+  };
+  var RTL={ar:1,ur:1};
+  function k(p){return C.onek+'_rate_'+p;}
+  function surum(){return C.surum||'1';}
+  function otur(){return +(LS.getItem(k('oturum'))||0);}
+  function soruldu(){return LS.getItem(k('soruldu'))===surum();}
+  // ÖNCE uygulamanın seçili dili: kullanıcı Mihenk'i Urduca kullanıyorsa soru da
+  // Urduca gelmeli, cihaz dili ne olursa olsun.
+  function dilKodu(){
+    var d='';
+    try{ d=(LS.getItem('dil')||'').slice(0,2).toLowerCase(); }catch(e){}
+    if(DILLER[d]) return d;
+    d=(navigator.language||navigator.userLanguage||'en').slice(0,2).toLowerCase();
+    return DILLER[d]?d:'en';
+  }
+  function metin(){
+    var d=dilKodu(), t=Object.assign({},DILLER[d],(C.metinler&&C.metinler[d])||{});
+    for(var key in t) t[key]=String(t[key]).replace('{ad}',C.ad);
+    return {t:t,rtl:!!RTL[d]};
+  }
+  function kur(cfg){ C=Object.assign({onek:'app',ad:'App',surum:'1',minOturum:3,iosId:'',paket:'',mail:'',metinler:null,kart:'#1a1410',yazi:'#f2e6d0',renk:'#c8912f',kenar:'#4a3826'},cfg); LS.setItem(k('oturum'),String(otur()+1)); }
+  function belkiSor(){ if(!C||soruldu()||otur()<C.minOturum) return; LS.setItem(k('soruldu'),surum()); setTimeout(kapiGoster,700); }
+  function kapiGoster(){
+    if(document.getElementById('ratingKapi')) return;
+    var M=metin(), t=M.t;
+    var o=document.createElement('div'); o.id='ratingKapi';
+    o.setAttribute('style','position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:24px');
+    o.innerHTML='<div role="dialog" aria-modal="true" dir="'+(M.rtl?'rtl':'ltr')+'" style="max-width:340px;width:100%;background:'+C.kart+';color:'+C.yazi+';border:1px solid '+C.kenar+';border-radius:16px;padding:22px 20px;text-align:center;font-family:inherit;box-shadow:0 20px 60px rgba(0,0,0,.35)">'
+      +'<div style="font-size:19px;font-weight:700;margin-bottom:6px"></div>'
+      +'<div style="font-size:14px;opacity:.75;margin-bottom:18px"></div>'
+      +'<div style="display:flex;gap:10px">'
+        +'<button id="rkHayir" style="flex:1;padding:12px;border-radius:10px;border:1px solid '+C.kenar+';background:transparent;color:'+C.yazi+';font:inherit;font-size:15px;cursor:pointer"></button>'
+        +'<button id="rkEvet" style="flex:1;padding:12px;border-radius:10px;border:0;background:'+C.renk+';color:#fff;font:inherit;font-size:15px;font-weight:700;cursor:pointer"></button>'
+      +'</div></div>';
+    // Metinler textContent ile basılıyor: app adı ve çeviriler innerHTML'e
+    // gömülürse tırnak/işaret içeren bir dil kutuyu bozabilir.
+    var kutu=o.firstChild;
+    kutu.children[0].textContent=t.soru;
+    kutu.children[1].textContent=t.alt;
+    document.body.appendChild(o);
+    o.querySelector('#rkHayir').textContent=t.hayir;
+    o.querySelector('#rkEvet').textContent=t.evet;
+    o.addEventListener('click',function(e){ if(e.target===o) kapat(); });
+    document.getElementById('rkEvet').onclick=function(){ kapat(); nativeIstem(); };
+    document.getElementById('rkHayir').onclick=function(){ kapat(); geriBildirim(); };
+  }
+  function kapat(){ var e=document.getElementById('ratingKapi'); if(e) e.remove(); }
+  async function nativeIstem(){ try{ var P=window.Capacitor&&window.Capacitor.Plugins; if(P&&P.InAppReview&&P.InAppReview.requestReview){ await P.InAppReview.requestReview(); return; } }catch(e){} magazaAc(); }
+  function magazaAc(){ var ios=(window.Capacitor&&Capacitor.getPlatform&&Capacitor.getPlatform()==='ios')||/iP(hone|ad|od)/.test(navigator.userAgent); var url=ios&&C.iosId?'https://apps.apple.com/app/id'+C.iosId+'?action=write-review':'https://play.google.com/store/apps/details?id='+C.paket; var B=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.Browser; if(B&&B.open) B.open({url:url}); else window.open(url,'_blank'); }
+  function geriBildirim(){ if(!C.mail) return; location.href='mailto:'+C.mail+'?subject='+encodeURIComponent(C.ad+' feedback ('+surum()+')'); }
+  window.RatingKapisi={kur:kur,belkiSor:belkiSor,magazaAc:magazaAc};
+  // Türkçe ek uyumu ({ad} şablonu Türkçe'de ek almaz): "Mihenk'i beğendin mi?"
+  kur({onek:'mihenk',ad:'Mihenk',surum:'1.5',iosId:'6793343627',paket:'com.nurettinerzen.mihenk',mail:'nurettinerzen@gmail.com',minOturum:3,
+       metinler:{tr:{soru:"Mihenk'i beğendin mi?"}},
+       kart:'#123028',yazi:'#eaf5f0',renk:'#57c4a3',kenar:'#24463c'});
+})();
+</script>
 <div class="wrap">
   <header>
     <svg class="amblem" viewBox="0 0 48 48" fill="none">
@@ -310,7 +395,7 @@
     <div class="divider">✦</div>
   </header>
 
-    <button class="ayar-btn" id="ayarBtn" aria-label="Ayarlar">
+    <button class="ayar-btn" id="ayarBtn" aria-label="Ayarlar" data-i18n-aria="settings">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
     </svg>
@@ -327,12 +412,12 @@
     <button class="unav" data-bol="ezan" data-i18n="nav_ezan">Ezan</button>
   </div>
 
-  <!-- Sunucu uykudan kalkarken (Render free: ölçülen 32,8 sn) gösterilir. -->
+  <!-- Deploy/bağlantı gecikmesi 4 saniyeyi aşarsa gösterilir. -->
   <div id="uyanmaSerit" class="uyanma" data-i18n="uyaniyor">Sunucu uyanıyor, birkaç saniye sürebilir…</div>
 
   <div id="miniCalar" class="mini-calar">
     <div class="mini-bilgi"><b id="miniAd"></b><span id="miniKari"></span></div>
-    <button id="miniDurdur" class="mini-btn" aria-label="Durdur">‖</button>
+    <button id="miniDurdur" class="mini-btn" aria-label="Durdur" data-i18n-aria="stop">‖</button>
   </div>
 
   <!-- BUGÜN -->
@@ -406,10 +491,10 @@
         <input class="metin" id="sureAra" data-i18n-ph="ph_sure" placeholder="Sûre ara…" style="margin-bottom:12px">
         <div id="sureListe" class="sure-liste"></div>
       </div>
-      <button class="geri-yuzen" id="sureGeriYuzen" aria-label="Geri">‹</button>
+      <button class="geri-yuzen" id="sureGeriYuzen" aria-label="Geri" data-i18n-aria="back">‹</button>
       <div id="sureOku" style="display:none">
         <div class="oku-bar">
-          <button class="geri-btn" id="sureGeri" aria-label="Geri">‹</button>
+          <button class="geri-btn" id="sureGeri" aria-label="Geri" data-i18n-aria="back">‹</button>
           <div class="oku-baslik"><div id="okuAd"></div><div id="okuAlt" class="oku-alt"></div></div>
         </div>
         <div class="kari-sec">
@@ -435,7 +520,7 @@
   <!-- PAYWALL -->
   <div class="paywall-arka" id="paywall">
     <div class="paywall-kart">
-      <button class="paywall-kapat" id="paywallKapat">×</button>
+      <button class="paywall-kapat" id="paywallKapat" aria-label="Kapat" data-i18n-aria="close">×</button>
       <div class="paywall-amblem">✦</div>
       <div class="paywall-baslik">Mihenk Plus</div>
       <div class="paywall-alt" data-i18n="pw_alt">Tüm kâriler, çevrimdışı dinleme ve sınırsız arama</div>
@@ -481,7 +566,7 @@
   <!-- AYARLAR -->
   <div class="paywall-arka" id="ayarlar">
     <div class="paywall-kart">
-      <button class="paywall-kapat" id="ayarKapat">×</button>
+      <button class="paywall-kapat" id="ayarKapat" aria-label="Kapat" data-i18n-aria="close">×</button>
       <div class="paywall-baslik" style="margin-bottom:16px" data-i18n="ayar_baslik">Ayarlar</div>
       <div class="ayar-satir">
         <span class="sol">
@@ -513,6 +598,10 @@
         </span>
         <button class="cip" id="denemeBtn" style="min-height:32px;padding:7px 14px" data-i18n="ayar_deneme_btn">Dene</button>
       </div>
+      <div class="ayar-satir">
+        <span class="sol" data-i18n="ayar_kimlik">Kurulum kimliği</span>
+        <button class="ayar-kimlik" id="cihazKimlikBtn" data-i18n-aria="copy_id" aria-label="Kurulum kimliğini kopyala">…</button>
+      </div>
       <a class="ayar-satir" href="https://mihenk-api.onrender.com/gizlilik" target="_blank" rel="noopener">
         <span class="sol" data-i18n="ayar_gizlilik">Gizlilik Politikası</span><span class="ok">›</span>
       </a>
@@ -520,14 +609,14 @@
         <span class="sol" data-i18n="ayar_kullanim">Kullanım Koşulları</span><span class="ok">›</span>
       </a>
       <div class="ayar-not" data-i18n="ayar_hakkinda">Mihenk; hadis metnini, âlim derecesini ve Kur'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.</div>
-      <div class="ayar-surum" id="surumEtiket">Mihenk 1.3</div><!-- MARKETING_VERSION ile aynı olmalı -->
+      <div class="ayar-surum" id="surumEtiket">Mihenk 1.5</div><!-- MARKETING_VERSION ile aynı olmalı -->
 
     </div>
   </div>
 
   <p class="disc" data-i18n="disc">
     Mihenk, kanonik kaynaklardaki hadis metnini ve âlimlerin derecelendirmesini,
-    Kur'an ayetlerini ve <b>Diyanet meâlini</b> <b>getirir</b> — hadis, meal ya da fıkhî hüküm <b>üretmez</b>.
+    Kur'an ayetlerini ve <b>Diyanet Vakfı meâlini</b> <b>getirir</b> — hadis, meal ya da fıkhî hüküm <b>üretmez</b>.
     Meâl bir çeviridir; ihtilaflı konularda bir âlime / müftülüğe danışınız.
   </p>
 </div>
@@ -586,7 +675,7 @@ const L = {
   tr: {
     indir_plus:'Çevrimdışı dinleme Mihenk Plus ile. Alafasy ile çevrimiçi dinleme ücretsiz.',indir_teklif:'Tilaveti internetsiz dinlemek için bu kâriyi indir (≈800 MB).',indir_et:'İndir',indir_iptal:'İptal',indir_kaldir:'Kaldır',indir_hazir:'{k} çevrimdışı dinlenebilir.',indir_basliyor:'Hazırlanıyor…',indir_bitti:'Tilavet indirildi. Artık internetsiz dinleyebilirsin.',indir_iptal_oldu:'İndirme durduruldu. Kaldığın yerden devam edebilirsin.',indir_kaldir_onay:'İndirilen tilavet cihazdan silinsin mi?',
     indir_sil:'Bu sûrenin sesi cihazdan silinsin mi?',indir_hata:'Sûre indirilemedi. Bağlantını kontrol et.',
-    ayar_bildirim:'Ezan bildirimi',ayar_deneme:'Ezan sesini dene',ayar_deneme_btn:'Dene',deneme_bekle:'10 sn…',deneme_baslik:'Ezan sesi denemesi',deneme_govde:'Bu bildirim ezan sesiyle gelmeliydi.',deneme_not:'Uygulamadan çık ve bekle — bildirim 10 saniye içinde ezan sesiyle gelmeli. Telefonun sessizde olmadığından ve Odaklanma modunun kapalı olduğundan emin ol.',bildirim_govde:'{v} vakti girdi.',bildirim_izin:'Bildirim izni verilmedi. iPhone Ayarlar > Mihenk > Bildirimler bölümünden açabilirsin.',
+    ayar_bildirim:'Ezan bildirimi',ayar_deneme:'Ezan sesini dene',ayar_deneme_btn:'Dene',ayar_kimlik:'Kurulum kimliği',kimlik_kopyala:'Kopyala',kimlik_kopyalandi:'Kopyalandı',deneme_bekle:'10 sn…',deneme_baslik:'Ezan sesi denemesi',deneme_govde:'Bu bildirim ezan sesiyle gelmeliydi.',deneme_not:'Uygulamadan çık ve bekle — bildirim 10 saniye içinde ezan sesiyle gelmeli. Telefonun sessizde olmadığından ve Odaklanma modunun kapalı olduğundan emin ol.',bildirim_govde:'{v} vakti girdi.',bildirim_izin:'Bildirim izni verilmedi. Telefon ayarlarında Mihenk > Bildirimler bölümünden açabilirsin.',bildirim_kesin:'Dakik ezan bildirimi için Android ayarlarında Mihenk\'in Alarmlar ve hatırlatıcılar iznini açmalısın.',
     ceviri_yok:'Bu rivayetin Türkçe çevirisi kaynakta yok; {dil} metni gösteriliyor.',
     yogun_baslik:'Şu an çok yoğunuz',
     ses_hata:'Tilavet indirilemedi. İnternet bağlantını kontrol et.',fark_title:'Metnin kaynaktakinden farklı',fark_body:'Aşağıdaki kayıt bu hadisin kaynaktaki hâlidir. Derecelendirme kaynak metne aittir, senin yazdığın metne değil.',pw_yenileme:'Abonelik, dönem bitiminden en az 24 saat önce iptal edilmedikçe kendini yeniler. Yönetim ve iptal App Store hesap ayarlarından yapılır.',
@@ -603,11 +692,11 @@ const L = {
     lbl_konu:'Bir konu yaz — sahih hadisleri getir', ph_konu:'yalancılık, evlilik, ticaret, komşuluk…', btn_konu:'Getir',
     lbl_kuran:'Bir konu ya da anlamını yaz — Kur\'an ne diyor?', ph_kuran:'sabır, anne-baba, faiz, "işini Allah\'a bırakmak"…', btn_kuran:'Ayetleri getir',
     ex_niyet:'Örnek: niyet hadisi', ex_cennet:'Örnek: cennet-anne', ex_temizlik:'Örnek: temizlik',
-    disc:'Mihenk, kanonik kaynaklardaki hadis metnini ve âlimlerin derecelendirmesini, Kur\'an ayetlerini ve <b>Diyanet meâlini</b> <b>getirir</b> — hadis, meal ya da fıkhî hüküm <b>üretmez</b>. Meâl bir çeviridir; ihtilaflı konularda bir âlime / müftülüğe danışınız.',
+    disc:'Mihenk, kanonik kaynaklardaki hadis metnini ve âlimlerin derecelendirmesini, Kur\'an ayetlerini ve <b>Diyanet Vakfı meâlini</b> <b>getirir</b> — hadis, meal ya da fıkhî hüküm <b>üretmez</b>. Meâl bir çeviridir; ihtilaflı konularda bir âlime / müftülüğe danışınız.',
     yukleniyor:'Kanonik kaynaklarda aranıyor…', err_title:'Bağlanamadım', err_body:'Sunucuya şu an ulaşılamıyor. İnternet bağlantını kontrol edip tekrar dener misin?',
     nf_title:'Bu söz kanonik kaynaklarda geçmiyor',
     nf_body:'Girdiğin metin <b>Kütüb-i Sitte\'de</b> (Buhârî, Müslim, Tirmizî, Ebû Dâvûd, Nesâî, İbn Mâce) bu haliyle yer almıyor — bu kaynaklarda sağlam bir dayanağı görünmüyor. <span style="opacity:.75">(Başka bir muteber kaynakta farklı lafızla geçme ihtimali ayrıca araştırılmalı; bu yüzden "kesinlikle uydurma" değil, "sağlam kaynağı gösterilemedi" diyoruz.)</span>',
-    similar:'Benzer / ilgili hadisler', meal:'Meâl: Diyanet İşleri',
+    similar:'Benzer / ilgili hadisler', meal:'Meâl: Diyanet Vakfı',
     bos_hak:'Bir şey getiremediğimiz için ücretsiz hakkın harcanmadı.', konu_bos:'Bu konuda sahih hadis bulunamadı. Farklı bir kelime dene.', kuran_bos:'Bu konuda ayet bulunamadı. Farklı bir kelime dene.',
     konu_bul:(n)=>`${n} sahih/hasen hadis`, kuran_bul:(n)=>`${n} ayet`,
     nav_ezan:'Ezan', ezan_intro:'Namaz vakitleri ve kıble için konumuna ihtiyacım var.', ezan_btn:'Konumumu kullan',
@@ -617,7 +706,7 @@ const L = {
     kible_etk:'Kıble yönü', yon:['Kuzey','Kuzeydoğu','Doğu','Güneydoğu','Güney','Güneybatı','Batı','Kuzeybatı'],
     pw_alt:'Tüm kâriler, çevrimdışı dinleme ve sınırsız arama', pw_m1:'Yedi kârinin tamamıyla dinle', pw_m2:'Tilaveti indir, internetsiz dinle', pw_m3:'Sınırsız hadis doğrulama ve Kur\'an araması',pw_m4:'Aynı hesaptaki tüm cihazlarında geçerli',
     pw_satinal:'Mihenk Plus\'a geç',
-    pw_kalan:(n)=>`${n} ücretsiz sorgu kaldı`, pw_aktif:'Plus aktif', pw_basarili:'Etkinleştirildi! Sınırsız erişim açık.', pw_gecersiz:'Anahtar geçersiz.', pw_yakinda:'Satın alma yakında (App Store).',
+    pw_kalan:(n)=>`${n} ücretsiz sorgu kaldı`, pw_aktif:'Plus aktif', pw_basarili:'Etkinleştirildi! Sınırsız erişim açık.', pw_gecersiz:'Anahtar geçersiz.', pw_yakinda:'Satın alma iOS ve Android uygulamasında kullanılabilir.',
     nav_bugun:'Bugün', ayar_baslik:'Ayarlar', ayar_dil:'Dil', ayar_gizlilik:'Gizlilik Politikası', ayar_kullanim:'Kullanım Koşulları',
     ayar_hakkinda:'Mihenk; hadis metnini, âlim derecesini ve Kur\'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.',
     selam:'Selâmün aleyküm', gun_ayet:'Günün Ayeti', gun_hadis:'Günün Hadisi',
@@ -629,7 +718,7 @@ const L = {
   en: {
     indir_plus:'Offline listening comes with Mihenk Plus. Online listening with Alafasy stays free.',indir_teklif:'Download this reciter to listen offline (~800 MB).',indir_et:'Download',indir_iptal:'Cancel',indir_kaldir:'Remove',indir_hazir:'{k} is available offline.',indir_basliyor:'Preparing…',indir_bitti:'Recitation downloaded. You can now listen offline.',indir_iptal_oldu:'Download stopped. You can resume where you left off.',indir_kaldir_onay:'Delete the downloaded recitation from your device?',
     indir_sil:'Delete this surah\'s audio from your device?',indir_hata:'Could not download the surah. Check your connection.',
-    ayar_bildirim:'Adhan notifications',ayar_deneme:'Test the adhan sound',ayar_deneme_btn:'Test',deneme_bekle:'10 s…',deneme_baslik:'Adhan sound test',deneme_govde:'This notification should arrive with the adhan.',deneme_not:'Leave the app and wait — the notification should arrive with the adhan within 10 seconds. Make sure your phone is not on silent and Focus is off.',bildirim_govde:'It is time for {v}.',bildirim_izin:'Notification permission was not granted. You can enable it in Settings > Mihenk > Notifications.',
+    ayar_bildirim:'Adhan notifications',ayar_deneme:'Test the adhan sound',ayar_deneme_btn:'Test',ayar_kimlik:'Installation ID',kimlik_kopyala:'Copy',kimlik_kopyalandi:'Copied',deneme_bekle:'10 s…',deneme_baslik:'Adhan sound test',deneme_govde:'This notification should arrive with the adhan.',deneme_not:'Leave the app and wait — the notification should arrive with the adhan within 10 seconds. Make sure your phone is not on silent and Focus is off.',bildirim_govde:'It is time for {v}.',bildirim_izin:'Notification permission was not granted. You can enable it in your phone settings under Mihenk > Notifications.',bildirim_kesin:'For timely adhan notifications, allow Alarms & reminders for Mihenk in Android settings.',
     ceviri_yok:'This narration has no translation in the source; showing the {dil} text.',
     yogun_baslik:'We are busy right now',
     ses_hata:'Could not load the recitation. Check your connection.',fark_title:'Your text differs from the source',fark_body:'The record below is how this hadith appears in the source. The grading belongs to the source text, not to the text you entered.',pw_yenileme:'Subscription renews automatically unless cancelled at least 24 hours before the end of the period. Manage or cancel in your App Store account settings.',
@@ -660,7 +749,7 @@ const L = {
     kible_etk:'Qibla direction', yon:['North','Northeast','East','Southeast','South','Southwest','West','Northwest'],
     pw_alt:'All reciters, offline listening and unlimited search', pw_m1:'Listen with all seven reciters', pw_m2:'Download recitation and listen offline', pw_m3:'Unlimited hadith verification and Quran search',pw_m4:'Works on all your devices with the same account',
     pw_satinal:'Get Mihenk Plus',
-    pw_kalan:(n)=>`${n} free left`, pw_aktif:'Plus active', pw_basarili:'Activated! Unlimited access unlocked.', pw_gecersiz:'Invalid key.', pw_yakinda:'Purchase coming soon (App Store).',
+    pw_kalan:(n)=>`${n} free left`, pw_aktif:'Plus active', pw_basarili:'Activated! Unlimited access unlocked.', pw_gecersiz:'Invalid key.', pw_yakinda:'Purchases are available in the iOS and Android apps.',
     nav_bugun:'Today', ayar_baslik:'Settings', ayar_dil:'Language', ayar_gizlilik:'Privacy Policy', ayar_kullanim:'Terms of Use',
     ayar_hakkinda:'Mihenk brings the hadith text, scholars\' grading and Quran translation from verified sources — it does not generate them. Consult a scholar on disputed matters.',
     selam:'As-salamu alaykum', gun_ayet:'Verse of the Day', gun_hadis:'Hadith of the Day',
@@ -672,7 +761,7 @@ const L = {
   fr: {
     indir_plus:'L’écoute hors ligne est incluse dans Mihenk Plus. L’écoute en ligne avec Alafasy reste gratuite.',indir_teklif:'Télécharge ce récitateur pour écouter hors ligne (~800 Mo).',indir_et:'Télécharger',indir_iptal:'Annuler',indir_kaldir:'Supprimer',indir_hazir:'{k} est disponible hors ligne.',indir_basliyor:'Préparation…',indir_bitti:'Récitation téléchargée. Tu peux écouter hors ligne.',indir_iptal_oldu:'Téléchargement arrêté. Tu peux reprendre plus tard.',indir_kaldir_onay:'Supprimer la récitation téléchargée de l\'appareil ?',
     indir_sil:'Supprimer l\'audio de cette sourate de l\'appareil ?',indir_hata:'Téléchargement impossible. Vérifie ta connexion.',
-    ayar_bildirim:'Notifications d\'adhan',ayar_deneme:'Tester le son de l\'adhan',ayar_deneme_btn:'Tester',deneme_bekle:'10 s…',deneme_baslik:'Test du son de l\'adhan',deneme_govde:'Cette notification devrait arriver avec l\'adhan.',deneme_not:'Quitte l\'app et attends — la notification devrait arriver avec l\'adhan sous 10 secondes. Vérifie que le téléphone n\'est pas en silencieux et que Concentration est désactivé.',bildirim_govde:'C\'est l\'heure de {v}.',bildirim_izin:'Permission refusée. Active-la dans Réglages > Mihenk > Notifications.',
+    ayar_bildirim:'Notifications d\'adhan',ayar_deneme:'Tester le son de l\'adhan',ayar_deneme_btn:'Tester',ayar_kimlik:'Identifiant d’installation',kimlik_kopyala:'Copier',kimlik_kopyalandi:'Copié',deneme_bekle:'10 s…',deneme_baslik:'Test du son de l\'adhan',deneme_govde:'Cette notification devrait arriver avec l\'adhan.',deneme_not:'Quitte l\'app et attends — la notification devrait arriver avec l\'adhan sous 10 secondes. Vérifie que le téléphone n\'est pas en silencieux et que Concentration est désactivé.',bildirim_govde:'C\'est l\'heure de {v}.',bildirim_izin:'Permission refusée. Active-la dans les réglages du téléphone sous Mihenk > Notifications.',bildirim_kesin:'Pour recevoir l’adhan à l’heure exacte, autorise Alarmes et rappels pour Mihenk dans les réglages Android.',
     ceviri_yok:'Cette narration n\'a pas de traduction dans la source ; texte en {dil} affiché.',
     yogun_baslik:'Service très sollicité',
     ses_hata:'Récitation indisponible. Vérifie ta connexion.',fark_title:'Ton texte diffère de la source',fark_body:'La fiche ci-dessous correspond au hadith tel qu\'il figure dans la source. Le degré d\'authenticité concerne le texte source, pas celui que tu as saisi.',pw_yenileme:'L\'abonnement se renouvelle automatiquement sauf résiliation au moins 24 heures avant la fin de la période. Gestion et résiliation dans les réglages de ton compte App Store.',
@@ -703,7 +792,7 @@ const L = {
     kible_etk:'Direction de la qibla', yon:['Nord','Nord-est','Est','Sud-est','Sud','Sud-ouest','Ouest','Nord-ouest'],
     pw_alt:'Tous les récitateurs, écoute hors ligne et recherches illimitées', pw_m1:'Écoute les sept récitateurs', pw_m2:'Télécharge la récitation et écoute hors ligne', pw_m3:'Vérification de hadiths et recherche coranique illimitées',pw_m4:'Valable sur tous tes appareils avec le même compte',
     pw_satinal:'Passer à Mihenk Plus',
-    pw_kalan:(n)=>`${n} requêtes gratuites restantes`, pw_aktif:'Plus actif', pw_basarili:'Activé ! Accès illimité débloqué.', pw_gecersiz:'Clé invalide.', pw_yakinda:'Achat bientôt disponible (App Store).',
+    pw_kalan:(n)=>`${n} requêtes gratuites restantes`, pw_aktif:'Plus actif', pw_basarili:'Activé ! Accès illimité débloqué.', pw_gecersiz:'Clé invalide.', pw_yakinda:'Les achats sont disponibles dans les apps iOS et Android.',
     nav_bugun:'Aujourd\'hui', ayar_baslik:'Réglages', ayar_dil:'Langue', ayar_gizlilik:'Politique de confidentialité', ayar_kullanim:'Conditions d\'utilisation',
     ayar_hakkinda:'Mihenk rapporte le texte du hadith, le degré des savants et la traduction du Coran depuis des sources vérifiées — il ne les génère pas. Consultez un savant pour les questions litigieuses.',
     selam:'As-salâmu alaykum', gun_ayet:'Verset du jour', gun_hadis:'Hadith du jour',
@@ -715,7 +804,7 @@ const L = {
   id: {
     indir_plus:'Mendengarkan offline tersedia di Mihenk Plus. Mendengarkan online dengan Alafasy tetap gratis.',indir_teklif:'Unduh qari ini untuk mendengarkan tanpa internet (~800 MB).',indir_et:'Unduh',indir_iptal:'Batal',indir_kaldir:'Hapus',indir_hazir:'{k} tersedia offline.',indir_basliyor:'Menyiapkan…',indir_bitti:'Tilawah terunduh. Kini bisa didengarkan tanpa internet.',indir_iptal_oldu:'Unduhan dihentikan. Bisa dilanjutkan nanti.',indir_kaldir_onay:'Hapus tilawah yang diunduh dari perangkat?',
     indir_sil:'Hapus audio surah ini dari perangkat?',indir_hata:'Surah tidak dapat diunduh. Periksa koneksimu.',
-    ayar_bildirim:'Notifikasi azan',ayar_deneme:'Coba suara azan',ayar_deneme_btn:'Coba',deneme_bekle:'10 dtk…',deneme_baslik:'Uji suara azan',deneme_govde:'Notifikasi ini seharusnya datang dengan suara azan.',deneme_not:'Keluar dari aplikasi dan tunggu — notifikasi akan datang dengan suara azan dalam 10 detik. Pastikan ponsel tidak dalam mode senyap dan Fokus mati.',bildirim_govde:'Waktu {v} telah masuk.',bildirim_izin:'Izin notifikasi belum diberikan. Aktifkan di Pengaturan > Mihenk > Notifikasi.',
+    ayar_bildirim:'Notifikasi azan',ayar_deneme:'Coba suara azan',ayar_deneme_btn:'Coba',ayar_kimlik:'ID instalasi',kimlik_kopyala:'Salin',kimlik_kopyalandi:'Disalin',deneme_bekle:'10 dtk…',deneme_baslik:'Uji suara azan',deneme_govde:'Notifikasi ini seharusnya datang dengan suara azan.',deneme_not:'Keluar dari aplikasi dan tunggu — notifikasi akan datang dengan suara azan dalam 10 detik. Pastikan ponsel tidak dalam mode senyap dan Fokus mati.',bildirim_govde:'Waktu {v} telah masuk.',bildirim_izin:'Izin notifikasi belum diberikan. Aktifkan di pengaturan ponsel pada Mihenk > Notifikasi.',bildirim_kesin:'Agar notifikasi azan tepat waktu, izinkan Alarm & pengingat untuk Mihenk di pengaturan Android.',
     ceviri_yok:'Riwayat ini tidak memiliki terjemahan di sumber; menampilkan teks {dil}.',
     yogun_baslik:'Sedang sibuk',
     ses_hata:'Rekaman tidak dapat dimuat. Periksa koneksi internetmu.',fark_title:'Teksmu berbeda dari sumber',fark_body:'Catatan di bawah adalah bunyi hadis ini dalam sumbernya. Derajat keabsahan berlaku untuk teks sumber, bukan teks yang kamu masukkan.',pw_yenileme:'Langganan diperpanjang otomatis kecuali dibatalkan minimal 24 jam sebelum periode berakhir. Kelola atau batalkan di pengaturan akun App Store.',
@@ -746,7 +835,7 @@ const L = {
     kible_etk:'Arah kiblat', yon:['Utara','Timur laut','Timur','Tenggara','Selatan','Barat daya','Barat','Barat laut'],
     pw_alt:'Semua qari, dengarkan offline, dan pencarian tanpa batas', pw_m1:'Dengarkan ketujuh qari', pw_m2:'Unduh tilawah dan dengarkan offline', pw_m3:'Verifikasi hadis dan pencarian Al-Qur\'an tanpa batas',pw_m4:'Berlaku di semua perangkat dengan akun yang sama',
     pw_satinal:'Dapatkan Mihenk Plus',
-    pw_kalan:(n)=>`${n} kueri gratis tersisa`, pw_aktif:'Plus aktif', pw_basarili:'Aktif! Akses tanpa batas terbuka.', pw_gecersiz:'Kunci tidak valid.', pw_yakinda:'Pembelian segera hadir (App Store).',
+    pw_kalan:(n)=>`${n} kueri gratis tersisa`, pw_aktif:'Plus aktif', pw_basarili:'Aktif! Akses tanpa batas terbuka.', pw_gecersiz:'Kunci tidak valid.', pw_yakinda:'Pembelian tersedia di aplikasi iOS dan Android.',
     nav_bugun:'Hari Ini', ayar_baslik:'Pengaturan', ayar_dil:'Bahasa', ayar_gizlilik:'Kebijakan Privasi', ayar_kullanim:'Ketentuan Penggunaan',
     ayar_hakkinda:'Mihenk menyajikan teks hadis, penilaian ulama, dan terjemahan Al-Qur\'an dari sumber terverifikasi — bukan mengarangnya. Rujuklah kepada ulama untuk masalah yang diperselisihkan.',
     selam:'Assalamu\'alaikum', gun_ayet:'Ayat Hari Ini', gun_hadis:'Hadis Hari Ini',
@@ -758,7 +847,7 @@ const L = {
   ar: {
     indir_plus:'الاستماع دون اتصال متاح مع مِحَك بلس. يبقى الاستماع إلى العفاسي عبر الإنترنت مجانيًا.',indir_teklif:'نزّل هذا القارئ للاستماع دون إنترنت (≈800 ميغابايت).',indir_et:'تنزيل',indir_iptal:'إلغاء',indir_kaldir:'إزالة',indir_hazir:'{k} متاح دون إنترنت.',indir_basliyor:'جارٍ التحضير…',indir_bitti:'تم تنزيل التلاوة. يمكنك الاستماع دون إنترنت.',indir_iptal_oldu:'تم إيقاف التنزيل. يمكنك المتابعة لاحقًا.',indir_kaldir_onay:'هل تريد حذف التلاوة المنزَّلة من جهازك؟',
     indir_sil:'هل تريد حذف تلاوة هذه السورة من جهازك؟',indir_hata:'تعذّر تنزيل السورة. تحقّق من اتصالك.',
-    ayar_bildirim:'تنبيهات الأذان',ayar_deneme:'جرّب صوت الأذان',ayar_deneme_btn:'جرّب',deneme_bekle:'10 ث…',deneme_baslik:'تجربة صوت الأذان',deneme_govde:'كان ينبغي أن يصل هذا التنبيه بصوت الأذان.',deneme_not:'اخرج من التطبيق وانتظر — سيصل التنبيه بصوت الأذان خلال 10 ثوانٍ. تأكد أن الهاتف ليس صامتًا وأن وضع التركيز مغلق.',bildirim_govde:'حان وقت {v}.',bildirim_izin:'لم يُمنح إذن الإشعارات. يمكنك تفعيله من الإعدادات > مِحَنك > الإشعارات.',
+    ayar_bildirim:'تنبيهات الأذان',ayar_deneme:'جرّب صوت الأذان',ayar_deneme_btn:'جرّب',ayar_kimlik:'معرّف التثبيت',kimlik_kopyala:'نسخ',kimlik_kopyalandi:'تم النسخ',deneme_bekle:'10 ث…',deneme_baslik:'تجربة صوت الأذان',deneme_govde:'كان ينبغي أن يصل هذا التنبيه بصوت الأذان.',deneme_not:'اخرج من التطبيق وانتظر — سيصل التنبيه بصوت الأذان خلال 10 ثوانٍ. تأكد أن الهاتف ليس صامتًا وأن وضع التركيز مغلق.',bildirim_govde:'حان وقت {v}.',bildirim_izin:'لم يُمنح إذن الإشعارات. فعّله من إعدادات الهاتف ضمن مِحَنك > الإشعارات.',bildirim_kesin:'لوصول تنبيه الأذان في وقته، اسمح لمِحَنك بالمنبّهات والتذكيرات في إعدادات أندرويد.',
     ceviri_yok:'لا تتوفر ترجمة لهذه الرواية في المصدر؛ يُعرض النص بلغة {dil}.',
     yogun_baslik:'الخدمة مزدحمة الآن',
     ses_hata:'تعذّر تحميل التلاوة. تحقّق من اتصالك بالإنترنت.',fark_title:'نصّك يختلف عن المصدر',fark_body:'السجل أدناه هو نصّ الحديث كما ورد في المصدر. الحكم يخصّ نصّ المصدر لا النصّ الذي أدخلته.',pw_yenileme:'يتجدّد الاشتراك تلقائيًا ما لم يُلغَ قبل نهاية المدة بأربع وعشرين ساعة على الأقل. الإدارة والإلغاء من إعدادات حساب App Store.',
@@ -789,7 +878,7 @@ const L = {
     kible_etk:'اتجاه القبلة', yon:['شمال','شمال شرقي','شرق','جنوب شرقي','جنوب','جنوب غربي','غرب','شمال غربي'],
     pw_alt:'جميع القراء والاستماع دون اتصال والبحث غير المحدود', pw_m1:'استمع إلى القراء السبعة', pw_m2:'نزّل التلاوة واستمع دون اتصال', pw_m3:'تحقّق غير محدود من الأحاديث وبحث في القرآن',pw_m4:'يعمل على كل أجهزتك بالحساب نفسه',
     pw_satinal:'اشترك في مِحَنك بلس',
-    pw_kalan:(n)=>`بقي ${n} استعلامات مجانية`, pw_aktif:'بلس مُفعّل', pw_basarili:'تم التفعيل! وصول غير محدود.', pw_gecersiz:'مفتاح غير صالح.', pw_yakinda:'الشراء قريبًا (App Store).',
+    pw_kalan:(n)=>`بقي ${n} استعلامات مجانية`, pw_aktif:'بلس مُفعّل', pw_basarili:'تم التفعيل! وصول غير محدود.', pw_gecersiz:'مفتاح غير صالح.', pw_yakinda:'الشراء متاح في تطبيقي iOS وأندرويد.',
     nav_bugun:'اليوم', ayar_baslik:'الإعدادات', ayar_dil:'اللغة', ayar_gizlilik:'سياسة الخصوصية', ayar_kullanim:'شروط الاستخدام',
     ayar_hakkinda:'يُحضِر مِحَنك نصّ الحديث وحُكم العلماء وترجمة القرآن من مصادر موثّقة — لا يُنشئها. اسأل عالمًا في المسائل الخلافية.',
     selam:'السلام عليكم', gun_ayet:'آية اليوم', gun_hadis:'حديث اليوم',
@@ -801,7 +890,7 @@ const L = {
   ur: {
     indir_plus:'آف لائن سماعت مِحک پلس میں دستیاب ہے۔ عفاسی کے ساتھ آن لائن سماعت مفت رہے گی۔',indir_teklif:'انٹرنیٹ کے بغیر سننے کے لیے یہ قاری ڈاؤن لوڈ کریں (≈800 MB)۔',indir_et:'ڈاؤن لوڈ',indir_iptal:'منسوخ',indir_kaldir:'ہٹائیں',indir_hazir:'{k} آف لائن دستیاب ہے۔',indir_basliyor:'تیاری جاری…',indir_bitti:'تلاوت ڈاؤن لوڈ ہو گئی۔ اب آف لائن سن سکتے ہیں۔',indir_iptal_oldu:'ڈاؤن لوڈ رک گیا۔ بعد میں جاری رکھ سکتے ہیں۔',indir_kaldir_onay:'کیا ڈاؤن لوڈ شدہ تلاوت آلے سے حذف کریں؟',
     indir_sil:'کیا اس سورت کی تلاوت آلے سے حذف کر دیں؟',indir_hata:'سورت ڈاؤن لوڈ نہیں ہو سکی۔ کنکشن دیکھیں۔',
-    ayar_bildirim:'اذان کی اطلاعات',ayar_deneme:'اذان کی آواز آزمائیں',ayar_deneme_btn:'آزمائیں',deneme_bekle:'10 س…',deneme_baslik:'اذان کی آواز کا امتحان',deneme_govde:'یہ اطلاع اذان کی آواز کے ساتھ آنی چاہیے تھی۔',deneme_not:'ایپ سے باہر نکلیں اور انتظار کریں — اطلاع 10 سیکنڈ میں اذان کی آواز کے ساتھ آنی چاہیے۔ یقینی بنائیں کہ فون سائلنٹ پر نہیں اور فوکس بند ہے۔',bildirim_govde:'{v} کا وقت ہو گیا۔',bildirim_izin:'اطلاعات کی اجازت نہیں ملی۔ سیٹنگز > مِحنک > اطلاعات سے فعال کریں۔',
+    ayar_bildirim:'اذان کی اطلاعات',ayar_deneme:'اذان کی آواز آزمائیں',ayar_deneme_btn:'آزمائیں',ayar_kimlik:'انسٹالیشن آئی ڈی',kimlik_kopyala:'کاپی کریں',kimlik_kopyalandi:'کاپی ہو گیا',deneme_bekle:'10 س…',deneme_baslik:'اذان کی آواز کا امتحان',deneme_govde:'یہ اطلاع اذان کی آواز کے ساتھ آنی چاہیے تھی۔',deneme_not:'ایپ سے باہر نکلیں اور انتظار کریں — اطلاع 10 سیکنڈ میں اذان کی آواز کے ساتھ آنی چاہیے۔ یقینی بنائیں کہ فون سائلنٹ پر نہیں اور فوکس بند ہے۔',bildirim_govde:'{v} کا وقت ہو گیا۔',bildirim_izin:'اطلاعات کی اجازت نہیں ملی۔ فون کی ترتیبات میں مِحنک > اطلاعات سے فعال کریں۔',bildirim_kesin:'بروقت اذان کے لیے اینڈرائیڈ ترتیبات میں مِحنک کو الارم اور یاد دہانی کی اجازت دیں۔',
     ceviri_yok:'اس روایت کا ترجمہ ماخذ میں موجود نہیں؛ {dil} متن دکھایا جا رہا ہے۔',
     yogun_baslik:'ابھی رش ہے',
     ses_hata:'تلاوت لوڈ نہیں ہو سکی۔ اپنا انٹرنیٹ کنکشن دیکھیں۔',fark_title:'آپ کا متن ماخذ سے مختلف ہے',fark_body:'نیچے دیا گیا اندراج اس حدیث کی ماخذ میں موجود صورت ہے۔ درجہ ماخذ کے متن کا ہے، آپ کے لکھے متن کا نہیں۔',pw_yenileme:'رکنیت خود بخود تجدید ہوتی ہے جب تک مدت ختم ہونے سے کم از کم 24 گھنٹے قبل منسوخ نہ کی جائے۔ انتظام اور منسوخی App Store اکاؤنٹ کی ترتیبات سے۔',
@@ -832,7 +921,7 @@ const L = {
     kible_etk:'قبلہ کی سمت', yon:['شمال','شمال مشرق','مشرق','جنوب مشرق','جنوب','جنوب مغرب','مغرب','شمال مغرب'],
     pw_alt:'تمام قاری، آف لائن سماعت اور لامحدود تلاش', pw_m1:'تمام سات قاریوں کو سنیں', pw_m2:'تلاوت ڈاؤن لوڈ کریں اور آف لائن سنیں', pw_m3:'لامحدود حدیث تصدیق اور قرآن تلاش',pw_m4:'ایک ہی اکاؤنٹ والے تمام آلات پر کارآمد',
     pw_satinal:'مِحنک پلس حاصل کریں',
-    pw_kalan:(n)=>`${n} مفت سوالات باقی`, pw_aktif:'پلس فعال', pw_basarili:'فعال! لامحدود رسائی کھل گئی۔', pw_gecersiz:'کلید غلط ہے۔', pw_yakinda:'خریداری جلد (App Store)۔',
+    pw_kalan:(n)=>`${n} مفت سوالات باقی`, pw_aktif:'پلس فعال', pw_basarili:'فعال! لامحدود رسائی کھل گئی۔', pw_gecersiz:'کلید غلط ہے۔', pw_yakinda:'خریداری iOS اور Android ایپس میں دستیاب ہے۔',
     nav_bugun:'آج', ayar_baslik:'ترتیبات', ayar_dil:'زبان', ayar_gizlilik:'رازداری پالیسی', ayar_kullanim:'شرائطِ استعمال',
     ayar_hakkinda:'مِحنک حدیث کا متن، علما کا درجہ اور قرآن کا ترجمہ مستند مآخذ سے پیش کرتا ہے — خود نہیں گھڑتا۔ اختلافی مسائل میں عالم سے رجوع کریں۔',
     selam:'السلام علیکم', gun_ayet:'آج کی آیت', gun_hadis:'آج کی حدیث',
@@ -859,6 +948,14 @@ const LBL = {
 };
 const lbl = (k)=> LBL[k][dil]||LBL[k].en;
 const RTL = (d)=> d==='ar'||d==='ur';
+const ARIA_LABEL = {
+  tr:{settings:'Ayarlar',stop:'Durdur',back:'Geri',close:'Kapat',play:'Dinle',copy_id:'Kurulum kimliğini kopyala'},
+  en:{settings:'Settings',stop:'Stop',back:'Back',close:'Close',play:'Play',copy_id:'Copy installation ID'},
+  fr:{settings:'Réglages',stop:'Arrêter',back:'Retour',close:'Fermer',play:'Écouter',copy_id:'Copier l’identifiant d’installation'},
+  id:{settings:'Pengaturan',stop:'Berhenti',back:'Kembali',close:'Tutup',play:'Putar',copy_id:'Salin ID instalasi'},
+  ar:{settings:'الإعدادات',stop:'إيقاف',back:'رجوع',close:'إغلاق',play:'استماع',copy_id:'نسخ معرّف التثبيت'},
+  ur:{settings:'ترتیبات',stop:'روکیں',back:'واپس',close:'بند کریں',play:'سنیں',copy_id:'انسٹالیشن آئی ڈی کاپی کریں'},
+};
 
 function hadisKarti(h, tam){
   const alim = (h.alimler||[]).map(a=>`${esc(a.alim)}: ${esc(a.derece)}`).join(' · ');
@@ -970,7 +1067,13 @@ function ekranBitir(){
 }
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden){ ekranBitir(); olayGonder(); }
-  else if(_ekranAd === null && typeof aktifEkranAdi === 'function') ekranBaslat(aktifEkranAdi());
+  else {
+    if(_ekranAd === null && typeof aktifEkranAdi === 'function') ekranBaslat(aktifEkranAdi());
+    if(bildirimAcik){
+      let k=null; try{k=JSON.parse(localStorage.getItem('konum')||'null');}catch(e){}
+      if(k&&typeof k.lat==='number'&&typeof k.lng==='number') bildirimleriPlanla(k.lat,k.lng);
+    }
+  }
 });
 window.addEventListener('pagehide', ()=>{ ekranBitir(); olayGonder(); });
 
@@ -992,9 +1095,11 @@ async function calistirDogrula(){
       // tek başına göstermek yanlış onaydır; farkı kartın ÜSTÜNDE açıkça bildiririz.
       const fark = j.anlamFarki ? `<div class="kart uyari-kart" style="margin-bottom:10px">
         <div class="uyari-baslik">${T.fark_title||'Metnin kaynaktan farklı'}</div>
-        <div class="anlam">${esc(j.farkNotu||'')} ${T.fark_body||''}</div>
+        <div class="anlam">${T.fark_body||''}</div>
       </div>` : '';
       el.innerHTML=fark+`<div class="kart">${hadisKarti(j.hadis,true)}</div>`+benzerBlok(j.benzerler);
+      if(window.RatingKapisi) RatingKapisi.belkiSor();   // hadis bulundu = olumlu an
+
     }else{
       el.innerHTML=`<div class="kart uyari-kart">
         <div class="uyari-baslik">${T.nf_title}</div>
@@ -1102,8 +1207,10 @@ function vakitleriHesapla(lat, lng, gun = new Date()){
 // --- Ezan bildirimleri (yerel; uygulama kapalıyken de çalışır) ---
 const BILDIRIM_VAKIT = ['imsak','ogle','ikindi','aksam','yatsi'];   // güneş vakit değil, bildirim yok
 let bildirimAcik = localStorage.getItem('bildirim') === '1';
+let bildirimEngeli = '';
 const LN = () => window.Capacitor?.Plugins?.LocalNotifications;
 const ANDROID = () => window.Capacitor?.getPlatform?.() === 'android';
+let _sonBildirimPlan = 0;
 
 // Android 8'den beri bildirim sesi bildirimin DEĞİL kanalın özelliği: `sound`
 // alanı sessizce yok sayılır ve varsayılan ses çalar. Ezan sesi ancak sesi
@@ -1128,15 +1235,35 @@ async function kanalKur(){
   }catch(e){ console.warn('bildirim kanalı kurulamadı', e); }
 }
 
-async function bildirimleriPlanla(lat, lng){
+async function kesinAlarmVarMi(ayarlaraGit=false){
+  const ln=LN();
+  if(!ANDROID() || !ln?.checkExactNotificationSetting) return true;
+  try{
+    let s=await ln.checkExactNotificationSetting();
+    if(s?.exact_alarm==='granted') return true;
+    if(ayarlaraGit && ln.changeExactNotificationSetting){
+      s=await ln.changeExactNotificationSetting();
+      return s?.exact_alarm==='granted';
+    }
+  }catch(e){ console.warn('kesin alarm ayarı okunamadı',e); }
+  return false;
+}
+
+async function bildirimleriPlanla(lat, lng, zorla=false){
   const ln = LN(); if(!ln || !bildirimAcik) return 0;
   try{
-    // Eski planı temizle (her açılışta yeniden kurulur; iOS'ta 64 bekleyen sınırı var)
+    // Android 12+ kesin alarm kapalıysa vakti dakik biçimde garanti edemeyiz.
+    // Önce ayarı denetle; reddedilmişken mevcut planı silip sahte güven vermeyiz.
+    if(!(await kesinAlarmVarMi(false))) return -1;
+    if(!zorla && Date.now()-_sonBildirimPlan < 6*3600_000) return 0;
+    // Her açılışta/öne gelişte ufku yeniden doldur. iOS 64 bekleyen sınırına
+    // 60 bildirimle (12 gün), Android'de 150 bildirimle (30 gün) uyarız.
     const bekleyen = await ln.getPending();
     if(bekleyen?.notifications?.length) await ln.cancel({ notifications: bekleyen.notifications });
     const liste = [];
     const simdi = Date.now();
-    for(let g = 0; g < 7 && liste.length < 60; g++){
+    const gunSiniri=ANDROID()?30:12, bildirimSiniri=ANDROID()?150:60;
+    for(let g = 0; g < gunSiniri && liste.length < bildirimSiniri; g++){
       const gun = new Date(); gun.setDate(gun.getDate() + g);
       const h = vakitleriHesapla(lat, lng, gun); if(!h) break;
       for(const k of BILDIRIM_VAKIT){
@@ -1153,16 +1280,19 @@ async function bildirimleriPlanla(lat, lng){
       }
     }
     if(liste.length) await ln.schedule({ notifications: liste });
+    _sonBildirimPlan=Date.now();
     return liste.length;
   }catch(e){ console.error('bildirim planlanamadı', e); return 0; }
 }
 
 async function bildirimAcKapa(ac){
   const ln = LN();
+  bildirimEngeli = '';
   if(ac){
-    if(!ln) return false;                       // web'de bildirim yok
+    if(!ln){ bildirimEngeli='izin'; return false; } // web'de bildirim yok
     const izin = await ln.requestPermissions();
-    if(izin?.display !== 'granted') return false;
+    if(izin?.display !== 'granted'){ bildirimEngeli='izin'; return false; }
+    if(!(await kesinAlarmVarMi(true))){ bildirimEngeli='kesin'; return false; }
     await kanalKur();
   }
   bildirimAcik = !!ac; localStorage.setItem('bildirim', ac ? '1' : '0');
@@ -1182,7 +1312,7 @@ async function ezanBaslat(){
     ezanVeri = vakitleriHesapla(k.lat, k.lng) || await istek('/api/namaz', k);
     localStorage.setItem('konum', JSON.stringify({lat:k.lat, lng:k.lng}));
     ezanCiz(); pusulaBaslat();
-    bildirimleriPlanla(k.lat, k.lng);
+    bildirimleriPlanla(k.lat, k.lng, true);
   }
   catch(e){
     if(e && e.paywall) { /* paywall kendi ekranını açar */ }
@@ -1432,7 +1562,11 @@ function avantajCiz(){
   el.textContent=(typeof T.pw_avantaj==='function')?T.pw_avantaj(yuzde):('%'+yuzde);
   el.style.display='';
 }
-const iapAktifMi = (ci) => !!ci && (Object.keys((ci.entitlements&&ci.entitlements.active)||{}).length>0 || (ci.activeSubscriptions||[]).length>0);
+const PLUS_URUNLER = new Set([URUNLER.aylik, URUNLER.yillik]);
+const iapAktifMi = (ci) => !!ci && (
+  (ci.activeSubscriptions||[]).some(id=>PLUS_URUNLER.has(id)) ||
+  Object.values((ci.entitlements&&ci.entitlements.active)||{}).some(e=>PLUS_URUNLER.has(e&&e.productIdentifier))
+);
 // customerInfo elde varsa (satın alma yanıtı) tekrar ağa çıkma.
 async function iapPremiumKontrol(hazirCi){
   let ci = hazirCi;
@@ -1453,8 +1587,10 @@ async function premiumYap(){
   iapDogrulandi=true; premium=true; localStorage.removeItem('premium'); hakGoster();
   try{
     const c = await cihazAl();
-    await fetch(API+'/api/iap-onay',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz:c})});
-  }catch(e){}
+    const r=await fetch(API+'/api/iap-onay',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz:c})});
+    const j=await r.json().catch(()=>({}));
+    return !!(r.ok&&j.premium===true);
+  }catch(e){ return false; }
 }
 function planSec(urun){
   seciliUrun=urun;
@@ -1502,9 +1638,16 @@ async function satinAl(){
     // parasını ödemiş olduğu hâlde EKRANDA HİÇBİR ŞEY GÖRMÜYORDU.
     olay('satinalma',{durum:'basladi',plan:seciliUrun});
     const { customerInfo } = await Purchases.purchaseStoreProduct({ product: rcUrunler[seciliUrun] });
+    let aktif=await iapPremiumKontrol(customerInfo);
+    // StoreKit/Play yanıtı kısa süre gecikebilir; fakat aktif Mihenk ürünü
+    // görülmeden Plus açılmaz ve "tamam" hunisine yazılmaz.
+    for(let i=0;!aktif&&i<2;i++){
+      await new Promise(r=>setTimeout(r,400*(i+1)));
+      aktif=await iapPremiumKontrol();
+    }
+    if(!aktif) throw new Error('satın alma aktif abonelik olarak doğrulanamadı');
     olay('satinalma',{durum:'tamam',plan:seciliUrun});
-    if(await iapPremiumKontrol(customerInfo)){ m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
-    else { await premiumYap(); m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
+    m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200);
   }catch(e){
     const iptal = e && (e.userCancelled || e.code==='1' || /cancel/i.test(e.message||''));
     olay('satinalma',{durum: iptal?'iptal':'hata', plan:seciliUrun});
@@ -1524,12 +1667,10 @@ async function restore(){
     else { olay('geri_yukle',{durum:'yok'}); m.textContent=T.pw_restore_yok; m.className='paywall-mesaj'; }
   }catch(e){ olay('geri_yukle',{durum:'hata'}); m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; }
 }
-// --- Soğuk açılış: önbellek + "sunucu uyanıyor" göstergesi -----------------
-// ÖLÇÜM (7 Ağu 2026): Render free instance 15 dk hareketsizlikte uyuyor, uyanış
-// 32,8 sn sürüyor. durumYukle() ve gununYukle() açılışta doğrudan sunucuya
-// gidiyordu; o yarım dakika boyunca "Bugün" ekranı BOŞTU ve kullanıcı uygulamayı
-// bozuk sanıyordu. Artık son bilinen durum ve içerik localStorage'dan ANINDA
-// çizilir, sunucu yanıtı gelince sessizce güncellenir.
+// --- Gecikmeli açılış: önbellek + durum göstergesi --------------------------
+// Starter uyumasa da deploy/ağ gecikmesinde Bugün ekranı boş kalmasın. Son
+// bilinen durum ve içerik localStorage'dan anında çizilir; sunucu yanıtı gelince
+// sessizce güncellenir.
 const OB = {
   oku(k){ try{ return JSON.parse(localStorage.getItem('ob_'+k)||'null'); }catch(e){ return null; } },
   yaz(k,v){ try{ localStorage.setItem('ob_'+k, JSON.stringify(v)); }catch(e){} },
@@ -1797,9 +1938,10 @@ async function kuranVeriYukle(){
   const el=document.getElementById('sureListe');
   el.innerHTML=`<div class="kuran-yukleniyor">${T.kuran_yukleniyor||'Yükleniyor…'}</div>`;
   try{
+    const jsonAl=async (u)=>{const r=await fetch(u);if(!r.ok) throw new Error(`${u}: HTTP ${r.status}`);return r.json();};
     const [a,s]=await Promise.all([
-      fetch('ayat.json').then(r=>r.json()),
-      fetch('sure.json').then(r=>r.json()),
+      jsonAl('ayat.json'),
+      jsonAl('sure.json'),
     ]);
     KURAN=a; SURELER=s;
     return true;
@@ -1879,7 +2021,7 @@ function sureAc(no, gitAyet){
     <div class="ayet" id="ay-${a.id}">
       <div class="ayet-ust">
         <span class="ayet-no">${a.ayet}</span>
-        <button class="ses-btn" data-ses="${a.id}" aria-label="Dinle">▶</button>
+        <button class="ses-btn" data-ses="${a.id}" aria-label="${esc((ARIA_LABEL[dil]||ARIA_LABEL.en).play)}">▶</button>
       </div>
       <div class="arapca">${esc(a.ar||'')}</div>
       ${(a.okunus && dil!=='ar')?`<div class="ayet-okunus">${esc(a.okunus)}</div>`:''}
@@ -2088,9 +2230,21 @@ function aktifEkranAdi(){
   return bol;
 }
 // Ayarlar
-document.getElementById('ayarBtn').onclick=()=>document.getElementById('ayarlar').classList.add('acik');
+document.getElementById('ayarBtn').onclick=async()=>{
+  document.getElementById('ayarlar').classList.add('acik');
+  const b=document.getElementById('cihazKimlikBtn');
+  if(b){ const id=await cihazAl(); b.dataset.tam=id; b.textContent=id ? `${id.slice(0,8)}…${id.slice(-4)}` : T.kimlik_kopyala; }
+};
 document.getElementById('ayarKapat').onclick=()=>document.getElementById('ayarlar').classList.remove('acik');
 document.getElementById('ayarlar').onclick=e=>{ if(e.target.id==='ayarlar') e.currentTarget.classList.remove('acik'); };
+document.getElementById('cihazKimlikBtn').onclick=async()=>{
+  const b=document.getElementById('cihazKimlikBtn'), id=b.dataset.tam||await cihazAl();
+  try{
+    if(navigator.clipboard?.writeText) await navigator.clipboard.writeText(id);
+    else { const t=document.createElement('textarea'); t.value=id; t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+    b.textContent=T.kimlik_kopyalandi; setTimeout(()=>{ b.textContent=id ? `${id.slice(0,8)}…${id.slice(-4)}` : T.kimlik_kopyala; },1400);
+  }catch(e){ b.textContent=id; }
+};
 // Ezan bildirimi anahtarı
 const bildirimAnahtarCiz=()=>{
   const b=document.getElementById('bildirimAnahtar'); if(!b) return;
@@ -2103,7 +2257,7 @@ document.getElementById('bildirimAnahtar').onclick=async()=>{
   const oldu=await bildirimAcKapa(yeni);
   olay('ezan_bildirim',{acik:!!(yeni&&oldu)});
   bildirimAnahtarCiz();
-  if(yeni && !oldu){ alert(T.bildirim_izin||'Bildirim izni verilmedi. Ayarlar > Bildirimler bölümünden açabilirsin.'); return; }
+  if(yeni && !oldu){ alert((bildirimEngeli==='kesin'?T.bildirim_kesin:T.bildirim_izin)||'Bildirim izni verilmedi.'); return; }
   if(yeni){
     let k=null; try{ k=JSON.parse(localStorage.getItem('konum')||'null'); }catch(e){}
     if(k) { const s=await bildirimleriPlanla(k.lat,k.lng); if(s) console.log('planlanan bildirim:',s); }
@@ -2116,7 +2270,7 @@ document.getElementById('denemeBtn').onclick=async()=>{
   const ln=LN(); if(!ln) return;
   const b=document.getElementById('denemeBtn');
   const izin=await bildirimAcKapa(true);
-  if(!izin){ alert(T.bildirim_izin||'Bildirim izni verilmedi.'); return; }
+  if(!izin){ alert((bildirimEngeli==='kesin'?T.bildirim_kesin:T.bildirim_izin)||'Bildirim izni verilmedi.'); return; }
   try{
     await ln.schedule({ notifications:[{
       id: 999,
@@ -2231,6 +2385,9 @@ function dilUygula(yeni){
   // basılırsa ekrana kaynak kodu yazılır. Yalnızca metinleri uygula.
   document.querySelectorAll('[data-i18n]').forEach(el=>{const k=el.dataset.i18n; const v=L[dil][k]; if(typeof v==='string') el.innerHTML=v;});
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{const k=el.dataset.i18nPh; if(L[dil][k]!==undefined) el.placeholder=L[dil][k];});
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{const k=el.dataset.i18nAria;el.setAttribute('aria-label',(ARIA_LABEL[dil]||ARIA_LABEL.en)[k]||k);});
+  const yenileme=document.querySelector('[data-i18n="pw_yenileme"]');
+  if(yenileme) yenileme.textContent=String(T.pw_yenileme||'').replace('App Store', window.Capacitor?.getPlatform?.()==='android'?'Google Play':'App Store');
   document.querySelectorAll('.dil').forEach(b=>b.classList.toggle('aktif',b.dataset.dil===dil));
   cipleriKur();
   // açık sonuçları temizle (dil karışmasın)
@@ -2271,17 +2428,20 @@ localStorage.removeItem('premium');
 // Konum kaydediliyordu ama hiç geri yüklenmiyordu: kullanıcı uygulamayı her
 // açışında Ezan sekmesinde tekrar "Konumumu kullan"a basmak zorunda kalıyordu.
 // İzin zaten verilmiş, koordinat zaten elimizde — sormaya gerek yok.
-(function konumuGeriYukle(){
+(async function konumuGeriYukle(){
   let k=null; try{ k=JSON.parse(localStorage.getItem('konum')||'null'); }catch(e){}
   if(!k || typeof k.lat!=='number' || typeof k.lng!=='number') return;
   const v = vakitleriHesapla(k.lat, k.lng);
   if(!v) return;                       // adhan yüklenemediyse butona düşsün
   ezanVeri = v; ezanCiz(); pusulaBaslat();
+  if(bildirimAcik){
+    const n=await bildirimleriPlanla(k.lat,k.lng,true);
+    if(n===-1) console.warn('Kesin alarm izni kapalı; ezan bildirimleri yeniden planlanmadı.');
+  }
 })();
 
 dilUygula(dil); // başlangıç
-// ÖNCE önbellekten çiz (0 ms), SONRA sunucuya git. Render free instance uykudan
-// 32,8 sn'de kalkıyor; eskiden bu süre boyunca ekran boştu.
+// ÖNCE önbellekten çiz (0 ms), SONRA sunucuya git; deploy/ağ gecikmesinde ekran boş kalmaz.
 durumOnbellektenCiz();
 durumYukle();   // premium/kalan durumunu çek
 gununYukle();   // Bugün: günün ayeti + hadisi (önbellek varsa anında çizer)
