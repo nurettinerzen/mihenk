@@ -10,21 +10,24 @@
 //   GET  /health
 
 import http from 'node:http';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, statfsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { embedOne, embedder, cos, cosI8, DIM } from './embed.mjs';
 import * as depo from './depo.mjs';
 import { metinAl, metinDili, trNorm, arNorm, hadisMatn, hadisMetni, DILLER } from './metin.mjs';
 import * as adhan from 'adhan';
 import tzlookup from 'tz-lookup';
 import Anthropic from '@anthropic-ai/sdk';
-import { olayYaz, ozet as olayOzet } from './olay.mjs';
+import { olayYaz, ozet as olayOzet, diskDurumu } from './olay.mjs';
 import { panelHtml } from './panel.mjs';
 import { toplamKota } from './kota.mjs';
 
 const PORT = process.env.PORT || 8788;
 const APP_KEY = process.env.APP_KEY || 'hadis-dev';
 const MODEL = process.env.MODEL || 'claude-haiku-4-5';
-const SURUM = 1;
+const SURUM = '1.5';
+const BUILD_SHA = process.env.RENDER_GIT_COMMIT || process.env.BUILD_SHA || 'yerel';
+const PLUS_URUNLER = new Set(['mihenk_plus_aylik', 'mihenk_plus_yillik']);
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
 // RevenueCat sunucu doğrulaması (IAP sahteciliğini engeller). Yoksa uyarı verilir.
@@ -40,7 +43,7 @@ const RC_API = process.env.RC_API || 'https://api.revenuecat.com/v1';
 // canlı API'ye karşı ölçerken ~950 ayrı test kimliği kullanıldı ve RC panelinde
 // 837 sahte müşteri belirdi — bir günde patlayan kullanıcı grafiği tamamen buydu.
 // Ölçüm kimlikleri RC'ye HİÇ sorulmaz (analitikteki elemeyle aynı desen).
-const TEST_KIMLIK = /^(test-|ekran-goruntusu-|teshis-)/;
+const TEST_KIMLIK = /^(test-|degerlendirme-|ekran-goruntusu-|teshis-)/;
 
 async function rcPremiumMi(cihaz) {
   if (!RC_SECRET || TEST_KIMLIK.test(String(cihaz || ''))) return null;
@@ -55,12 +58,16 @@ async function rcPremiumMi(cihaz) {
     // bakmak, parası iade edilmiş kullanıcıya dönem sonuna kadar premium vermek demek.
     // (unsubscribe_detected_at / billing_issues_detected_at premium'u KAPATMAZ:
     //  iptal eden kullanıcı ödediği dönemin sonuna kadar hizmeti hak eder.)
-    const gecerli = (o) => Object.values(o || {}).some(x =>
-      !x.refunded_at && (!x.expires_date || new Date(x.expires_date) > new Date()));
-    // ÖNCE entitlement (doğru yapılandırma). Ama RevenueCat'te ürün/entitlement
-    // tanımlı değilse burası BOŞ gelir ve gerçekten ödeyen kullanıcı premium alamaz
-    // — yani parayı alıp hizmeti vermemiş oluruz. Abonelik kaydına da bakarız.
-    return gecerli(j?.subscriber?.entitlements) || gecerli(j?.subscriber?.subscriptions);
+    const gecerli = (x) => x && !x.refunded_at
+      && (!x.expires_date || new Date(x.expires_date) > new Date());
+    // Başka bir RevenueCat entitlement/ürünü Mihenk Plus açamaz. Uygulama aynı
+    // projeye ileride başka ürün eklerse "herhangi bir aktif abonelik" kontrolü
+    // yanlışlıkla sınırsız arama verirdi.
+    const ent = Object.values(j?.subscriber?.entitlements || {}).some(x =>
+      PLUS_URUNLER.has(x?.product_identifier) && gecerli(x));
+    const sub = Object.entries(j?.subscriber?.subscriptions || {}).some(([urun, x]) =>
+      PLUS_URUNLER.has(urun) && gecerli(x));
+    return ent || sub;
   } catch { return null; }
 }
 console.log('Depo açılıyor (SQLite)...');
@@ -107,7 +114,11 @@ function lexHadis(dil, qw) {
   const out = new Float32Array(N);
   for (const w of qw) {
     const vars = arMi2 ? arVaryant(w) : kokVaryant(w);
-    const rows = depo.hadisEslesen(dil, vars).filter(i => i <= N);   // mevzuat satırları puan dışı
+    // الربا içindeki kök "ربا", Arapçada "Rabbimiz olarak" anlamındaki ربا ile
+    // aynı yazılır. Harf-i tarifli faiz sorgusunda yalın biçimi kabul etmek
+    // tamamen alakasız "رضينا بالله ربا" rivayetlerini öne çıkarıyordu.
+    const arYalin = !(arMi2 && arKok(w) === 'ربا' && /^(وال|فال|بال|كال|لل|ال)/.test(w));
+    const rows = depo.hadisEslesen(dil, vars, arYalin).filter(i => i <= N);   // mevzuat satırları puan dışı
     const idf = Math.log(1 + N / (1 + rows.length));
     for (const i of rows) out[i - 1] += idf;
   }
@@ -166,7 +177,7 @@ let hadisVek = null;
 const i8Yukle = (f) => { const b = readFileSync(yol(f)); return new Int8Array(b.buffer, b.byteOffset, b.length); };
 try { hadisVek = { tr: i8Yukle('model/vektor-hadis-tr.i8'), en: i8Yukle('model/vektor-hadis-en.i8') }; console.log('Hadis semantik vektörleri yüklendi (int8).'); }
 catch { console.log('Hadis vektörleri henüz yok — konu araması lexical modda.'); }
-// Model ARKA PLANDA ısınır, boot'u BLOKLAMAZ: Free instance'ta (0.1 CPU) uykudan
+// Model ARKA PLANDA ısınır, boot'u BLOKLAMAZ: düşük CPU'lu instance'ta deploy sonrası
 // uyanış hızlı kalsın — /health, statik sayfa, günün içeriği ve namaz model
 // beklemeden yanıt verir; semantik uçlar hazır olana dek embedOne içinde bekler.
 console.log('Embedding modeli arka planda yükleniyor...');
@@ -291,7 +302,9 @@ function derecele(h, dil = 'tr') {
     metinDili: metinDili(h, dil),   // istenen dilden farklıysa istemci uyarı gösterir
     derece: h.derece, dereceEtiket: b.etiket[dil] || b.etiket.en || b.etiket.tr, dereceRenk: b.renk,
     // Grade açıklaması artık 6 dilde; eksikse en→tr'ye düşer.
-    dereceAnlam: h.aciklama || (b.anlam[dil] || b.anlam.en || b.anlam.tr),
+    dereceAnlam: (h.mevzuat && dil !== 'tr')
+      ? (b.anlam[dil] || b.anlam.en || b.anlam.tr)
+      : (h.aciklama || (b.anlam[dil] || b.anlam.en || b.anlam.tr)),
     dereceRaw: h.dereceRaw, alimler: alimlerDil(h.alimler, dil),
     mevzuat: !!h.mevzuat, referans: h.referans || null,
   };
@@ -303,7 +316,7 @@ async function eslestir(metin, adaylar, dil = 'tr') {
     // mock: en yüksek skorlu adayı, skoru belirginse eşleşmiş say. Yakınlığı mock yargılayamaz → null.
     const en = adaylar[0];
     const es = en && en._skor > 12 ? en.id : null;
-    return { eslesenId: es, anlamFarki: false, farkNotu: '', yakinId: null, yakinGuven: 0, guven: en ? Math.min(1, en._skor / 40) : 0 };
+    return { eslesenId: es, anlamFarki: false, yakinId: null, yakinGuven: 0, guven: en ? Math.min(1, en._skor / 40) : 0 };
   }
   // İsnad zinciri ("Bize A tahdis etti… O B'den…") 300 karakterin tamamını yiyip
   // asıl sözü listeden dışarıda bırakıyordu; model karşılaştıramadığı için hem
@@ -329,7 +342,6 @@ async function eslestir(metin, adaylar, dil = 'tr') {
       '  • hükmü tersine çeviren kelime ("elinden dilinden EMİN olduğu" ↔ "ZARAR GÖRDÜĞÜ")\n' +
       '  • kaynakta olmayan bir cümle/şart EKLENMİŞ ("…hayır söylesin" ↔ "…dilediğini söylesin", "+kadınlar müstesnadır")\n' +
       '  Şüphedeysen true ver. Yanlış onay, onaysızlıktan çok daha zararlıdır.\n' +
-      '- farkNotu: anlamFarki true ise farkı TEK cümleyle, kullanıcının dilinde yaz (ör. "Kaynakta \'beş\' geçiyor, senin metninde \'üç\' yazıyor."). Değilse boş string.\n' +
       '- yakinId: eslesenId null ise VE adaylardan biri kullanıcının metniyle GERÇEKTEN AYNI KONU/MANA taşıyorsa onun id\'si.\n' +
       '  ⚠️ ÇOK ÖNEMLİ: Sırf ortak bir kelime paylaşmak (ör. "imandandır", "iman", "Allah", "cennet", "namaz") YAKINLIK DEĞİLDİR. Konu/mesaj gerçekten örtüşmüyorsa null döndür. Zorlama eşleştirme yanlış bilgidir. Şüphedeysen null.\n' +
       '- yakinGuven: yakinId adayının kullanıcının kastıyla ne kadar aynı konuda olduğunu 0-1 ver (alakasızsa 0).\n' +
@@ -343,18 +355,17 @@ async function eslestir(metin, adaylar, dil = 'tr') {
         properties: {
           eslesenId: { type: ['string', 'null'], description: 'Aynı hadis olan adayın id\'si (örn "h123"), yoksa null' },
           anlamFarki: { type: 'boolean', description: 'Kullanıcının metni kaynağın manasını değiştiriyorsa true' },
-          farkNotu: { type: 'string', description: 'anlamFarki true ise farkı tek cümleyle anlat, değilse boş' },
           yakinId: { type: ['string', 'null'], description: 'Aynı değil ama GERÇEKTEN aynı konuda en yakın adayın id\'si, yoksa null' },
           yakinGuven: { type: 'number', description: '0-1, yakinId ne kadar aynı konuda' },
           guven: { type: 'number', description: '0-1 arası eşleşme güveni' },
         },
-        required: ['eslesenId', 'anlamFarki', 'farkNotu', 'yakinId', 'yakinGuven', 'guven'],
+        required: ['eslesenId', 'anlamFarki', 'yakinId', 'yakinGuven', 'guven'],
       },
     }],
     tool_choice: { type: 'tool', name: 'eslesme' },
   });
   const tu = r.content.find(c => c.type === 'tool_use');
-  return tu ? tu.input : { eslesenId: null, anlamFarki: false, farkNotu: '', yakinId: null, yakinGuven: 0, guven: 0 };
+  return tu ? tu.input : { eslesenId: null, anlamFarki: false, yakinId: null, yakinGuven: 0, guven: 0 };
 }
 
 // --- Arapça lexical arama (korpustaki asıl Arapça metin üzerinde) ---
@@ -439,13 +450,13 @@ async function dogrula(metin, dil = 'tr') {
   const mv = mevzuatAdaylar(metin);
   if (mv.length) adaylar = [...mv, ...adaylar].filter((h, i, a) => a.findIndex(x => x.id === h.id) === i);
   if (!adaylar.length) return { bulundu: false, yakin: null, benzerler: [] };
-  const { eslesenId, anlamFarki, farkNotu, yakinId, yakinGuven, guven } = await eslestir(metin, adaylar, dil);
+  const { eslesenId, anlamFarki, yakinId, yakinGuven, guven } = await eslestir(metin, adaylar, dil);
   const es = eslesenId && guven >= 0.45 ? adaylar.find(a => a.id === eslesenId) : null;
   if (es) {
     // Kaynak sahih olsa bile kullanıcının metni manayı değiştiriyorsa "sahih" demek
     // yanlış bilgidir; kaydı gösterir ama farkı açıkça bildiririz.
     return {
-      bulundu: true, guven, anlamFarki: !!anlamFarki, farkNotu: anlamFarki ? (farkNotu || '') : '',
+      bulundu: true, guven, anlamFarki: !!anlamFarki,
       hadis: derecele(es, dil),
       benzerler: adaylar.filter(a => a.id !== es.id).slice(0, 3).map(a => derecele(a, dil)),
     };
@@ -520,6 +531,11 @@ async function genislet(konu, dil) {
 // DOKUNULMADI: ölçülmeden yapılan genişletme sessiz regresyon üretir.
 const KAVRAM_HADIS = {
   tevazu: 'alçakgönüllülük, kibirlenmemek, büyüklenmemek, mütevazı olmak',   // "tevazu" 14 kayıt
+  komsuluk: 'komşuya iyilik, komşuya ikram, komşuya eziyet etmemek, komşuluk hakkı',
+  anne_baba: 'anne babaya iyilik, ana babaya itaat, anne baba rızası',
+  ticaret: 'dürüst tüccar, alışverişte doğruluk, satarken aldatmamak',
+  borc: 'borcu ödemek, borçluya mühlet, borçtan sakınmak',
+  selam_vermek: 'selamı yaymak, selamlaşmak, selam vermek',
   giybet: 'gıybet, çekiştirmek, arkasından konuşmak',                        // "gıybet" 9 kayıt
   dedikodu: 'gıybet, çekiştirmek, arkasından konuşmak, koğuculuk',           // "dedikodu" 13 kayıt
   hased: 'haset, kıskançlık, çekememek',                                     // "haset" 9 kayıt
@@ -534,8 +550,25 @@ const KAVRAM_HADIS = {
 // DAHA YUKARI ÇEKİLMEZ: gerçek Arapça/Urduca konular çöple aynı bantta duruyor,
 // eşiği 0,26'nın üstüne almak onları sessizce boşa düşürür.
 const ALAKA_TABANI = 0.20;
+const ALAKASIZ_ACIK = {
+  tr: /(futbol maçı|video oyunu|bilgisayar oyunu|araba tamiri|borsa fiyatı)/i,
+  en: /(football match|soccer match|video game|computer game|car repair|stock price)/i,
+  fr: /(match de football|jeu vidéo|jeu video|réparation de voiture|cours de bourse)/i,
+  id: /(pertandingan sepak bola|gim video|permainan video|perbaikan mobil|harga saham)/i,
+  ar: /(مباراة كرة القدم|لعبة فيديو|إصلاح السيارة|سعر السهم)/,
+  ur: /(فٹ بال میچ|ویڈیو گیم|گاڑی کی مرمت|شیئر کی قیمت)/,
+};
+function konuKaydiUygun(h, sorgu, dil) {
+  // Türkçedeki "sabır" aynı zamanda aloe kökenli eski bir göz ilacı adıdır.
+  // Konu sabır erdemiyken ilaç rivayeti lexical eşleşmeyle ilk üçe çıkamaz.
+  if (dil === 'tr' && kavramAnahtar(sorgu) === 'sabir'
+    && /(sabır çek|gözlerinden? rahatsız|göz tedavisi)/i.test(h.tr || '')) return false;
+  return true;
+}
 
 async function konu(sorgu, dil = 'tr') {
+  if (ALAKASIZ_ACIK[dil]?.test(String(sorgu || '')))
+    return { konu: sorgu, sonuclar: [], alakasiz: true };
   // Kur'an'daki gibi: metinlerde karşılığı olmayan terimi aç ("alkol" hadis
   // metinlerinde hiç geçmez, "içki/şarap" geçer).
   // KAVRAM_HADIS önceliklidir: hadis çevirilerindeki kelime dağarcığı meâlden
@@ -589,6 +622,7 @@ async function konu(sorgu, dil = 'tr') {
     for (const [i, sk] of puan) {
       if (sec.length >= 10 || sk < ALAKA_TABANI) break;
       const h = kayit.get(i) || depo.hadisAl(i + 1); kayit.set(i, h);
+      if (!konuKaydiUygun(h, sorgu, dil)) continue;
       const imza = trNorm(hadisMetni(metinAl(h, dil))).slice(0, 90);
       if (gor.has(imza)) continue;
       gor.add(imza); sec.push(i);
@@ -892,11 +926,15 @@ setInterval(() => {
     istek: olcum.istek, dil: olcum.dil, hata: olcum.hata,
     bulunamadi: olcum.bulunamadi, anlamFarki: olcum.anlamFarki,
     kotaCihaz: toplamKota.cihazSayisi(), kota: toplamKota.durum(),
-    bosSorgu: olcum.bosSorgu.slice(-25).map(x => `${x.yol}/${x.dil}: ${x.sorgu}`),
+    bosSorgu: olcum.bosSorgu.slice(-25),
   }));
 }, 1800_000).unref();
 const bosKaydet = (yol, dil, sorgu) => {
-  olcum.bosSorgu.push({ yol, dil, sorgu: String(sorgu || '').slice(0, 80), t: new Date().toISOString() });
+  const s = String(sorgu || '').trim();
+  // Kullanıcının dinî arama metni loga açık biçimde düşmez. Aynı boş sorgunun
+  // tekrarını görebilmek için geri döndürülemez kısa özet + uzunluk yeterli.
+  const ozet = createHash('sha256').update(`${dil}|${s}`).digest('hex').slice(0, 16);
+  olcum.bosSorgu.push({ yol, dil, ozet, uzunluk: s.length, t: new Date().toISOString() });
   if (olcum.bosSorgu.length > 300) olcum.bosSorgu.shift();
 };
 
@@ -919,12 +957,17 @@ const bosKaydet = (yol, dil, sorgu) => {
 const LIMIT = Number(process.env.RATE_LIMIT || 3000);          // IP / saat
 const CIHAZ_LIMIT = Number(process.env.CIHAZ_RATE_LIMIT || 300); // cihaz / saat
 const cihazSayac = new Map();
+const OLAY_IP_LIMIT = Number(process.env.OLAY_IP_RATE_LIMIT || 6000);
+const OLAY_CIHAZ_LIMIT = Number(process.env.OLAY_CIHAZ_RATE_LIMIT || 600);
+const olayIpSayac = new Map(), olayCihazSayac = new Map();
 // Map'ler istemciden gelen anahtarlarla (IP, cihaz) büyüyor ve hiç temizlenmiyordu.
 // Saatte bir süresi geçmiş kayıtları at; premium kayıtları korunur.
 setInterval(() => {
   const now = Date.now();
   for (const [k, v] of istekSayac) if (now > v.reset) istekSayac.delete(k);
   for (const [k, v] of cihazSayac) if (now > v.reset) cihazSayac.delete(k);
+  for (const [k, v] of olayIpSayac) if (now > v.reset) olayIpSayac.delete(k);
+  for (const [k, v] of olayCihazSayac) if (now > v.reset) olayCihazSayac.delete(k);
   // Premium önbelleği de sınırsız büyümesin. 7 gündür dokunulmamış kaydı at:
   // silinse bile kayıp yok, cihaz döndüğünde RevenueCat'ten yeniden öğrenilir.
   for (const [k, v] of premiumCihaz) if (now - v.guncel > 7 * 86400_000) premiumCihaz.delete(k);
@@ -938,6 +981,8 @@ function sayacAstiMi(harita, anahtar, limit) {
 }
 const limitAsildi = (ip) => sayacAstiMi(istekSayac, ip, LIMIT);
 const cihazLimitAsildi = (c) => sayacAstiMi(cihazSayac, c, CIHAZ_LIMIT);
+const olayLimitAsildi = (ip, c) => sayacAstiMi(olayIpSayac, ip, OLAY_IP_LIMIT)
+  || sayacAstiMi(olayCihazSayac, c || 'anon', OLAY_CIHAZ_LIMIT);
 
 // --- Freemium: cihaz başına TOPLAM ücretsiz AI sorgusu; premium = sınırsız ---
 const FREE_LIMIT = Number(process.env.FREE_LIMIT || 5);
@@ -948,8 +993,8 @@ const AI_YOLLAR = ['/api/dogrula', '/api/konu', '/api/kuran-konu']; // limite ta
 // ESKİDEN premium kaydı sunucunun belleğinde bir Map'ti. Render her deploy/restart/
 // uyanmada süreci sıfırlıyor → o an uygulamada olan ABONE bir sonraki sorgusunda
 // 402 yiyip paywall görüyordu. Parası alınmış, hizmeti kesilmiş oluyordu.
-// Render'da kalıcı disk YOK (render.yaml'da disk tanımı yok, plan: standard) ve
-// disk eklemek tek örneğe bağlar. Bu yüzden kalıcılığı biz TUTMUYORUZ: her cihazın
+// Render'da kalıcı disk olsa da aboneliğin doğruluk kaynağı olarak yerel kayıt
+// tutmuyoruz: her cihazın
 // premium'u RevenueCat'ten (zaten mağaza makbuzunun tek doğruluk kaynağı) sorulur,
 // yanıt kısa süreli bellek önbelleğine yazılır. Süreç ölse de kayıp yok — önbellek
 // boşalır, ilk istekte RevenueCat'ten yeniden öğrenilir.
@@ -989,6 +1034,10 @@ function govde(req) {
     req.on('data', c => { n += c.length; if (n > 200_000) { rej(new Error('gövde büyük')); req.destroy(); } d += c; });
     req.on('end', () => res(d));
   });
+}
+function istemciIp(req) {
+  const xff = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return (process.env.PROXY_GUVENILIR === '1' && xff) || req.socket.remoteAddress || 'x';
 }
 
 const sunucu = http.createServer(async (req, res) => {
@@ -1039,8 +1088,10 @@ const sunucu = http.createServer(async (req, res) => {
     // değilse analitik ve kota her deploy'da siliniyor ve bu SESSİZCE oluyor.
     // Anahtar istemeyen bir uçta durmalı ki her deploy sonrası tek istekle
     // bakılabilsin — panele girmek için gizli anahtar gerekiyor.
-    return res.end(JSON.stringify({ ok: true, surum: SURUM, hadis: depo.nCorpus, ayet: depo.nAyet,
-      model: MODEL, llm: !!anthropic, diskKalici: existsSync('/veri') }));
+    let diskBosMB = null;
+    try { const s = statfsSync(process.env.VERI_DIZIN || (existsSync('/veri') ? '/veri' : '.')); diskBosMB = Math.round(s.bavail * s.bsize / 1048576); } catch {}
+    return res.end(JSON.stringify({ ok: true, surum: SURUM, sha: BUILD_SHA, hadis: depo.nCorpus, ayet: depo.nAyet,
+      model: MODEL, llm: !!anthropic, diskKalici: existsSync('/veri'), diskBosMB, analitik: diskDurumu() }));
   }
 
   // /app-ads.txt KALDIRILDI: uygulamada hiç reklam yok (AdMob SDK'sı da yok).
@@ -1049,13 +1100,19 @@ const sunucu = http.createServer(async (req, res) => {
 
   // Statik sunum: uygulama HTML'i + fontlar (tek servis olsun diye).
   if (req.method === 'GET') {
-    const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
+    const MIME = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' };
     let p = url.pathname === '/' ? '/hadis.html' : url.pathname;
     if (p === '/gizlilik') p = '/gizlilik.html';
     if (p === '/kullanim') p = '/kullanim.html';
-    if (/^\/(hadis\.html|gizlilik\.html|kullanim\.html|fonts\.css|fonts\/[\w.-]+\.woff2)$/.test(p)) {
+    const STATIK = {
+      '/adhan.min.js': 'node_modules/adhan/lib/bundles/adhan.umd.min.js',
+      '/tz.js': 'node_modules/tz-lookup/tz.js',
+      '/ayat.json': 'ayat.json',
+      '/sure.json': 'sure.json',
+    };
+    if (STATIK[p] || /^\/(hadis\.html|gizlilik\.html|kullanim\.html|fonts\.css|fonts\/[\w.-]+\.woff2)$/.test(p)) {
       try {
-        const dosya = readFileSync(yol(p.replace(/^\//, '')));
+        const dosya = readFileSync(yol(STATIK[p] || p.replace(/^\//, '')));
         const ext = p.slice(p.lastIndexOf('.'));
         // HTML/CSS taze kalsın (redeploy'da anında güncellensin); fontlar uzun cache.
         const cache = ext === '.woff2' ? 'public, max-age=604800' : 'no-cache';
@@ -1076,6 +1133,9 @@ const sunucu = http.createServer(async (req, res) => {
       if (req.headers['x-app-key'] !== APP_KEY) { res.writeHead(401); return res.end(); }
       try {
         const b = JSON.parse((await govde(req)) || '{}');
+        if (olayLimitAsildi(istemciIp(req), String(b.cihaz || 'anon').slice(0, 64))) {
+          res.writeHead(429); return res.end();
+        }
         olayYaz(b.cihaz, b.olaylar);
       } catch { /* bozuk yığın sessizce düşer */ }
       res.writeHead(204); return res.end();
@@ -1086,8 +1146,7 @@ const sunucu = http.createServer(async (req, res) => {
       if (req.headers['x-app-key'] !== APP_KEY) { res.writeHead(401); return res.end(JSON.stringify({ hata: 'yetkisiz' })); }
       // X-Forwarded-For istemciden gelir ve taklit edilebilir; SADECE güvenilir proxy
       // arkasındayken (Render) kullan. Aksi halde soket adresi esas alınır.
-      const xff = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
-      const ip = (process.env.PROXY_GUVENILIR === '1' && xff) || req.socket.remoteAddress || 'x';
+      const ip = istemciIp(req);
       if (limitAsildi(ip)) { say(olcum.hata, '429'); res.writeHead(429); return res.end(JSON.stringify({ hata: 'çok fazla istek, biraz bekleyin' })); }
       // Bozuk gövde istemci hatasıdır; 500 dönmek hem yanıltıcı hem de log'u
       // gerçek sunucu hatalarıyla dolduruyordu.

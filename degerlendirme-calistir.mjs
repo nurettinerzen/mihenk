@@ -26,10 +26,21 @@ const set = JSON.parse(readFileSync(new URL('./degerlendirme-konu.json', import.
 export const olcNorm = (s) => (s || '')
   .replace(/[ً-ْٰـۖ-ۭ]/g, '')
   .replace(/ٱ/g, 'ا').replace(/[إأآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه')
-  .toLocaleLowerCase('tr');
-export const isabet = (metin, anahtarlar) => {
+  .toLocaleLowerCase('tr').replace(/[^a-z0-9çğıöşüء-ي]+/gi, ' ').trim();
+const tokenKok = (w, anahtar = false) => /[ء-ي]/.test(w)
+  ? w.replace(anahtar ? /^ال/ : /^[وفبك]?ال/, '') : w;
+export const isabet = (metin, anahtarlar, redAnahtar = []) => {
   const t = olcNorm(metin);
-  return (anahtarlar || []).some(k => t.includes(olcNorm(k)));
+  if ((redAnahtar || []).some(k => t.includes(olcNorm(k)))) return false;
+  const hamToks = t.split(' ').filter(Boolean), toks = hamToks.map(w => tokenKok(w));
+  return (anahtarlar || []).some(k => {
+    const a = olcNorm(k);
+    if (a.includes(' ')) return (` ${t} `).includes(` ${a} `);
+    const x = tokenKok(a, true);
+    if (x === 'ربا') return hamToks.some(w => /^(الربا|والربا|فالربا|بالربا|كالربا|للربا)$/.test(w));
+    const min = /[ء-ي]/.test(x) ? 3 : 4;
+    return toks.some(w => w === x || (x.length >= min && w.startsWith(x)));
+  });
 };
 
 // Doğrudan çalıştırılmadıysa (başka betik olcNorm/isabet için import ettiyse)
@@ -53,8 +64,8 @@ let t5 = 0, t10 = 0, b5 = 0, kotu = [];
 console.log(`Set: ${set.sorgular.length} sorgu | temel çizgi: ${set.uyari}\n`);
 for (const q of set.sorgular) {
   const son = await sorgula(q);
-  const i5 = son.slice(0, 5).filter(h => isabet(h.tr, q.kabulAnahtar)).length;
-  const i10 = son.filter(h => isabet(h.tr, q.kabulAnahtar)).length;
+  const i5 = son.slice(0, 5).filter(h => isabet(h.tr, q.kabulAnahtar, q.redAnahtar)).length;
+  const i10 = son.filter(h => isabet(h.tr, q.kabulAnahtar, q.redAnahtar)).length;
   const t = q.temelCizgi || {};
   const fark = i5 - (t.anahtarIsabetIlk5 ?? i5);
   t5 += i5; t10 += i10; b5 += (t.anahtarIsabetIlk5 ?? 0);

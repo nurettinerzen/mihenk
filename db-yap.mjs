@@ -79,8 +79,9 @@ db.transaction(() => {
       JSON.stringify({ kitapTr: h.kitapTr, kisaTr: h.kisaTr, no: h.no ?? null, dereceRaw: h.dereceRaw, alimler: h.alimler || [], kaynak: h.kaynak, referans: h.referans, aciklama: h.aciklama }),
       h.tr || '', h.en || '', h.fr || '', h.idn || '', h.ur || '', h.ar || '',
     );
-    // hadisNormAl birebir: ' ' + nf(hadisMatn(metinAl(h, dil)))
-    for (const [alan, dil, nf] of DIL_NORM) nIns[alan].run(i, ' ' + nf(hadisMatn(metinAl(h, dil))));
+    // Konu araması yalnız gerçekten o dilde bulunan çeviriyi tarar. Eksik TR/FR
+    // kaydın İngilizce fallback'i râvi adlarını konu sanıp sonuç üretiyordu.
+    for (const [alan,, nf] of DIL_NORM) nIns[alan].run(i, ' ' + nf(hadisMatn(h[alan] || '')));
     if (!h.mevzuat && h.ar) {
       const an = arNorm(h.ar);
       // arapcaAra, kelime kümesi (Set) boyutuyla normalize eder → benzersiz kelime sayısı.
@@ -104,7 +105,7 @@ db.transaction(() => { for (const [w, n] of arDF) aIns.run(w, n); })();
 console.log(`ar_df: ${arDF.size} kelime (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
 
 // --- günün hadisi havuzu (hadis-api.mjs'teki filtreyle birebir; sıra korunur) ---
-const GUNUN_ELE = /(kıyamet|cehennem|azâb|azap|recm|celde|kırbaç|öldür|katl|savaş|gazve|deccal|zina|cariye|köle|kesil|lânet|lanet|helâk|helak|burnu|yüzlü)/i;
+const GUNUN_ELE = /(kıyamet|cehennem|azâb|azap|recm|celde|kırbaç|öldür|katl|savaş|gazve|deccal|zina|cariye|köle|kesil|lânet|lanet|helâk|helak|burnu|yüzlü|hadisin (?:bir )?benzeri)/i;
 const havuz = [];
 for (let idx = 0; idx < corpus.length; idx++) {
   const h = corpus[idx];

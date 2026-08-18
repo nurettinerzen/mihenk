@@ -29,5 +29,8 @@
   "devDependencies": {
     "@capacitor/cli": "^7.6.8",
     "@huggingface/transformers": "^4.2.0"
+  },
+  "overrides": {
+    "adm-zip": "0.6.0"
   }
 }
