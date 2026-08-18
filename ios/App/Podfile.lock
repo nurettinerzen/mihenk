@@ -12,12 +12,12 @@ PODS:
     - Capacitor
   - IONFilesystemLib (1.1.2)
   - IONGeolocationLib (1.0.1)
-  - PurchasesHybridCommon (14.3.0):
-    - RevenueCat (= 5.32.0)
-  - RevenueCat (5.32.0)
-  - RevenuecatPurchasesCapacitor (10.4.0):
+  - PurchasesHybridCommon (17.25.0):
+    - RevenueCat (= 5.51.1)
+  - RevenueCat (5.51.1)
+  - RevenuecatPurchasesCapacitor (11.3.2):
     - Capacitor
-    - PurchasesHybridCommon (= 14.3.0)
+    - PurchasesHybridCommon (= 17.25.0)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
@@ -56,9 +56,9 @@ SPEC CHECKSUMS:
   CapacitorLocalNotifications: 71124afe526ac00585314bff34651bd023f86e37
   IONFilesystemLib: 21a63377696b2d8fab5632ecfb7d2ac67bddb68a
   IONGeolocationLib: 20f9d0248a0b5264511fb57a37e25dd2badf797a
-  PurchasesHybridCommon: 7f0944cc5411bdcd1ea5d69affa6a6f9aaf87b13
-  RevenueCat: 7e1d0768fb287c9983173c9b28e39ccbeeb828a9
-  RevenuecatPurchasesCapacitor: c84ce1cd5253bf22758c28decfb4313267cabb2c
+  PurchasesHybridCommon: 6a79a873ab52f777bfa36e9516f3fcd84d3b3428
+  RevenueCat: eab035bbab271faccfef5c36eaff2a1ffef14dc0
+  RevenuecatPurchasesCapacitor: fa376932f9967c7ab4b5eac477e824d90393b91a
 
 PODFILE CHECKSUM: e404c62e147d34e293cb587186fc3dd5b7039c37
 
