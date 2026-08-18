@@ -4,10 +4,10 @@ import { readFile } from 'node:fs/promises';
 import { isabet } from '../degerlendirme-calistir.mjs';
 
 const oku = (ad) => readFile(new URL(`../${ad}`, import.meta.url), 'utf8');
-const [html, api, depo, dbYap, gradle, pbx, olay, androidManifest, paket] = await Promise.all([
+const [html, api, depo, dbYap, gradle, pbx, olay, androidManifest, paket, podLock] = await Promise.all([
   oku('hadis.html'), oku('hadis-api.mjs'), oku('depo.mjs'), oku('db-yap.mjs'),
   oku('android/app/build.gradle'), oku('ios/App/App.xcodeproj/project.pbxproj'), oku('olay.mjs'),
-  oku('android/app/src/main/AndroidManifest.xml'), oku('package.json'),
+  oku('android/app/src/main/AndroidManifest.xml'), oku('package.json'), oku('ios/App/Podfile.lock'),
 ]);
 
 test('web Kur’an ve hesaplama varlıkları statik sunucuda açık ve istemci HTTP hatasını denetliyor', () => {
@@ -38,17 +38,21 @@ test('ezan planı uygulama başlangıcında yenilenir ve Android kesin alarmı d
   assert.match(html, /changeExactNotificationSetting/);
   assert.match(html, /ANDROID\(\)\?30:12/);
   assert.match(html, /bildirimleriPlanla\(k\.lat,k\.lng,true\)/);
+  assert.equal((html.match(/sound:\s*'ezan\.caf'/g) || []).length, 2);
+  assert.match(pbx, /ezan\.caf in Resources/);
 });
 
 test('sürüm numaraları mağaza hedefleri ve istemcide tutarlıdır', () => {
   assert.match(html, /surum:'1\.5'/); assert.match(html, /Mihenk 1\.5/);
   assert.match(gradle, /versionCode 11/); assert.match(gradle, /versionName "1\.5"/);
-  assert.equal((pbx.match(/CURRENT_PROJECT_VERSION = 36;/g) || []).length, 2);
+  assert.equal((pbx.match(/CURRENT_PROJECT_VERSION = 37;/g) || []).length, 2);
   assert.equal((pbx.match(/MARKETING_VERSION = 1\.5;/g) || []).length, 2);
 });
 
-test('Android ödeme kitaplığı güncel, ilan edilen foreground service gerçekten yoksa izin de yoktur', () => {
+test('Mobil ödeme kitaplıkları güncel, ilan edilen foreground service gerçekten yoksa izin de yoktur', () => {
   assert.match(paket, /"@revenuecat\/purchases-capacitor": "\^11\.3\.2"/);
+  assert.match(podLock, /RevenuecatPurchasesCapacitor \(11\.3\.2\)/);
+  assert.match(podLock, /PurchasesHybridCommon \(17\.25\.0\)/);
   assert.doesNotMatch(androidManifest, /android\.permission\.FOREGROUND_SERVICE/);
 });
 
