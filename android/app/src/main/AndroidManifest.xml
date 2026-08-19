@@ -1,5 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Permissions uygulamadan önce tanımlanır; Android lint ve manifest
+         birleştiricisinin beklediği standart sıra budur. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Namaz vakti bildirimi -->
+    <!-- Android 13+ bildirim izni artık çalışma anında isteniyor. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Android 12+ için kullanıcı tarafından verilebilen özel erişim. Mihenk
+         alarm saati/takvim uygulaması olmadığı için daha kısıtlı
+         USE_EXACT_ALARM iznini istemez. Eski AGP lint'i Android 36 ile bunu
+         yanlışlıkla sistem izni sayıyor; AlarmManager hâlâ kullanıcı ayarına
+         yönlendirilerek verilmesini destekliyor. -->
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        tools:ignore="ProtectedPermissions" />
+    <!-- Telefon yeniden başlatılınca planlanmış vakitler kaybolmasın. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Namaz vakti ve kıble -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -34,23 +57,5 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
     </application>
-
-    <!-- Permissions -->
-
-    <uses-permission android:name="android.permission.INTERNET" />
-
-    <!-- Namaz vakti bildirimi -->
-    <!-- Android 13+ bildirim izni artık çalışma anında isteniyor. -->
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Android 12+ için kullanıcı tarafından verilebilen özel erişim. Mihenk
-         alarm saati/takvim uygulaması olmadığı için daha kısıtlı
-         USE_EXACT_ALARM iznini istemez. -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <!-- Telefon yeniden başlatılınca planlanmış vakitler kaybolmasın. -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-
-    <!-- Namaz vakti ve kıble -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
 </manifest>

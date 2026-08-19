@@ -1071,7 +1071,12 @@ document.addEventListener('visibilitychange', ()=>{
     if(_ekranAd === null && typeof aktifEkranAdi === 'function') ekranBaslat(aktifEkranAdi());
     if(bildirimAcik){
       let k=null; try{k=JSON.parse(localStorage.getItem('konum')||'null');}catch(e){}
-      if(k&&typeof k.lat==='number'&&typeof k.lng==='number') bildirimleriPlanla(k.lat,k.lng);
+      // Uygulama öne geldiğinde eski koordinatı körlemesine yeniden planlamak,
+      // seyahat eden kullanıcıya eski şehrin ezanını çaldırıyordu. İzin zaten
+      // verilmişse yeni konumu sessizce al; sistem izin penceresini tekrar açma.
+      konumSessizYenile().then(yenilendi=>{
+        if(!yenilendi&&k&&typeof k.lat==='number'&&typeof k.lng==='number') bildirimleriPlanla(k.lat,k.lng);
+      });
     }
   }
 });
@@ -1179,6 +1184,39 @@ async function konumAl(){
     if(!navigator.geolocation) return rej(new Error('yok'));
     navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),rej,{timeout:12000});
   });
+}
+let _konumYenileme=null;
+async function konumIzniVarMi(){
+  try{
+    const cap=window.Capacitor, geo=cap?.Plugins?.Geolocation;
+    if(cap?.isNativePlatform?.()&&geo?.checkPermissions){
+      const p=await geo.checkPermissions();
+      return p?.location==='granted'||p?.coarseLocation==='granted';
+    }
+    // Web'de yalnız mevcut izni sorgula. `getCurrentPosition` çağırıp yeni bir
+    // izin penceresi açmak, sessiz yenilemenin amacına aykırı.
+    if(navigator.permissions?.query){
+      const p=await navigator.permissions.query({name:'geolocation'});
+      return p.state==='granted';
+    }
+  }catch(e){}
+  return false;
+}
+async function konumSessizYenile(){
+  if(_konumYenileme) return _konumYenileme;
+  _konumYenileme=(async()=>{
+    if(!(await konumIzniVarMi())) return false;
+    try{
+      const k=await konumAl();
+      if(!Number.isFinite(k?.lat)||!Number.isFinite(k?.lng)) return false;
+      localStorage.setItem('konum',JSON.stringify({lat:k.lat,lng:k.lng,t:Date.now()}));
+      const v=vakitleriHesapla(k.lat,k.lng);
+      if(v){ ezanVeri=v; ezanCiz(); }
+      if(bildirimAcik) await bildirimleriPlanla(k.lat,k.lng,true);
+      return true;
+    }catch(e){ return false; }
+  })();
+  try{return await _konumYenileme;}finally{_konumYenileme=null;}
 }
 // Vakitleri CİHAZDA hesapla (adhan, Türkiye yöntemi). Sunucuyla aynı sonucu
 // verir ama internet gerektirmez ve bildirim planlaması için şarttır.
@@ -1305,13 +1343,16 @@ async function bildirimAcKapa(ac){
 
 async function ezanBaslat(){
   const btn=document.getElementById('btnEzan'), intro=document.querySelector('#ezanBaslangic .anlam');
+  // iOS yön sensörü izni yalnız doğrudan kullanıcı dokunuşunda istenebilir.
+  // İlk `await`ten önce başlat; konum dönüşünü beklersek Safari isteği reddeder.
+  pusulaBaslat();
   btn.disabled=true;
   try{
     let k; try{ k=await konumAl(); }catch(ke){ ke.konum=true; throw ke; }
     // Önce cihazda hesapla (offline çalışsın); adhan yüklenemediyse sunucuya düş.
     ezanVeri = vakitleriHesapla(k.lat, k.lng) || await istek('/api/namaz', k);
-    localStorage.setItem('konum', JSON.stringify({lat:k.lat, lng:k.lng}));
-    ezanCiz(); pusulaBaslat();
+    localStorage.setItem('konum', JSON.stringify({lat:k.lat, lng:k.lng, t:Date.now()}));
+    ezanCiz();
     bildirimleriPlanla(k.lat, k.lng, true);
   }
   catch(e){
@@ -2219,6 +2260,12 @@ document.querySelectorAll('.unav').forEach(b=>b.onclick=()=>{
   // Bölüm değişince tilavet DEVAM eder (arka plan sesi amaçlı); kontrol kilit
   // ekranından ve mini oynatıcıdan yapılabiliyor.
   if(b.dataset.bol==='bugun' && !gununVeri) gununYukle();
+  if(b.dataset.bol==='ezan' && ezanVeri){
+    // Önbellekten açılan iOS oturumunda da pusula izni kullanıcı dokunuşuna
+    // bağlı kalsın; konumu ise mevcut izinle sessizce güncelle.
+    pusulaBaslat();
+    konumSessizYenile();
+  }
   hakGoster();   // sayaç yalnız sorgu harcanan ekranlarda görünsün
   ekranBaslat(aktifEkranAdi());
 });
@@ -2433,8 +2480,11 @@ localStorage.removeItem('premium');
   if(!k || typeof k.lat!=='number' || typeof k.lng!=='number') return;
   const v = vakitleriHesapla(k.lat, k.lng);
   if(!v) return;                       // adhan yüklenemediyse butona düşsün
-  ezanVeri = v; ezanCiz(); pusulaBaslat();
-  if(bildirimAcik){
+  ezanVeri = v; ezanCiz();
+  // Önce eldeki değeri anında göster, sonra izin zaten verilmişse konumu GPS'ten
+  // yenile. Bu çağrı izin istemez; kullanıcının önceki kararına saygı duyar.
+  const yenilendi=await konumSessizYenile();
+  if(bildirimAcik&&!yenilendi){
     const n=await bildirimleriPlanla(k.lat,k.lng,true);
     if(n===-1) console.warn('Kesin alarm izni kapalı; ezan bildirimleri yeniden planlanmadı.');
   }

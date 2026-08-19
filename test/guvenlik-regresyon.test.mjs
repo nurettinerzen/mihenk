@@ -42,10 +42,22 @@ test('ezan planı uygulama başlangıcında yenilenir ve Android kesin alarmı d
   assert.match(pbx, /ezan\.caf in Resources/);
 });
 
+test('konum tekrar izin istemeden yenilenir ve iOS pusulası kullanıcı dokunuşunda başlar', () => {
+  assert.match(html, /async function konumIzniVarMi\(\)/);
+  assert.match(html, /geo\.checkPermissions\(\)/);
+  assert.match(html, /if\(!\(await konumIzniVarMi\(\)\)\) return false/);
+  assert.match(html, /const yenilendi=await konumSessizYenile\(\)/);
+  assert.match(html, /if\(b\.dataset\.bol==='ezan' && ezanVeri\)\{[\s\S]*?pusulaBaslat\(\)/);
+  const ezanBaslatGovde=html.slice(html.indexOf('async function ezanBaslat()'),html.indexOf('// Canlı kıble pusulası'));
+  assert.ok(ezanBaslatGovde.indexOf('pusulaBaslat()') < ezanBaslatGovde.indexOf('await konumAl()'));
+  const geriYukleGovde=html.slice(html.indexOf('(async function konumuGeriYukle()'),html.indexOf('dilUygula(dil)'));
+  assert.doesNotMatch(geriYukleGovde,/pusulaBaslat\(\)/);
+});
+
 test('sürüm numaraları mağaza hedefleri ve istemcide tutarlıdır', () => {
   assert.match(html, /surum:'1\.5'/); assert.match(html, /Mihenk 1\.5/);
-  assert.match(gradle, /versionCode 11/); assert.match(gradle, /versionName "1\.5"/);
-  assert.equal((pbx.match(/CURRENT_PROJECT_VERSION = 37;/g) || []).length, 2);
+  assert.match(gradle, /versionCode 12/); assert.match(gradle, /versionName "1\.5"/);
+  assert.equal((pbx.match(/CURRENT_PROJECT_VERSION = 38;/g) || []).length, 2);
   assert.equal((pbx.match(/MARKETING_VERSION = 1\.5;/g) || []).length, 2);
 });
 
