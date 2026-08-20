@@ -47,17 +47,32 @@ test('konum tekrar izin istemeden yenilenir ve iOS pusulası kullanıcı dokunu�
   assert.match(html, /geo\.checkPermissions\(\)/);
   assert.match(html, /if\(!\(await konumIzniVarMi\(\)\)\) return false/);
   assert.match(html, /const yenilendi=await konumSessizYenile\(\)/);
-  assert.match(html, /if\(b\.dataset\.bol==='ezan' && ezanVeri\)\{[\s\S]*?pusulaBaslat\(\)/);
+  assert.match(html, /if\(b\.dataset\.bol==='ezan'\)\{[\s\S]*?if\(ezanVeri\)\{[\s\S]*?pusulaBaslat\(\)/);
   const ezanBaslatGovde=html.slice(html.indexOf('async function ezanBaslat()'),html.indexOf('// Canlı kıble pusulası'));
   assert.ok(ezanBaslatGovde.indexOf('pusulaBaslat()') < ezanBaslatGovde.indexOf('await konumAl()'));
   const geriYukleGovde=html.slice(html.indexOf('(async function konumuGeriYukle()'),html.indexOf('dilUygula(dil)'));
   assert.doesNotMatch(geriYukleGovde,/pusulaBaslat\(\)/);
 });
 
+test('Ezan sekmesi konumu önce, bildirimi yalnız başarılı konumdan sonra teklif eder', () => {
+  for (const dil of ['tr','en','fr','id','ar','ur']) assert.match(html, new RegExp(`\\n  ${dil}:\\{kb:`));
+  assert.match(html, /dir=\"'\+\(RTL\(dil\)\?'rtl':'ltr'\)\+'\"/);
+  assert.match(html, /if\(b\.dataset\.bol==='ezan'\)\{[\s\S]*?ezanIzinAkisiBaslat\(\)/);
+  const akis=html.slice(html.indexOf('async function ezanIzinAkisiBaslat()'),html.indexOf('async function ezanBaslat()'));
+  assert.ok(akis.indexOf('k=await konumAl()') < akis.indexOf('await ezanBildirimTeklifEt(k)'));
+  assert.match(akis, /catch\(e\)\{[\s\S]*?return; \/\/ Konum olmadan boş bir bildirim aboneliği açmayız\./);
+  assert.match(html, /localStorage\.getItem\('bildirim'\)!==null/);
+  assert.match(html, /let ezanIzinAkisiAcik=false, ezanIzinAkisiBuOturum=false/);
+  assert.doesNotMatch(html, /localStorage\.setItem\('karsilama'/);
+  const teklif=html.slice(html.indexOf('async function ezanBildirimTeklifEt(k)'),html.indexOf('async function ezanIzinAkisiBaslat()'));
+  assert.match(teklif, /bildirimAcKapa\(true\)/);
+  assert.match(teklif, /bildirimleriPlanla\(k\.lat,k\.lng,true\)/);
+});
+
 test('sürüm numaraları mağaza hedefleri ve istemcide tutarlıdır', () => {
   assert.match(html, /surum:'1\.5'/); assert.match(html, /Mihenk 1\.5/);
-  assert.match(gradle, /versionCode 12/); assert.match(gradle, /versionName "1\.5"/);
-  assert.equal((pbx.match(/CURRENT_PROJECT_VERSION = 38;/g) || []).length, 2);
+  assert.match(gradle, /versionCode 13/); assert.match(gradle, /versionName "1\.5"/);
+  assert.equal((pbx.match(/CURRENT_PROJECT_VERSION = 39;/g) || []).length, 2);
   assert.equal((pbx.match(/MARKETING_VERSION = 1\.5;/g) || []).length, 2);
 });
 
