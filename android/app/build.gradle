@@ -14,7 +14,7 @@ android {
         applicationId "com.nurettinerzen.mihenk"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 12
+        versionCode 13
         versionName "1.5"   // iOS MARKETING_VERSION ile aynı
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

@@ -1341,12 +1341,100 @@ async function bildirimAcKapa(ac){
   return true;
 }
 
+// İzinleri uygulama açılır açılmaz bağlamsız istemek yerine kullanıcı Ezan
+// sekmesine girdiğinde neden gerektiğini anlatırız. "Şimdi değil" işletim sistemi
+// iznini tüketmez ve kalıcı ret sayılmaz; sonraki uygulama oturumunda teklif
+// yeniden gösterilebilir.
+const EZAN_IZIN_METIN = {
+  tr:{kb:'Namaz vakitleri için konum',kg:'Vakitler bulunduğun yere göre cihazında hesaplanır. Konumun cihazından çıkmaz.',ke:'Konumumu kullan',
+      bb:'Ezan vakti gelince haber verelim mi?',bg:'Her namaz vaktinde ezan sesiyle bildirim alırsın. İstediğin zaman ayarlardan kapatabilirsin.',be:'Ezan bildirimini aç',sonra:'Şimdi değil'},
+  en:{kb:'Location for prayer times',kg:'Times are calculated on your device for where you are. Your location never leaves your device.',ke:'Use my location',
+      bb:'Notify you when prayer time begins?',bg:'Receive a notification with the adhan at every prayer time. You can turn it off in settings whenever you like.',be:'Turn on adhan notifications',sonra:'Not now'},
+  fr:{kb:'Localisation pour les heures de prière',kg:"Les heures sont calculées sur ton appareil selon ta position. Ta position ne quitte jamais ton appareil.",ke:'Utiliser ma position',
+      bb:"Te prévenir à l’entrée de chaque prière ?",bg:"Reçois une notification avec l’adhan à chaque prière. Tu peux la désactiver dans les réglages quand tu veux.",be:"Activer les notifications d’adhan",sonra:'Plus tard'},
+  id:{kb:'Lokasi untuk waktu salat',kg:'Waktu dihitung di perangkatmu sesuai lokasimu. Lokasimu tidak pernah meninggalkan perangkat.',ke:'Gunakan lokasi saya',
+      bb:'Beri tahu saat waktu salat masuk?',bg:'Dapatkan notifikasi dengan suara azan di setiap waktu salat. Bisa dimatikan kapan saja di pengaturan.',be:'Aktifkan notifikasi azan',sonra:'Nanti saja'},
+  ar:{kb:'الموقع لمواقيت الصلاة',kg:'تُحسب المواقيت على جهازك حسب موقعك. موقعك لا يغادر جهازك.',ke:'استخدام موقعي',
+      bb:'هل ننبّهك عند دخول وقت الصلاة؟',bg:'يصلك تنبيه بصوت الأذان عند كل صلاة، ويمكنك إيقافه من الإعدادات متى شئت.',be:'تفعيل تنبيهات الأذان',sonra:'ليس الآن'},
+  ur:{kb:'نماز کے اوقات کے لیے مقام',kg:'اوقات آپ کے مقام کے مطابق آپ ہی کے فون پر شمار ہوتے ہیں۔ آپ کا مقام فون سے باہر نہیں جاتا۔',ke:'میرا مقام استعمال کریں',
+      bb:'نماز کا وقت آنے پر اطلاع دیں؟',bg:'ہر نماز کے وقت اذان کی آواز کے ساتھ اطلاع ملے گی۔ آپ اسے جب چاہیں سیٹنگز سے بند کر سکتے ہیں۔',be:'اذان کی اطلاعات آن کریں',sonra:'ابھی نہیں'},
+};
+let ezanIzinAkisiAcik=false, ezanIzinAkisiBuOturum=false;
+
+function ezanIzinOnBilgi(baslik, govde, evetMetni, evetAninda){
+  return new Promise(coz=>{
+    const M=EZAN_IZIN_METIN[dil]||EZAN_IZIN_METIN.en;
+    const ort=document.createElement('div');
+    ort.id='ezanIzinOnBilgi';
+    ort.setAttribute('style','position:fixed;inset:0;z-index:99998;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6);padding:24px');
+    ort.innerHTML='<div role="dialog" aria-modal="true" dir="'+(RTL(dil)?'rtl':'ltr')+'" style="max-width:340px;width:100%;background:#123028;color:#eaf5f0;border:1px solid #24463c;border-radius:16px;padding:22px 20px;text-align:center;font-family:inherit;box-shadow:0 20px 60px rgba(0,0,0,.4)">'
+      +'<div style="font-size:19px;font-weight:700;margin-bottom:8px"></div>'
+      +'<div style="font-size:14px;line-height:1.5;opacity:.8;margin-bottom:18px"></div>'
+      +'<button style="width:100%;padding:13px;border-radius:10px;border:0;background:#57c4a3;color:#0b1512;font:inherit;font-size:15px;font-weight:700;cursor:pointer"></button>'
+      +'<button style="width:100%;margin-top:8px;padding:11px;border-radius:10px;border:0;background:transparent;color:#eaf5f0;opacity:.65;font:inherit;font-size:14px;cursor:pointer"></button>'
+      +'</div>';
+    const kutu=ort.firstChild, bas=kutu.children[0], gov=kutu.children[1], evet=kutu.children[2], sonra=kutu.children[3];
+    bas.textContent=baslik; gov.textContent=govde; evet.textContent=evetMetni; sonra.textContent=M.sonra;
+    const bitir=sonuc=>{ ort.remove(); coz(sonuc); };
+    evet.onclick=()=>{ if(evetAninda) evetAninda(); bitir(true); };
+    sonra.onclick=()=>bitir(false);
+    document.body.appendChild(ort);
+    evet.focus();
+  });
+}
+
+async function ezanBildirimTeklifEt(k){
+  if(!YERLI_PLATFORM || localStorage.getItem('bildirim')!==null || document.getElementById('ezanIzinOnBilgi')) return false;
+  const M=EZAN_IZIN_METIN[dil]||EZAN_IZIN_METIN.en;
+  const ister=await ezanIzinOnBilgi(M.bb,M.bg,M.be);
+  olay('ezan_izin',{adim:'bildirim',sonuc:ister?'kabul':'sonra'});
+  if(!ister) return false;
+  const oldu=await bildirimAcKapa(true);
+  bildirimAnahtarCiz();
+  olay('ezan_izin',{adim:'bildirim',sonuc:oldu?'izin-verildi':bildirimEngeli||'izin-yok'});
+  if(!oldu){ alert((bildirimEngeli==='kesin'?T.bildirim_kesin:T.bildirim_izin)||'Bildirim izni verilmedi.'); return false; }
+  const n=await bildirimleriPlanla(k.lat,k.lng,true);
+  if(n===-1) alert(T.bildirim_kesin||'Dakik ezan bildirimi için kesin alarm izni gerekli.');
+  return n>0;
+}
+
+async function ezanIzinAkisiBaslat(){
+  if(!YERLI_PLATFORM || ezanIzinAkisiAcik || ezanIzinAkisiBuOturum) return;
+  if(localStorage.getItem('bildirim')!==null && localStorage.getItem('konum') && await konumIzniVarMi()) return;
+  ezanIzinAkisiAcik=true; ezanIzinAkisiBuOturum=true;
+  try{
+    let k=null; try{k=JSON.parse(localStorage.getItem('konum')||'null');}catch(e){}
+    const konumHazir=k && Number.isFinite(k.lat) && Number.isFinite(k.lng) && await konumIzniVarMi();
+    if(!konumHazir){
+      const M=EZAN_IZIN_METIN[dil]||EZAN_IZIN_METIN.en;
+      // iOS pusula izni doğrudan bu düğmenin kullanıcı jestinde başlamalı.
+      const ister=await ezanIzinOnBilgi(M.kb,M.kg,M.ke,()=>pusulaBaslat());
+      olay('ezan_izin',{adim:'konum',sonuc:ister?'kabul':'sonra'});
+      if(!ister) return;
+      try{
+        k=await konumAl();
+        if(!Number.isFinite(k?.lat)||!Number.isFinite(k?.lng)) throw new Error('konum');
+        localStorage.setItem('konum',JSON.stringify({lat:k.lat,lng:k.lng,t:Date.now()}));
+        ezanVeri=vakitleriHesapla(k.lat,k.lng)||await istek('/api/namaz',k);
+        ezanCiz();
+        olay('ezan_izin',{adim:'konum',sonuc:'izin-verildi'});
+      }catch(e){
+        olay('ezan_izin',{adim:'konum',sonuc:'izin-yok'});
+        const intro=document.querySelector('#ezanBaslangic .anlam'); if(intro) intro.textContent=T.ezan_konum_hata;
+        return; // Konum olmadan boş bir bildirim aboneliği açmayız.
+      }
+    }
+    await ezanBildirimTeklifEt(k);
+  }finally{ ezanIzinAkisiAcik=false; }
+}
+
 async function ezanBaslat(){
   const btn=document.getElementById('btnEzan'), intro=document.querySelector('#ezanBaslangic .anlam');
   // iOS yön sensörü izni yalnız doğrudan kullanıcı dokunuşunda istenebilir.
   // İlk `await`ten önce başlat; konum dönüşünü beklersek Safari isteği reddeder.
   pusulaBaslat();
   btn.disabled=true;
+  let basariliKonum=null;
   try{
     let k; try{ k=await konumAl(); }catch(ke){ ke.konum=true; throw ke; }
     // Önce cihazda hesapla (offline çalışsın); adhan yüklenemediyse sunucuya düş.
@@ -1354,6 +1442,7 @@ async function ezanBaslat(){
     localStorage.setItem('konum', JSON.stringify({lat:k.lat, lng:k.lng, t:Date.now()}));
     ezanCiz();
     bildirimleriPlanla(k.lat, k.lng, true);
+    basariliKonum=k;
   }
   catch(e){
     if(e && e.paywall) { /* paywall kendi ekranını açar */ }
@@ -1362,6 +1451,9 @@ async function ezanBaslat(){
     else intro.textContent = T.err_body;
   }
   btn.disabled=false;
+  // Kullanıcı eski "Konumumu kullan" düğmesini tercih ettiyse de bildirim
+  // özelliğini keşfedebilsin; yalnız konum başarıyla alındıktan sonra sorulur.
+  if(basariliKonum) ezanBildirimTeklifEt(basariliKonum);
 }
 // Canlı kıble pusulası: cihaz yönüne göre bütün pusulayı döndür (N gerçek kuzeyi, ok gerçek kıbleyi gösterir).
 let pusulaAktif=false;
@@ -2260,11 +2352,16 @@ document.querySelectorAll('.unav').forEach(b=>b.onclick=()=>{
   // Bölüm değişince tilavet DEVAM eder (arka plan sesi amaçlı); kontrol kilit
   // ekranından ve mini oynatıcıdan yapılabiliyor.
   if(b.dataset.bol==='bugun' && !gununVeri) gununYukle();
-  if(b.dataset.bol==='ezan' && ezanVeri){
-    // Önbellekten açılan iOS oturumunda da pusula izni kullanıcı dokunuşuna
-    // bağlı kalsın; konumu ise mevcut izinle sessizce güncelle.
-    pusulaBaslat();
-    konumSessizYenile();
+  if(b.dataset.bol==='ezan'){
+    if(ezanVeri){
+      // Önbellekten açılan iOS oturumunda da pusula izni kullanıcı dokunuşuna
+      // bağlı kalsın; konumu ise mevcut izinle sessizce güncelle.
+      pusulaBaslat();
+      konumSessizYenile();
+    }
+    // İlk kez Ezan'a giren kullanıcı konumu ve bildirimi neden verdiğini görür;
+    // işletim sistemi izinleri yalnız açıkça "Etkinleştir" dediğinde istenir.
+    ezanIzinAkisiBaslat();
   }
   hakGoster();   // sayaç yalnız sorgu harcanan ekranlarda görünsün
   ekranBaslat(aktifEkranAdi());
