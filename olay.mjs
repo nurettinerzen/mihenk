@@ -182,11 +182,18 @@ export function ozet(gun = 30, { testDahil = false } = {}) {
         // tetikleniyor demektir. (premium = -1)
         if (e.kalan !== undefined) say(kalanDagilim, String(e.kalan));
         break;
-      case 'paywall':
-        say(paywallKaynak, e.kaynak || e.sebep); G.paywall++;
+      case 'paywall': {
+        // Eski istemciler (≤1.3) paywallGoster'ı doğrudan click dinleyicisi olarak
+        // bağlıyordu → kaynak alanına MouseEvent (obje) geliyor ve panelde
+        // "[object Object]" görünüyordu. Dizgi olmayanı tek kovaya topla; bu,
+        // depodaki TARİHİ kayıtları da temizler (istemci 1.4'ten beri dizgi yollar).
+        const pk = [e.kaynak, e.sebep].find(v => typeof v === 'string' && v)
+          ?? ((e.kaynak !== undefined || e.sebep !== undefined) ? 'eski-surum' : undefined);
+        say(paywallKaynak, pk); G.paywall++;
         if (e.urunHazir === true) paywallUrunHazir++;
         else if (e.urunHazir === false) paywallUrunYok++;
         break;
+      }
       case 'satinalma':
         say(satinalma, e.durum); say(plan, e.plan);
         if (e.sebep) say(satinalmaSebep, e.sebep);

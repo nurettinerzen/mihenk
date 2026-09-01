@@ -346,8 +346,11 @@
     for(var key in t) t[key]=String(t[key]).replace('{ad}',C.ad);
     return {t:t,rtl:!!RTL[d]};
   }
-  function kur(cfg){ C=Object.assign({onek:'app',ad:'App',surum:'1',minOturum:3,iosId:'',paket:'',mail:'',metinler:null,kart:'#1a1410',yazi:'#f2e6d0',renk:'#c8912f',kenar:'#4a3826'},cfg); LS.setItem(k('oturum'),String(otur()+1)); }
-  function belkiSor(){ if(!C||soruldu()||otur()<C.minOturum) return; LS.setItem(k('soruldu'),surum()); setTimeout(kapiGoster,700); }
+  // TEKRAR SORMA (kritik): puanlama HAYATTA BİR KEZ sorulur, sürüm başına değil.
+  // Eski `soruldu=sürüm` kaydı olan kullanıcı göçte 'bitti' işaretlenir — sürüm
+  // bump'ı kapıyı kimseye yeniden açmaz.
+  function kur(cfg){ C=Object.assign({onek:'app',ad:'App',surum:'1',minOturum:3,iosId:'',paket:'',mail:'',metinler:null,kart:'#1a1410',yazi:'#f2e6d0',renk:'#c8912f',kenar:'#4a3826'},cfg); LS.setItem(k('oturum'),String(otur()+1)); if(!LS.getItem(k('durum'))&&LS.getItem(k('soruldu'))) LS.setItem(k('durum'),'bitti'); }
+  function belkiSor(){ if(!C) return; if(LS.getItem(k('durum'))==='bitti') return; if(otur()<C.minOturum) return; LS.setItem(k('durum'),'bitti'); setTimeout(kapiGoster,700); }
   function kapiGoster(){
     if(document.getElementById('ratingKapi')) return;
     var M=metin(), t=M.t;
@@ -369,7 +372,7 @@
     o.querySelector('#rkHayir').textContent=t.hayir;
     o.querySelector('#rkEvet').textContent=t.evet;
     o.addEventListener('click',function(e){ if(e.target===o) kapat(); });
-    document.getElementById('rkEvet').onclick=function(){ kapat(); nativeIstem(); };
+    document.getElementById('rkEvet').onclick=function(){ LS.setItem(k('durum'),'bitti'); kapat(); nativeIstem(); };
     document.getElementById('rkHayir').onclick=function(){ kapat(); geriBildirim(); };
   }
   function kapat(){ var e=document.getElementById('ratingKapi'); if(e) e.remove(); }
@@ -378,7 +381,7 @@
   function geriBildirim(){ if(!C.mail) return; location.href='mailto:'+C.mail+'?subject='+encodeURIComponent(C.ad+' feedback ('+surum()+')'); }
   window.RatingKapisi={kur:kur,belkiSor:belkiSor,magazaAc:magazaAc};
   // Türkçe ek uyumu ({ad} şablonu Türkçe'de ek almaz): "Mihenk'i beğendin mi?"
-  kur({onek:'mihenk',ad:'Mihenk',surum:'1.5',iosId:'6793343627',paket:'com.nurettinerzen.mihenk',mail:'nurettinerzen@gmail.com',minOturum:3,
+  kur({onek:'mihenk',ad:'Mihenk',surum:'1.6',iosId:'6793343627',paket:'com.nurettinerzen.mihenk',mail:'nurettinerzen@gmail.com',minOturum:3,
        metinler:{tr:{soru:"Mihenk'i beğendin mi?"}},
        kart:'#123028',yazi:'#eaf5f0',renk:'#57c4a3',kenar:'#24463c'});
 })();
@@ -609,7 +612,7 @@
         <span class="sol" data-i18n="ayar_kullanim">Kullanım Koşulları</span><span class="ok">›</span>
       </a>
       <div class="ayar-not" data-i18n="ayar_hakkinda">Mihenk; hadis metnini, âlim derecesini ve Kur'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.</div>
-      <div class="ayar-surum" id="surumEtiket">Mihenk 1.5</div><!-- MARKETING_VERSION ile aynı olmalı -->
+      <div class="ayar-surum" id="surumEtiket">Mihenk 1.6</div><!-- MARKETING_VERSION ile aynı olmalı -->
 
     </div>
   </div>
@@ -1581,8 +1584,10 @@ function paywallGoster(kaynak){
   const k = (typeof kaynak==='string' && kaynak) ? kaynak : 'sayac';
   const urunHazir = !!(rcUrunler && rcUrunler[seciliUrun]);
   olay('paywall',{ kaynak:k, sebep:k, kalan: premium ? -1 : (typeof kalan==='number' ? kalan : -2), urunHazir });
-  // Ürünler yoksa kullanıcı düğmeye basmadan da bunu görsün + tekrar deneyebilsin.
-  if(YERLI && !urunHazir) urunYokGoster('acilis'); else urunYokGizle();
+  paywallDugmeCiz();
+  // Ürünler yoksa: önce KISA bir senkron yükleme dene (spinner), o da olmazsa
+  // "tekrar dene" göster. Fiyatsız/ölü satın alma düğmesi hiçbir an görünmez.
+  if(YERLI && !urunHazir) paywallAcilisYukle(); else urunYokGizle();
 }
 function paywallGizle(){ document.getElementById('paywall').classList.remove('acik'); }
 // --- Mihenk Plus / mağaza IAP (RevenueCat) ---
@@ -1606,51 +1611,111 @@ const CapEklenti = () => (window.Capacitor && window.Capacitor.Plugins) || {};
 // (alias) — böylece hem eski hem yeni kimlik aynı aboneyi gösterir ve sunucunun
 // RevenueCat sorgusu iki kimlikle de doğru yanıt verir.
 let rcKuruldu = false;
-let _cihazSoz = null;
-const cihazAl = () => _cihazSoz || (_cihazSoz = cihazCoz());
-async function cihazCoz(){
-  if(YERLI && RC_KEY){
+let _rcKurSoz = null;
+// configure() TEKRAR DENENEBİLİR olmalı. Eski kod bunu cihazCoz() içinde yapıp
+// sonucu ömürlük önbelleğe alıyordu: soğuk açılışta ağ yoksa configure bir kez
+// düşüyor ve "Tekrar dene" düğmesi dahil HİÇBİR yol onu bir daha çağıramıyordu
+// (panelde `tekrar-basarisiz` 33 kez — kullanıcı denedi, kod baştan yenilmişti).
+async function rcKur(){
+  if(rcKuruldu) return true;
+  if(!(YERLI && RC_KEY)) return false;
+  if(_rcKurSoz) return _rcKurSoz;            // eşzamanlı çağrılar tek uçuşu paylaşır
+  _rcKurSoz = (async()=>{
     try{
       const { Purchases } = CapEklenti();
       await Purchases.configure({ apiKey: RC_KEY });
       rcKuruldu = true;
-      let rcId = (await Purchases.getAppUserID() || {}).appUserID || '';
-      if(cihaz && rcId && rcId !== cihaz){
-        try{ await Purchases.logIn({ appUserID: cihaz }); rcId = cihaz; }
-        catch(e){ console.warn('eski kimlik bağlanamadı', e); }
-      }
-      if(rcId) cihaz = rcId;
-    }catch(e){ console.warn('RC kimliği alınamadı', e); }
-  }
+      // Kimlik eşleme: RC farklı kimlik döndürürse eski localStorage UUID'sine
+      // logIn ile bağla (alias) — configure geç başarsa bile kimlik DEĞİŞMEZ,
+      // sunucuya o ana dek gönderilen cihaz kimliği geçerli kalır.
+      try{
+        let rcId = (await Purchases.getAppUserID() || {}).appUserID || '';
+        if(cihaz && rcId && rcId !== cihaz){
+          try{ await Purchases.logIn({ appUserID: cihaz }); rcId = cihaz; }
+          catch(e){ console.warn('eski kimlik bağlanamadı', e); }
+        }
+        if(rcId){ cihaz = rcId; try{ localStorage.setItem('cihaz', cihaz); }catch(e){} }
+      }catch(e){ console.warn('RC kimliği alınamadı', e); }
+      return true;
+    }catch(e){ console.warn('RC kurulamadı', e); return false; }
+    finally{ _rcKurSoz = null; }             // başarısızsa SONRAKİ çağrı yeniden dener
+  })();
+  return _rcKurSoz;
+}
+let _cihazSoz = null;
+const cihazAl = () => _cihazSoz || (_cihazSoz = cihazCoz());
+async function cihazCoz(){
+  await rcKur();       // başarısızlık ölümcül değil: UUID'ye düşeriz, alias sonra bağlar
   if(!cihaz) cihaz = yeniUuid();
   try{ localStorage.setItem('cihaz', cihaz); }catch(e){}   // hızlı yol yedeği
   return cihaz;
 }
 
-async function iapBaslat(){
-  if(!YERLI || !RC_KEY) return;
+// Paywall gösterimlerinin %87'si ÜRÜNSÜZ açılıyordu (urunHazir 7/46): başlatma
+// bir kez düşünce bir daha denenmiyordu. Artık (1) başarısızlıkta üstel geri
+// çekilmeyle kendiliğinden tekrar, (2) ağ dönünce / uygulama öne gelince hemen
+// tekrar, (3) paywall açılırken senkron son bir deneme. Ölçüm olayları AYNEN
+// akıyor: baslangic-hata/baslangic-bos yalnız İLK denemede yazılır (sayı şişmez).
+const urunlerHazirMi = () => !!(rcUrunler && (rcUrunler[URUNLER.yillik] || rcUrunler[URUNLER.aylik]));
+let _iapSoz = null;          // uçuştaki yükleme; eşzamanlı istekler paylaşır
+let _iapIlkYapildi = false;  // baslangic-* olayları yalnız ilk denemede
+async function _iapCalistir(){
+  const ilk = !_iapIlkYapildi; _iapIlkYapildi = true;
   try{
     const { Purchases } = CapEklenti();
-    await cihazAl();                    // configure + kalıcı kimlik burada yapılır
-    if(!rcKuruldu) return;
+    await cihazAl();                                   // kalıcı kimlik
+    if(!(await rcKur())) throw new Error('RevenueCat kurulamadı');
     // Entitlement kontrolünü ürün/fiyat ağ isteğinden ÖNCE yap. Ücretli kullanıcı
     // çevrimdışıyken RevenueCat'in önbelleğindeki hakkıyla indirdiği tilaveti
     // dinleyebilsin; fiyatların yüklenememesi premium kontrolünü engellemesin.
     await iapPremiumKontrol();
     const { products } = await Purchases.getProducts({ productIdentifiers: Object.values(URUNLER) });
-    rcUrunler = {}; (products||[]).forEach(p=>{ rcUrunler[p.identifier]=p; });
-    fiyatCiz();
-    avantajCiz(); denemeCiz();
+    const liste = {}; (products||[]).forEach(p=>{ liste[p.identifier]=p; });
+    // Boş yanıt eldeki ürünleri EZMESİN: geçici bir ağ tökezlemesi, daha önce
+    // yüklenmiş fiyatları ekrandan söküp çalışan paywall'ı bozmasın.
+    if(liste[URUNLER.yillik] || liste[URUNLER.aylik]) rcUrunler = liste;
+    fiyatCiz(); avantajCiz(); denemeCiz(); paywallDugmeCiz();
     // ÖLÇÜM: ürünler hiç gelmediyse kullanıcı satın ALAMAZ. Bu şimdiye kadar
     // sessiz bir kayıptı; artık panelde `satinalma/urun-yok` olarak görünür.
-    if(!rcUrunler[URUNLER.yillik] && !rcUrunler[URUNLER.aylik]) olay('satinalma',{durum:'urun-yok', sebep:'baslangic-bos'});
-    else urunYokGizle();
+    if(!urunlerHazirMi()){
+      if(ilk) olay('satinalma',{durum:'urun-yok', sebep:'baslangic-bos'});
+      return false;
+    }
+    urunYokGizle();
+    return true;
   }catch(e){
     console.warn('IAP başlatılamadı', e);
-    olay('satinalma',{durum:'urun-yok', sebep:'baslangic-hata'});
-    fiyatCiz();
+    if(ilk) olay('satinalma',{durum:'urun-yok', sebep:'baslangic-hata'});
+    fiyatCiz(); paywallDugmeCiz();
+    return false;
   }
 }
+async function iapBaslat(){
+  if(!YERLI || !RC_KEY) return false;
+  if(!_iapSoz){
+    _iapSoz = _iapCalistir().then(oldu=>{
+      _iapSoz = null;
+      if(oldu) iapTekrarDurdur(); else iapTekrarPlanla();
+      return oldu;
+    });
+  }
+  return _iapSoz;
+}
+// Üstel geri çekilme: 2 sn → 5 dk tavan, en çok 10 otomatik deneme. Ağ dönünce
+// (online) sayaç sıfırlanıp hemen denenir; kullanıcı eylemleri (tekrar düğmesi,
+// paywall açılışı) bu sayaca hiç bağlı değildir.
+const IAP_BEKLEME = [2000, 5000, 15000, 45000, 120000, 300000];
+let _iapZaman = null, _iapDeneme = 0;
+function iapTekrarPlanla(){
+  if(!YERLI || !RC_KEY || urunlerHazirMi() || _iapZaman || _iapDeneme >= 10) return;
+  const ms = IAP_BEKLEME[Math.min(_iapDeneme, IAP_BEKLEME.length-1)];
+  _iapZaman = setTimeout(async ()=>{
+    _iapZaman = null; _iapDeneme++;
+    if(navigator.onLine === false){ iapTekrarPlanla(); return; }  // ağ yokken RC'yi yorma
+    if(await iapBaslat()) olay('satinalma',{durum:'urun-geldi', sebep:'oto-tekrar'});
+  }, ms);
+}
+function iapTekrarDurdur(){ if(_iapZaman){ clearTimeout(_iapZaman); _iapZaman = null; } _iapDeneme = 0; }
 // Fiyat SADECE StoreKit'ten gelir. Eskiden HTML'de "₺249,99 / ₺49,99" gömülüydü:
 // ürünler yüklenmese bile ekranda fiyat duruyor, kullanıcı ürünün satışta olduğunu
 // sanıp düğmeye basıyor ve "yakında" duvarına çarpıyordu. Fiyat yoksa satır boş
@@ -1729,6 +1794,7 @@ function planSec(urun){
   seciliUrun=urun;
   document.getElementById('planYillik').classList.toggle('secili', urun===URUNLER.yillik);
   document.getElementById('planAylik').classList.toggle('secili', urun===URUNLER.aylik);
+  paywallDugmeCiz();   // yalnız bir plan yüklendiyse öbürüne geçişte düğme pasifleşir
 }
 // --- Ürünler yüklenemedi çıkmazı ------------------------------------------
 // Eskiden bu durumda tek yapılan "Satın alma yakında (App Store)" yazmaktı:
@@ -1739,11 +1805,37 @@ function urunYokGoster(nereden){
   if(!YERLI){ if(m){ m.textContent=T.pw_yakinda; m.className='paywall-mesaj'; } return; }  // tarayıcı önizlemesi
   if(m){ m.textContent=T.pw_urun_yok; m.className='paywall-mesaj hata'; }
   if(b){ b.style.display=''; b.disabled=false; b.textContent=T.pw_tekrar; }
+  paywallDugmeCiz();
   if(nereden==='acilis') return;   // olay paywallGoster içinde zaten yazıldı
 }
 function urunYokGizle(){
   const b=document.getElementById('pwTekrarBtn'); if(b) b.style.display='none';
   const m=document.getElementById('lisansMesaj'); if(m && m.className.indexOf('hata')>=0){ m.textContent=''; m.className='paywall-mesaj'; }
+  paywallDugmeCiz();
+}
+// Satın alma düğmesi ürünler (seçili plan) hazır değilken PASİF: fiyatsız/ölü
+// düğmeye basıp sessizce duvara çarpmak yok. Tarayıcı önizlemesinde aktif kalır
+// (orada düğme "mağaza uygulamada" mesajını gösterir, ölü değildir).
+function paywallDugmeCiz(){
+  const b=document.getElementById('paywallSatinAl'); if(!b) return;
+  b.disabled = YERLI && !(rcUrunler && rcUrunler[seciliUrun]);
+}
+// Paywall ürünler yokken açıldıysa: spinner eşliğinde senkron bir yükleme daha.
+// 8 sn içinde gelmezse "tekrar dene" — ama yükleme arka planda sürer ve geç
+// başarırsa iapBaslat'ın çizim çağrıları paywall'ı olduğu yerde CANLANDIRIR.
+let _pwYuklemeNo = 0;
+async function paywallAcilisYukle(){
+  const no = ++_pwYuklemeNo;
+  const m=document.getElementById('lisansMesaj'), b=document.getElementById('pwTekrarBtn');
+  if(b) b.style.display='none';
+  if(m){ m.textContent=T.pw_yukleniyor; m.className='paywall-mesaj'; }
+  const sonuc = await Promise.race([ iapBaslat(), new Promise(r=>setTimeout(()=>r('zamanasimi'), 8000)) ]);
+  if(no !== _pwYuklemeNo) return;                 // daha yeni bir açılış devraldı
+  if(sonuc === true){
+    if(m && m.className.indexOf('hata')<0) m.textContent='';   // spinner yazısını sil
+    urunYokGizle(); olay('satinalma',{durum:'urun-geldi', sebep:'paywall-acilis'});
+  }
+  else urunYokGoster('acilis');
 }
 async function urunleriTekrarDene(){
   const m=document.getElementById('lisansMesaj'), b=document.getElementById('pwTekrarBtn');
@@ -2593,6 +2685,14 @@ durumOnbellektenCiz();
 durumYukle();   // premium/kalan durumunu çek
 gununYukle();   // Bugün: günün ayeti + hadisi (önbellek varsa anında çizer)
 iapBaslat();    // RevenueCat (native + RC_KEY varsa): fiyatları çek + premium kontrol
+// Ağ dönünce ya da uygulama öne gelince ürünler hâlâ yoksa beklemeden dene:
+// soğuk açılışta interneti olmayan kullanıcı, ağ gelir gelmez fiyatları görsün.
+window.addEventListener('online', ()=>{
+  if(YERLI && RC_KEY && !urunlerHazirMi()){ iapTekrarDurdur(); iapBaslat(); }
+});
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden && YERLI && RC_KEY && !urunlerHazirMi() && !_iapSoz) iapBaslat();
+});
 
 // Ölçüm başlangıcı. "ilk": bu cihazda uygulamanın ilk açılışı — kurulum sayısını
 // App Store'dan ayrı, gerçekten AÇAN kişi olarak görmek için.
