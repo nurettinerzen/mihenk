@@ -1,4 +1,20 @@
-# Mihenk — sıradaki iş (9 Ağustos 2026)
+# Mihenk — sıradaki iş
+
+## ⚠️ BİR SONRAKİ SÜRÜMDE İLK İŞ: sürüm notlarını düzelt (4 Eyl 2026)
+Play'de **vc18 / 1.7.2** incelemeye "ücretsiz deneme şartları artık açıkça yazıyor"
+notuyla gitti. Aynı gün **deneme tamamen kaldırıldı** (App Store'da 175 ülkede
+silindi, Play'de zaten yoktu) — yani o not artık olmayan bir özelliği anlatıyor.
+İncelemeyi bozmamak için dokunulmadı.
+
+**Yapılacak:** bir sonraki gönderimde notları hazır dosyadan geç, elle yazma:
+```bash
+PLAY_SURUM=<yeni> node ~/Desktop/discuss/magaza-araclar/play-yukle.mjs \
+  ~/Desktop/discuss/helal-tarayici/fastlane/play-service-account.json \
+  com.nurettinerzen.mihenk <aab> @~/Desktop/discuss/hadis/magaza-notlari-siradaki.json
+```
+Aynı metin App Store için de kullanılabilir (`ios-submit.mjs ... @<dosya>`).
+
+---
 
 ## Bugün olan
 - 8 Ağustos'taki **10 dosyalık düzeltmenin hiçbiri commit edilmemişti**; `autoDeploy` GitHub `main`'den deploy ettiği için o günkü deploy **5 Ağustos kodunu geri kurdu**. 9 Ağustos'ta commit edilip push edildi (`016b9e2`).
