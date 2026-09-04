@@ -149,7 +149,9 @@ ${kutu('En çok çalınan sûre', dagilim(o.oynat, 'sûre'))}
 
 <div class="ikili">
 ${kutu('Ezan bildirimi', tablo(['durum', 'adet'], [['Açan', o.bildirim?.acan ?? 0], ['Kapatan', o.bildirim?.kapatan ?? 0]]))}
-${kutu('İstemci hataları', dagilim(o.hata, 'yer'))}
+${kutu('Hatalar (kaynak · yer · kod)', dagilim(o.hata, 'hata'))}
+${kutu('Hata ayrıntısı', dagilim(o.hataDetay, 'hata · mesaj'))}
+${kutu('Ezan izin hunisi', dagilim(o.ezanIzin, 'adım · sonuç'))}
 </div>
 
 ${kutu('Sürüm', dagilim(o.surum, 'sürüm'))}

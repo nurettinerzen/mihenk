@@ -58,7 +58,13 @@ export const OLAYLAR = new Set([
   'kari_indir',      // tilavet indirme            { durum: basladi|bitti|iptal, kari }
   'oynat',           // tilavet çalındı            { sure }
   'dil_degis',       // uygulama dili değişti      { dil }
-  'hata',            // istemci tarafı hata        { yer }
+  // Hatanın SEBEBİ olmadan hata sayısı işe yaramaz: "yüzlerce hata var ama
+  // neden olduğunu bilmiyoruz" tam olarak buradan doğuyordu.
+  //   yer    = hangi ekran/işlev      kod    = makine-okur kısa sebep
+  //   kaynak = kullanici|magaza|ag|sunucu|istemci|yapayzeka|bilinmiyor
+  //   detay  = kısa mesaj (kişisel veri yok, 120 karakter)
+  'hata',            // hata                       { yer, kod, kaynak, detay }
+  'ezan_izin',       // ezan izin hunisi           { adim, sonuc }
 ]);
 
 // Panelde sayı olarak toplanacak alanlar dışındaki her şey atılır: istemci ne
@@ -67,12 +73,16 @@ export const OLAYLAR = new Set([
 // gönderilmeye başlanmıştı ama buraya eklenmediği için diske hiç inmedi —
 // "kaç kullanıcı 5 ücretsiz sorguyu gerçekten tüketiyor" sorusu ölçülemedi.
 const ALANLAR = ['ilk', 'dil', 'tz', 'surum', 'ad', 'sn', 'tur', 'bulundu', 'ms', 'kaynak',
-  'plan', 'durum', 'acik', 'kari', 'sure', 'yer', 'kalan', 'sebep', 'urunHazir'];
+  'plan', 'durum', 'acik', 'kari', 'sure', 'yer', 'kalan', 'sebep', 'urunHazir',
+  'kod', 'detay', 'adim', 'sonuc'];
 
-function temizle(v) {
+// `detay` bir hata mesajının kısaltılmışıdır; 40 karakter onu okunmaz yapıyordu.
+const UZUN_ALAN = new Set(['detay']);
+
+function temizle(v, anahtar) {
   if (typeof v === 'boolean') return v;
   if (typeof v === 'number') return Number.isFinite(v) ? Math.round(v * 100) / 100 : 0;
-  return String(v).slice(0, 40);
+  return String(v).slice(0, UZUN_ALAN.has(anahtar) ? 120 : 40);
 }
 
 /** Bir cihazın olay yığınını diske yazar. Dönen sayı: kabul edilen olay adedi. */
@@ -85,7 +95,7 @@ export function olayYaz(cihaz, olaylar) {
   for (const o of olaylar.slice(0, 100)) {
     if (!o || typeof o !== 'object' || !OLAYLAR.has(o.a)) continue;
     const kayit = { t: new Date().toISOString(), c, a: o.a };
-    for (const k of ALANLAR) if (o[k] !== undefined && o[k] !== null) kayit[k] = temizle(o[k]);
+    for (const k of ALANLAR) if (o[k] !== undefined && o[k] !== null) kayit[k] = temizle(o[k], k);
     satirlar.push(JSON.stringify(kayit));
   }
   if (!satirlar.length) return 0;
@@ -208,7 +218,7 @@ export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
   const paywallKaynak = {}, satinalma = {}, satinalmaSebep = {}, plan = {};
   const kalanDagilim = {};      // sorgu sonucundaki kalan hak → kaç kez
   let paywallUrunHazir = 0, paywallUrunYok = 0;
-  const paylas = {}, kariIndir = {}, oynat = {}, hata = {};
+  const paylas = {}, kariIndir = {}, oynat = {}, hata = {}, hataDetay = {}, ezanIzin = {};
   let bildirimAc = 0, bildirimKapa = 0, geriYukle = 0;
 
   for (const e of ev) {
@@ -247,7 +257,9 @@ export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
       }
       case 'satinalma':
         say(satinalma, e.durum); say(plan, e.plan);
-        if (e.sebep) say(satinalmaSebep, e.sebep);
+        // Sebep durumla birlikte sayılır: eskiden `urun-geldi`'nin sebepleri de
+        // "urun-yok ayrıntısı" kutusuna düşüyor ve sayılar tutmuyordu.
+        if (e.sebep) say(satinalmaSebep, `${e.durum || '?'} · ${e.sebep}`);
         if (e.durum === 'tamam') G.satis++;
         if (e.durum === 'basladi') G.satisBaslat++;
         break;
@@ -256,7 +268,15 @@ export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
       case 'ezan_bildirim': e.acik ? bildirimAc++ : bildirimKapa++; break;
       case 'kari_indir': say(kariIndir, e.durum); break;
       case 'oynat': say(oynat, e.sure); break;
-      case 'hata': say(hata, e.yer); G.hata++; break;
+      case 'hata': {
+        // Kırılım anahtarı: kaynak · yer · kod. "Nerede, neden, kimden" tek satırda.
+        const k = `${e.kaynak || 'bilinmiyor'} · ${e.yer || '?'} · ${e.kod || '?'}`;
+        say(hata, k);
+        if (e.detay) say(hataDetay, `${k} — ${e.detay}`);
+        G.hata++;
+        break;
+      }
+      case 'ezan_izin': say(ezanIzin, `${e.adim || '?'} · ${e.sonuc || '?'}`); break;
     }
   }
 
@@ -309,7 +329,7 @@ export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
       [k, { kez: v.kez, ortSn: Math.round(v.sn / v.kez * 10) / 10, toplamDk: Math.round(v.sn / 60) }])),
     dil, tz, surum, sorguTur, sonucTur, paywallKaynak, satinalma, satinalmaSebep, plan,
     kalanDagilim, paywallUrun: { hazir: paywallUrunHazir, yok: paywallUrunYok },
-    paylas, kariIndir, oynat, hata, geriYukle,
+    paylas, kariIndir, oynat, hata, hataDetay, ezanIzin, geriYukle,
     bildirim: { acan: bildirimAc, kapatan: bildirimKapa },
     disk: diskDurumu(),
   };

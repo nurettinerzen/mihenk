@@ -934,8 +934,24 @@ const L = {
     uyaniyor:'سرور بیدار ہو رہا ہے، چند سیکنڈ لگ سکتے ہیں…', gunun_bayat:'محفوظ مواد دکھایا جا رہا ہے، اپ ڈیٹ ہو رہا ہے…',
   },
 };
-window.addEventListener('error', e=>{ try{ console.error('MIHENK hata:', e.message, e.filename+':'+e.lineno); }catch(_){} });
-window.addEventListener('unhandledrejection', e=>{ try{ console.error('MIHENK reddedilen söz:', e.reason); }catch(_){} });
+/* Yakalanmamış hatalar: WebView'da console kimseye ulaşmıyor. Panele yazılmazsa
+   uygulama iki sürüm boyunca kırık gider ve kimse haber vermez (Mihenk'te oldu).
+   Cihaz başına en çok 5 kayıt: döngüye giren bir hata kotayı ve paneli boğmasın. */
+let _hataSayaci = 0;
+function _globalHata(yer, kod, detay){
+  if(_hataSayaci >= 5) return;
+  _hataSayaci++;
+  try{ olay('hata',{yer, kod, kaynak:'istemci', detay:String(detay||'').slice(0,120)}); }catch(_){}
+}
+window.addEventListener('error', e=>{
+  try{ console.error('MIHENK hata:', e.message, e.filename+':'+e.lineno); }catch(_){}
+  // Dosya:satır kişisel veri değil ama teşhisin yarısı; mesajı da kısaltarak alıyoruz.
+  _globalHata('global', 'js_hata', (e.message||'') + ' @' + String(e.filename||'').split('/').pop() + ':' + (e.lineno||0));
+});
+window.addEventListener('unhandledrejection', e=>{
+  try{ console.error('MIHENK reddedilen söz:', e.reason); }catch(_){}
+  _globalHata('global', 'soz_reddi', (e.reason && (e.reason.message||e.reason)) || '');
+});
 if(!L[dil]) dil='tr';   // bozuk/eski dil değeri her açılışta T.* erişimini patlatırdı
 let T = L[dil];
 
@@ -1086,7 +1102,23 @@ document.addEventListener('visibilitychange', ()=>{
 window.addEventListener('pagehide', ()=>{ ekranBitir(); olayGonder(); });
 
 function yukleniyor(el){el.className='sonuc gorunur';el.innerHTML=`<div class="yukleniyor"><span class="spin"></span>${T.yukleniyor}</div>`;}
-function hata(el,e){const yogun=e&&e.yogun;el.className='sonuc gorunur';el.innerHTML=`<div class="kart uyari-kart"><div class="uyari-baslik">${yogun?(T.yogun_baslik||T.err_title):T.err_title}</div><div class="anlam">${yogun?T.yogun:T.err_body}</div></div>`;}
+/* Bir hatanın SEBEBİNİ makine-okur koda çevirir. Panelde "hata var" demek
+   hiçbir işe yaramıyordu; "429 · sunucu" ile "ag_kopuk · ag" farklı iki iştir. */
+function hataKodu(e){
+  if(!e) return {kod:'bilinmiyor', kaynak:'bilinmiyor'};
+  if(e.yogun) return {kod:'429', kaynak:'sunucu'};
+  const m = String(e.message||e||'');
+  const s = m.match(/^sunucu (\d{3})/);
+  if(s) return {kod:'http_'+s[1], kaynak: s[1][0]==='5' ? 'sunucu' : 'istemci'};
+  if(e.name==='AbortError'||/abort|timeout|zaman/i.test(m)) return {kod:'zaman_asimi', kaynak:'ag'};
+  if(e instanceof TypeError || /failed to fetch|load failed|network|networkerror/i.test(m)) return {kod:'ag_kopuk', kaynak:'ag'};
+  if(/json|unexpected token/i.test(m)) return {kod:'bozuk_yanit', kaynak:'sunucu'};
+  return {kod:'bilinmiyor', kaynak:'istemci'};
+}
+/* Tek hata yüzeyi: kullanıcıya mesajı gösterirken sebebi de kaydeder. */
+function hata(el,e,yer){const yogun=e&&e.yogun;
+  try{ const k=hataKodu(e); olay('hata',{yer:yer||'sorgu', kod:k.kod, kaynak:k.kaynak, detay:String(e&&e.message||e||'').slice(0,120)}); }catch(_){}
+  el.className='sonuc gorunur';el.innerHTML=`<div class="kart uyari-kart"><div class="uyari-baslik">${yogun?(T.yogun_baslik||T.err_title):T.err_title}</div><div class="anlam">${yogun?T.yogun:T.err_body}</div></div>`;}
 
 // --- Doğrula ---
 async function calistirDogrula(){
@@ -1115,7 +1147,7 @@ async function calistirDogrula(){
       </div>`;
     }
     el.className='sonuc gorunur';
-  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el,e); }
+  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el,e,'dogrula'); }
   document.getElementById('btnDogrula').disabled=false;
 }
 function benzerBlok(list){
@@ -1141,7 +1173,7 @@ async function calistirKonu(){
         j.sonuclar.map(h=>`<div class="mini">${hadisKarti(h,false)}</div>`).join('');
     }
     el.className='sonuc gorunur';
-  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el,e); }
+  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el,e,'konu'); }
   document.getElementById('btnKonu').disabled=false;
 }
 
@@ -1169,7 +1201,7 @@ async function calistirKuran(){
         j.sonuclar.map(a=>`<div class="mini">${ayetKarti(a)}</div>`).join('');
     }
     el.className='sonuc gorunur';
-  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el,e); }
+  }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el,e,'kuran'); }
   document.getElementById('btnKuran').disabled=false;
 }
 
@@ -1845,6 +1877,27 @@ async function urunleriTekrarDene(){
   if(rcUrunler && rcUrunler[seciliUrun]){ urunYokGizle(); olay('satinalma',{durum:'urun-geldi', plan:seciliUrun}); }
   else { olay('satinalma',{durum:'urun-yok', plan:seciliUrun, sebep:'tekrar-basarisiz'}); urunYokGoster('tekrar'); }
 }
+/* RevenueCat hata kodunu SEBEBE çevirir. Eskiden "iptal mi değil mi" diye
+   mesaj metnine regex atılıyordu: mağaza reddi, ağ kopması ve doğrulama hatası
+   hepsi tek `hata` kovasına düşüyor, "para alındı premium verilmedi" vakası
+   ödeme reddinden ayırt edilemiyordu. */
+const RC_SEBEP = {
+  '1':['kullanici_iptal','kullanici'], '2':['magaza_sorunu','magaza'], '3':['izin_yok','magaza'],
+  '4':['odeme_reddedildi','magaza'], '5':['urun_yok','magaza'], '6':['zaten_sahip','magaza'],
+  '7':['zaten_sahip','magaza'], '8':['makbuz_gecersiz','magaza'], '9':['makbuz_gecersiz','magaza'],
+  '10':['ag','ag'], '11':['rc_yapilandirma','sunucu'], '12':['rc_yapilandirma','sunucu'],
+  '20':['odeme_bekliyor','magaza'],
+};
+function satinAlmaSebebi(e){
+  if(!e) return {sebep:'bilinmiyor', kaynak:'bilinmiyor', iptal:false};
+  if(e.dogrulanamadi) return {sebep:'dogrulanamadi', kaynak:'magaza', iptal:false};
+  const k = RC_SEBEP[String(e.code ?? '')];
+  if(k) return {sebep:k[0], kaynak:k[1], iptal:k[0]==='kullanici_iptal'};
+  if(e.userCancelled) return {sebep:'kullanici_iptal', kaynak:'kullanici', iptal:true};
+  const m = String(e.message||'');
+  if(/network|ağ|internet/i.test(m)) return {sebep:'ag', kaynak:'ag', iptal:false};
+  return {sebep:'bilinmiyor', kaynak:'bilinmiyor', iptal:false};
+}
 async function satinAl(){
   const m=document.getElementById('lisansMesaj');
   if(!YERLI || !rcUrunler || !rcUrunler[seciliUrun]){
@@ -1870,13 +1923,16 @@ async function satinAl(){
       await new Promise(r=>setTimeout(r,400*(i+1)));
       aktif=await iapPremiumKontrol();
     }
-    if(!aktif) throw new Error('satın alma aktif abonelik olarak doğrulanamadı');
+    // ÖDEME GEÇTİ AMA HAK GELMEDİ: bu, ödeme reddinden bambaşka bir arızadır ve
+    // ayrı bir sebep koduyla işaretlenir, yoksa panelde ikisi aynı görünür.
+    if(!aktif){ const hataD=new Error('satın alma aktif abonelik olarak doğrulanamadı'); hataD.dogrulanamadi=true; throw hataD; }
     olay('satinalma',{durum:'tamam',plan:seciliUrun});
     m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200);
   }catch(e){
-    const iptal = e && (e.userCancelled || e.code==='1' || /cancel/i.test(e.message||''));
-    olay('satinalma',{durum: iptal?'iptal':'hata', plan:seciliUrun});
-    if(!iptal){ m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; }
+    const s0 = satinAlmaSebebi(e);
+    olay('satinalma',{durum: s0.iptal?'iptal':'hata', plan:seciliUrun, sebep:s0.sebep});
+    if(!s0.iptal) olay('hata',{yer:'satinalma', kod:s0.sebep, kaynak:s0.kaynak, detay:String(e&&e.message||'').slice(0,120)});
+    if(!s0.iptal){ m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; }
   }
 }
 async function restore(){
@@ -1890,7 +1946,10 @@ async function restore(){
     await Purchases.restorePurchases();
     if(await iapPremiumKontrol()){ olay('geri_yukle',{durum:'bulundu'}); m.textContent=T.pw_basarili; m.className='paywall-mesaj ok'; setTimeout(paywallGizle,1200); }
     else { olay('geri_yukle',{durum:'yok'}); m.textContent=T.pw_restore_yok; m.className='paywall-mesaj'; }
-  }catch(e){ olay('geri_yukle',{durum:'hata'}); m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; }
+  }catch(e){ const s1=satinAlmaSebebi(e);
+    olay('geri_yukle',{durum:'hata', sebep:s1.sebep});
+    olay('hata',{yer:'geri_yukle', kod:s1.sebep, kaynak:s1.kaynak, detay:String(e&&e.message||'').slice(0,120)});
+    m.textContent=T.pw_hata; m.className='paywall-mesaj hata'; }
 }
 // --- Gecikmeli açılış: önbellek + durum göstergesi --------------------------
 // Starter uyumasa da deploy/ağ gecikmesinde Bugün ekranı boş kalmasın. Son

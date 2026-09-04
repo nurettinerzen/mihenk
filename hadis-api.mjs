@@ -45,13 +45,50 @@ const RC_API = process.env.RC_API || 'https://api.revenuecat.com/v1';
 // Ölçüm kimlikleri RC'ye HİÇ sorulmaz (analitikteki elemeyle aynı desen).
 const TEST_KIMLIK = /^(test-|degerlendirme-|ekran-goruntusu-|teshis-)/;
 
+/* Sunucunun kendi hataları da panele düşsün. Eskiden hepsi console'a gidiyordu
+   ve Render free katmanında her uyanışta siliniyordu: "LLM mi düştü, RevenueCat
+   mi, kota mı" sorusunun cevabı hiçbir yerde durmuyordu.
+   Cihaz biliniyorsa ona yazılır (hatayı YAŞAYAN cihaz odur); bilinmiyorsa
+   olay hiç yazılmaz — sahte bir "sunucu" cihazı toplam cihaz sayısını şişirirdi. */
+/* Anthropic hatasının TÜRÜ: aşırı yük mü, kota mı, zaman aşımı mı, bozuk yanıt mı.
+   Hepsi tek "llm hatası" olunca müdahale edilecek yer bulunamıyor. */
+function llmKodu(e) {
+  const st = e && (e.status || e.statusCode);
+  if (st === 429) return 'llm_429';
+  if (st === 529) return 'llm_529';
+  if (st >= 500) return 'llm_5xx';
+  if (st === 401 || st === 403) return 'llm_yetki';
+  const m = String((e && e.message) || '');
+  if (/abort|timeout/i.test(m)) return 'llm_zaman_asimi';
+  if (/json|unexpected token/i.test(m)) return 'llm_bozuk_yanit';
+  if (/fetch failed|network|ENOTFOUND|ECONNRESET/i.test(m)) return 'llm_ag';
+  return 'llm_bilinmiyor';
+}
+
+/* Hangi cihazın isteğini işlediğimiz, iç fonksiyonlara parametre geçirmeden
+   bilinsin diye istek başında yazılır (Node tek iş parçacığı; await sınırında
+   değişebileceği için yalnız TEŞHİS amaçlı kullanılır, karar için değil). */
+let cihazIzi = null;
+
+function sunucuHatasi(cihaz, yer, kod, kaynak, detay) {
+  if (!cihaz) return;
+  try {
+    olayYaz(cihaz, [{ a: 'hata', yer, kod, kaynak, detay: String(detay || '').slice(0, 120) }]);
+  } catch { /* ölçüm asla isteği bozmaz */ }
+}
+
 async function rcPremiumMi(cihaz) {
   if (!RC_SECRET || TEST_KIMLIK.test(String(cihaz || ''))) return null;
   try {
     const r = await fetch(`${RC_API}/subscribers/${encodeURIComponent(cihaz)}`,
       { headers: { Authorization: `Bearer ${RC_SECRET}` }, signal: AbortSignal.timeout(8000) });
     if (r.status === 404) return false;               // RC'de böyle bir abone yok
-    if (!r.ok) return null;                            // 401/429/5xx → bilinmiyor
+    if (!r.ok) {                                       // 401/429/5xx → bilinmiyor
+      // "Premium doğrulanamadı" ile "abonesi yok" bambaşka iki şey: ilki bizim
+      // arızamız ve ödeyen kullanıcıyı mağdur eder.
+      sunucuHatasi(cihaz, 'rc_dogrulama', 'rc_' + r.status, 'magaza', 'RevenueCat ' + r.status);
+      return null;
+    }
     const j = await r.json();
     // refunded_at: Apple para iadesi verdiğinde RevenueCat bu alanı doldurur ama
     // abonelik kaydındaki expires_date GELECEKTE kalabiliyor. Sadece expires_date'e
@@ -68,7 +105,10 @@ async function rcPremiumMi(cihaz) {
     const sub = Object.entries(j?.subscriber?.subscriptions || {}).some(([urun, x]) =>
       PLUS_URUNLER.has(urun) && gecerli(x));
     return ent || sub;
-  } catch { return null; }
+  } catch (e) {
+    sunucuHatasi(cihaz, 'rc_dogrulama', e && e.name === 'TimeoutError' ? 'rc_zaman_asimi' : 'rc_ulasilamadi', 'magaza', e && e.message);
+    return null;
+  }
 }
 console.log('Depo açılıyor (SQLite)...');
 const yol = (f) => new URL(`./${f}`, import.meta.url).pathname;
@@ -500,7 +540,11 @@ async function konuMu(sorgu, dil) {
     });
     const t = (r.content.find(c => c.type === 'text')?.text || '').trim().toUpperCase();
     if (t.startsWith('DEGIL') || t.startsWith('DE\u011eIL')) sonuc = false;
-  } catch { sonuc = true; }              // sınıflandırıcı düşerse ürün eski gibi çalışır
+  } catch (e) {
+    sonuc = true;                        // sınıflandırıcı düşerse ürün eski gibi çalışır
+    // ...ama SESSİZCE çalışmasın: kalite düşüşünün tek işareti bu satır.
+    sunucuHatasi(cihazIzi, 'llm_konu', llmKodu(e), 'yapayzeka', e && e.message);
+  }
   if (konuMuOnbellek.size >= KONU_ONBELLEK_SINIR) konuMuOnbellek.clear();
   konuMuOnbellek.set(k, sonuc);
   return sonuc;
@@ -516,7 +560,10 @@ async function genislet(konu, dil) {
     });
     const ek = r.content.find(c => c.type === 'text')?.text || '';
     return `${konu} ${ek}`.slice(0, 300);
-  } catch { return konu; }
+  } catch (e) {
+    sunucuHatasi(cihazIzi, 'llm_genislet', llmKodu(e), 'yapayzeka', e && e.message);
+    return konu;
+  }
 }
 
 // HADİSE ÖZGÜ kavram sözlüğü. Türkçe hadis çevirileri Arapça terimi değil sade
@@ -1158,10 +1205,14 @@ const sunucu = http.createServer(async (req, res) => {
       const dil = dilAl(body.dil);
       say(olcum.istek, url.pathname); say(olcum.dil, dil);
       const cihaz = (body.cihaz || '').toString().slice(0, 64) || 'anon';
+      cihazIzi = cihaz === 'anon' ? null : cihaz;   // hata olayı hangi cihaza yazılacak
       // Asıl fren burada: cihaz başına saatlik tavan. IP kovası CGNAT yüzünden
       // meşru kullanıcıyı komşusuyla birlikte cezalandırıyordu.
       if (cihaz !== 'anon' && cihazLimitAsildi(cihaz)) {
-        say(olcum.hata, '429'); res.writeHead(429);
+        say(olcum.hata, '429');
+        // Kotanın ne zaman ısırdığı bugüne dek yalnız bellekte duruyordu.
+        sunucuHatasi(cihaz, url.pathname, 'hiz_limiti_cihaz', 'sunucu', '');
+        res.writeHead(429);
         return res.end(JSON.stringify({ hata: 'çok fazla istek, biraz bekleyin' }));
       }
       // `yerli` istemciden geliyordu: gövdeye yerli:false yazan herkes kotayı tamamen
@@ -1250,6 +1301,9 @@ const sunucu = http.createServer(async (req, res) => {
     }
   } catch (e) {
     console.error(e);
+    // 500'ler şimdiye kadar yalnız console'a gidiyordu: hangi ucun patladığı
+    // deploy sonrası kayboluyordu.
+    sunucuHatasi(cihazIzi, (url && url.pathname) || 'bilinmiyor', 'http_500', 'sunucu', e && e.message);
     res.writeHead(500); return res.end(JSON.stringify({ hata: 'sunucu hatası' }));
   }
   res.writeHead(404); res.end(JSON.stringify({ hata: 'yok' }));
