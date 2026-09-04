@@ -213,7 +213,7 @@ export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
 
   for (const e of ev) {
     const g = (e.t || '').slice(0, 10);
-    const G = gunluk[g] || (gunluk[g] = { cihaz: new Set(), olay: 0, sorgu: 0, paywall: 0, satis: 0 });
+    const G = gunluk[g] || (gunluk[g] = { cihaz: new Set(), olay: 0, sorgu: 0, paywall: 0, satis: 0, satisBaslat: 0, hata: 0 });
     G.cihaz.add(e.c); G.olay++;
     if (!cihazIlk[e.c] || g < cihazIlk[e.c]) cihazIlk[e.c] = g;
     if (!cihazSon[e.c] || g > cihazSon[e.c]) cihazSon[e.c] = g;
@@ -249,13 +249,14 @@ export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
         say(satinalma, e.durum); say(plan, e.plan);
         if (e.sebep) say(satinalmaSebep, e.sebep);
         if (e.durum === 'tamam') G.satis++;
+        if (e.durum === 'basladi') G.satisBaslat++;
         break;
       case 'geri_yukle': geriYukle++; break;
       case 'paylas': say(paylas, e.tur); break;
       case 'ezan_bildirim': e.acik ? bildirimAc++ : bildirimKapa++; break;
       case 'kari_indir': say(kariIndir, e.durum); break;
       case 'oynat': say(oynat, e.sure); break;
-      case 'hata': say(hata, e.yer); break;
+      case 'hata': say(hata, e.yer); G.hata++; break;
     }
   }
 
@@ -290,6 +291,7 @@ export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
 
   const gunListe = Object.entries(gunluk).sort(([a], [b]) => a < b ? -1 : 1).map(([g, v]) => ({
     gun: g, cihaz: v.cihaz.size, olay: v.olay, sorgu: v.sorgu, paywall: v.paywall, satis: v.satis,
+    satisBaslat: v.satisBaslat, hata: v.hata,
     yeni: Object.values(cihazIlk).filter(x => x === g).length,
   }));
 
