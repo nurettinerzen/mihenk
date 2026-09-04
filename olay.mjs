@@ -141,11 +141,50 @@ export function diskDurumu() {
 // `testDahil=true` ile geri alınabilir. Silmek, sonradan "acaba neydi" dediğimizde
 // geri dönülemez olurdu.
 /** Panel ve /olcum için özet. Ham olay döndürmez; yalnız toplamlar. */
-export function ozet(gun = 30, { testDahil = false } = {}) {
+// Mağaza yayın tarihleri (App Store). Bir cihaz bir sürümü mağazaya çıkmadan ÖNCE
+// çalıştırdıysa o cihaz TestFlight'tır = geliştirici/test cihazı. Yeni sürümde
+// buraya bir satır ekle; eklenmezse yalnız "≥3 sürüm" kuralı çalışır.
+const SURUM_YAYIN = { '1.6': '2026-09-03' };
+
+// Geliştirici/test cihazı: (a) pencere içinde ≥3 farklı sürüm görmüş (her build'i
+// deneyen sahip) ya da (b) bir sürümü mağaza yayın tarihinden önce çalıştırmış
+// (TestFlight). Kimlik özetlenmiş olduğundan cihaz adı yerine davranıştan ayrılır.
+function gelistiriciCihazlar(ev) {
+  const prof = {};
+  for (const e of ev) {
+    if (e.a !== 'acilis' || !e.surum) continue;
+    const p = prof[e.c] || (prof[e.c] = {});
+    const g = (e.t || '').slice(0, 10);
+    if (!p[e.surum] || g < p[e.surum]) p[e.surum] = g;
+  }
+  const set = new Set();
+  for (const [c, surumler] of Object.entries(prof)) {
+    const adlar = Object.keys(surumler);
+    if (adlar.length >= 3) { set.add(c); continue; }
+    if (adlar.some((s) => SURUM_YAYIN[s] && surumler[s] < SURUM_YAYIN[s])) set.add(c);
+  }
+  return set;
+}
+
+export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
   const hepsi = olayOku(gun);
-  const ev = testDahil ? hepsi : hepsi.filter((e) => !testMi(e.c));
+  const gelistirici = testDahil ? new Set() : gelistiriciCihazlar(hepsi.filter((e) => !testMi(e.c)));
+  const ev = testDahil ? hepsi : hepsi.filter((e) => !testMi(e.c) && !gelistirici.has(e.c));
   const elenenCihaz = new Set(hepsi.filter((e) => testMi(e.c)).map((e) => e.c)).size;
   const elenenOlay = hepsi.length - ev.length;
+  // ?cihaz=1: cihaz başına profil (özetlenmiş kimlik, tz, sürümler, olay sayıları) —
+  // "bu sayının içinde ben var mıyım" sorusunu cevaplamak için.
+  let cihazlar;
+  if (cihazDahil) {
+    const pr = {};
+    for (const e of hepsi) {
+      const p = pr[e.c] || (pr[e.c] = { c: e.c, n: 0, tz: new Set(), surum: new Set(), dil: new Set(), paywall: 0, sorgu: 0, satinalma: 0, ilk: e.t, son: e.t, gelistirici: gelistirici.has(e.c), test: testMi(e.c) });
+      p.n++; if (e.tz) p.tz.add(e.tz); if (e.surum) p.surum.add(e.surum); if (e.dil) p.dil.add(e.dil);
+      if (e.a === 'paywall') p.paywall++; if (e.a === 'sorgu') p.sorgu++; if (e.a === 'satinalma') p.satinalma++;
+      if (e.t < p.ilk) p.ilk = e.t; if (e.t > p.son) p.son = e.t;
+    }
+    cihazlar = Object.values(pr).sort((a, b) => b.n - a.n).map((p) => ({ ...p, tz: [...p.tz], surum: [...p.surum], dil: [...p.dil] }));
+  }
   const say = (o, k, n = 1) => { if (k !== undefined) o[k] = (o[k] || 0) + n; };
 
   const gunluk = {};            // gün -> { cihaz:Set, olay, sorgu, paywall, satis }
@@ -247,7 +286,8 @@ export function ozet(gun = 30, { testDahil = false } = {}) {
     toplamOlay: ev.length,
     toplamCihaz: acan.size,
     // Elenenler görünür kalsın: "sayı neden düştü" sorusu panelde cevaplansın.
-    elenen: { cihaz: elenenCihaz, olay: elenenOlay, dahil: testDahil },
+    elenen: { cihaz: elenenCihaz, olay: elenenOlay, dahil: testDahil, gelistirici: gelistirici.size },
+    ...(cihazlar ? { cihazlar } : {}),
     gunluk: gunListe,
     huni,
     eldeTutma: { d1: eldeTutma(1), d7: eldeTutma(7) },
