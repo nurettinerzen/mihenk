@@ -22,7 +22,13 @@ Ember'de kurulu desen (`App.js:552`, `components/Paywall.js:74`) buraya taşınm
 
 Bu veri olmadan aşağıdaki hiçbir maddenin etkisini göremezsin. `/olcum` altyapısı zaten var, olayları oraya eklemek küçük iş. Hedef oran: `paywall_view` → `purchase_done` **%1-3**.
 
-### 2. Yıllık plana 3 gün deneme
+### 2. ~~Yıllık plana 3 gün deneme~~ — DENENDİ, KALDIRILDI (4 Eyl 2026)
+Deneme App Store'da 175 ülkede kuruldu, sonra **tamamen kaldırıldı**. Sahibinin
+gerekçesi: uygulama zaten ücretsiz indiriliyor ve serbestçe kullanılıyor, kullanıcı
+limiti açmak istediğinde satın alıyor — bu modelde "ücretsiz deneme"nin karşılığı yok.
+Ayrıca Play, deneme şartları ekranda tam yazılmadığı için vc17'yi Abonelikler
+politikasından reddetti; deneme olmayınca o yük de kalkıyor. Aşağıdaki eski gerekçe
+kayıt için duruyor:
 Portföyde en yüksek getirili tek değişiklik burada olabilir. ₺249/yıl tek seferde büyük bir karar; ₺49,99/ay ile arasındaki %58 fark doğru kurgulanmış ama kullanıcı yıllığa atlamak için bir sebep istiyor. Deneme o direnci kırar. **Yalnız yıllıkta** tanımla, metni StoreKit `introPrice`'tan oku (Safi'deki `pay_deneme_*` desenini kopyala), koda gömme.
 
 Toplam kota ile deneme çelişmiyor: ilk 5 arama ürünü ispatlar, deneme yıllık plana geçiş direncini azaltır.

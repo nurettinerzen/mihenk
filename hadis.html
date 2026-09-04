@@ -1851,6 +1851,15 @@ function fiyatCiz(){
 // Ücretsiz deneme yalnızca YILLIK planda tanımlı. Süreyi ve birimi mağazadan
 // okuyup kullanıcının dilinde yazarız — sabit metin yazmak, teklif ülkeye göre
 // değişince ya da kaldırılınca tutulmayan bir söz olurdu.
+// ÜRÜN KARARI (4 Eyl 2026): DENEME YOK — ne App Store'da ne Play'de.
+// Gerekçe sahibinden: uygulama zaten ücretsiz indiriliyor ve serbestçe
+// kullanılıyor; kullanıcı limiti açmak istediğinde satın alıyor. Böyle bir
+// modelde "ücretsiz deneme" anlamsız, üstelik Play'in Abonelikler politikasında
+// ekstra şart yükü getiriyor (vc17 tam bundan reddedildi).
+// Aşağıdaki kod SİLİNMEDİ: metin tamamen mağazadan gelen introPrice'a bağlı,
+// teklif yoksa satır hiç çizilmiyor. Bir gün tanıtım teklifi açılırsa şartlarıyla
+// birlikte doğru şekilde görünür. Yani burada teklif göremiyorsan bu bir arıza
+// değil, kasıtlı — mağazada teklif yok demektir.
 function denemeCiz(){
   const el=document.getElementById('planDeneme'); if(!el) return;
   const y=rcUrunler&&rcUrunler[URUNLER.yillik];
