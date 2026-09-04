@@ -170,6 +170,11 @@ function gelistiriciCihazlar(ev) {
   // saat dilimli, tek günlük, 6 dilli onlarca "cihaz" — hepsi test turuydu ve
   // paywall/satın alma sayılarını (urun-yok 187) tamamen bunlar şişiriyordu.
   for (const [c, d] of Object.entries(diller)) if (d.size >= 3) set.add(c);
+  // (d) Sahibin saat dilimi (Los Angeles): geliştirme makinesindeki simülatör/emülatör
+  // ve sahibin telefonu. Mihenk'in kitlesi Türkiye; LA'daki gerçek Türk kullanıcı
+  // bu kuralla kaybedilir, bilinçli taviz (3 Eyl 2026 ölçümü: LA'li 21 cihazın
+  // tamamı tek günlük, ajan denetim günlerine yığılmış test oturumuydu).
+  for (const e of ev) if (e.a === 'acilis' && e.tz === 'America/Los_Angeles') set.add(e.c);
   return set;
 }
 
