@@ -16,6 +16,11 @@ const DIZIN = process.env.VERI_DIZIN || (existsSync('/veri') ? '/veri/olay' : '.
 try { mkdirSync(DIZIN, { recursive: true }); } catch { /* salt-okunur disk: yazma sessizce düşer */ }
 
 const gunAdi = (d = new Date()) => d.toISOString().slice(0, 10);
+/* Panelde günler SAHİBİN saatiyle (Pasifik) sayılır: UTC gün, LA'de saat 17:00'de
+   dönüyor ve "bugün"/"dün" kayıyordu. Depolama dosya adları UTC kalır (o yalnız
+   dosya bölme); yalnız RAPOR kovaları yerelleştirilir. DST'yi Intl hallediyor. */
+const PASIFIK = 'America/Los_Angeles';
+const pasifikGun = (t) => new Date(t).toLocaleDateString('en-CA', { timeZone: PASIFIK });
 const dosyaYolu = (g) => join(DIZIN, `${g}.jsonl`);
 const GUNLUK_MAX_BAYT = Math.max(1, Number(process.env.OLAY_GUNLUK_MAX_MB || 20)) * 1048576;
 const SAKLAMA_GUN = Math.max(7, Number(process.env.OLAY_SAKLAMA_GUN || 90));
@@ -116,7 +121,9 @@ export function olayYaz(cihaz, olaylar) {
 export function olayOku(gun = 30) {
   const cikti = [];
   const bugun = new Date();
-  for (let i = gun - 1; i >= 0; i--) {
+  // Bir gün FAZLA okunur: Pasifik günü UTC dosyasının sınırını aşıyor, aksi hâlde
+  // pencerenin ilk gününün sabah saatleri (UTC'de bir önceki dosyada) düşerdi.
+  for (let i = gun; i >= 0; i--) {
     const d = new Date(bugun.getTime() - i * 86400_000);
     const y = dosyaYolu(gunAdi(d));
     if (!existsSync(y)) continue;
@@ -166,7 +173,7 @@ function gelistiriciCihazlar(ev) {
     if (e.dil) (diller[e.c] ||= new Set()).add(e.dil);
     if (e.a !== 'acilis' || !e.surum) continue;
     const p = prof[e.c] || (prof[e.c] = {});
-    const g = (e.t || '').slice(0, 10);
+    const g = pasifikGun(e.t);
     if (!p[e.surum] || g < p[e.surum]) p[e.surum] = g;
   }
   const set = new Set();
@@ -222,7 +229,7 @@ export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
   let bildirimAc = 0, bildirimKapa = 0, geriYukle = 0;
 
   for (const e of ev) {
-    const g = (e.t || '').slice(0, 10);
+    const g = pasifikGun(e.t);
     const G = gunluk[g] || (gunluk[g] = { cihaz: new Set(), olay: 0, sorgu: 0, paywall: 0, satis: 0, satisBaslat: 0, hata: 0 });
     G.cihaz.add(e.c); G.olay++;
     if (!cihazIlk[e.c] || g < cihazIlk[e.c]) cihazIlk[e.c] = g;

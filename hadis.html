@@ -80,7 +80,7 @@
   .plan-ad{font-family:'Sora',sans-serif;font-weight:600;font-size:15.5px;color:var(--metin)}
   .plan-rozet{font-size:11px;color:var(--zumrut);font-weight:600}
   .plan-fiyat{font-family:'Sora',sans-serif;font-weight:700;font-size:17px;color:var(--pirinc)}
-  .plan-deneme{font-size:12.5px;color:var(--zumrut);text-align:center;margin:-2px 0 2px}
+  .plan-deneme{font-size:12.5px;line-height:1.45;color:var(--zumrut);text-align:center;margin:-2px 0 6px;padding:0 2px}
   .restore-link{background:none;border:none;color:var(--daha-soluk);font-family:inherit;font-size:12.5px;
     cursor:pointer;display:block;margin:14px auto 0;text-decoration:underline}
   .btn-ince{background:var(--yuzey2);border:1px solid var(--zumrut-koyu);color:var(--metin);font-family:inherit;
@@ -744,7 +744,7 @@ const L = {
     nav_bugun:'Bugün', ayar_baslik:'Ayarlar', ayar_dil:'Dil', ayar_gizlilik:'Gizlilik Politikası', ayar_kullanim:'Kullanım Koşulları',
     ayar_hakkinda:'Mihenk; hadis metnini, âlim derecesini ve Kur\'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.',
     selam:'Selâmün aleyküm', gun_ayet:'Günün Ayeti', gun_hadis:'Günün Hadisi',
-    pw_yillik:'Yıllık', pw_aylik:'Aylık', pw_deneme:(s)=>`İlk ${s} ücretsiz`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'gün':'gün',WEEK:'hafta',MONTH:'ay',YEAR:'yıl'}[b]||''),pw_avantaj:(p)=>`%${p} avantajlı`, pw_devam:'Devam et', pw_restore:'Satın almaları geri yükle',
+    pw_yillik:'Yıllık', pw_aylik:'Aylık', pw_deneme:(s,f)=>`İlk ${s} ücretsiz. Deneme bitince abonelik ${f}/yıl olarak başlar ve iptal edilmedikçe her yıl yenilenir. Deneme süresi içinde App Store üzerinden iptal edersen hiçbir ücret alınmaz.`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'gün':'gün',WEEK:'hafta',MONTH:'ay',YEAR:'yıl'}[b]||''),pw_avantaj:(p)=>`%${p} avantajlı`, pw_devam:'Devam et', pw_restore:'Satın almaları geri yükle',
     pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
     pw_urun_yok:'Mağazaya şu an bağlanamadık. İnternetini kontrol edip tekrar dene.', pw_tekrar:'Tekrar dene', pw_yukleniyor:'Bağlanılıyor…',
     uyaniyor:'Sunucu uyanıyor, birkaç saniye sürebilir…', gunun_bayat:'Kayıtlı içerik gösteriliyor, güncelleniyor…',
@@ -788,7 +788,7 @@ const L = {
     nav_bugun:'Today', ayar_baslik:'Settings', ayar_dil:'Language', ayar_gizlilik:'Privacy Policy', ayar_kullanim:'Terms of Use',
     ayar_hakkinda:'Mihenk brings the hadith text, scholars\' grading and Quran translation from verified sources — it does not generate them. Consult a scholar on disputed matters.',
     selam:'As-salamu alaykum', gun_ayet:'Verse of the Day', gun_hadis:'Hadith of the Day',
-    pw_yillik:'Yearly', pw_aylik:'Monthly', pw_deneme:(s)=>`First ${s} free`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'days':'day',WEEK:n>1?'weeks':'week',MONTH:n>1?'months':'month',YEAR:n>1?'years':'year'}[b]||''),pw_avantaj:(p)=>`Save ${p}%`, pw_devam:'Continue', pw_restore:'Restore purchases',
+    pw_yillik:'Yearly', pw_aylik:'Monthly', pw_deneme:(s,f)=>`First ${s} free. When the trial ends the subscription starts at ${f}/year and renews yearly unless cancelled. Cancel in App Store before the trial ends and you won't be charged.`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'days':'day',WEEK:n>1?'weeks':'week',MONTH:n>1?'months':'month',YEAR:n>1?'years':'year'}[b]||''),pw_avantaj:(p)=>`Save ${p}%`, pw_devam:'Continue', pw_restore:'Restore purchases',
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
     pw_urun_yok:'We couldn\'t reach the store right now. Check your connection and try again.', pw_tekrar:'Try again', pw_yukleniyor:'Connecting…',
     uyaniyor:'Waking the server, this may take a few seconds…', gunun_bayat:'Showing saved content, refreshing…',
@@ -832,7 +832,7 @@ const L = {
     nav_bugun:'Aujourd\'hui', ayar_baslik:'Réglages', ayar_dil:'Langue', ayar_gizlilik:'Politique de confidentialité', ayar_kullanim:'Conditions d\'utilisation',
     ayar_hakkinda:'Mihenk rapporte le texte du hadith, le degré des savants et la traduction du Coran depuis des sources vérifiées — il ne les génère pas. Consultez un savant pour les questions litigieuses.',
     selam:'As-salâmu alaykum', gun_ayet:'Verset du jour', gun_hadis:'Hadith du jour',
-    pw_yillik:'Annuel', pw_aylik:'Mensuel', pw_deneme:(s)=>`${s} offerts`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'jours':'jour',WEEK:n>1?'semaines':'semaine',MONTH:'mois',YEAR:n>1?'ans':'an'}[b]||''),pw_avantaj:(p)=>`-${p} %`, pw_devam:'Continuer', pw_restore:'Restaurer les achats',
+    pw_yillik:'Annuel', pw_aylik:'Mensuel', pw_deneme:(s,f)=>`${s} offerts. À la fin de l'essai, l'abonnement démarre à ${f}/an et se renouvelle chaque année sauf résiliation. Résilie via App Store avant la fin de l'essai et rien ne te sera facturé.`,pw_sure:(n,b)=>n+' '+({DAY:n>1?'jours':'jour',WEEK:n>1?'semaines':'semaine',MONTH:'mois',YEAR:n>1?'ans':'an'}[b]||''),pw_avantaj:(p)=>`-${p} %`, pw_devam:'Continuer', pw_restore:'Restaurer les achats',
     pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
     pw_urun_yok:'Impossible de joindre la boutique. Vérifiez votre connexion et réessayez.', pw_tekrar:'Réessayer', pw_yukleniyor:'Connexion…',
     uyaniyor:'Le serveur se réveille, cela peut prendre quelques secondes…', gunun_bayat:'Contenu enregistré affiché, actualisation…',
@@ -876,7 +876,7 @@ const L = {
     nav_bugun:'Hari Ini', ayar_baslik:'Pengaturan', ayar_dil:'Bahasa', ayar_gizlilik:'Kebijakan Privasi', ayar_kullanim:'Ketentuan Penggunaan',
     ayar_hakkinda:'Mihenk menyajikan teks hadis, penilaian ulama, dan terjemahan Al-Qur\'an dari sumber terverifikasi — bukan mengarangnya. Rujuklah kepada ulama untuk masalah yang diperselisihkan.',
     selam:'Assalamu\'alaikum', gun_ayet:'Ayat Hari Ini', gun_hadis:'Hadis Hari Ini',
-    pw_yillik:'Tahunan', pw_aylik:'Bulanan', pw_deneme:(s)=>`${s} pertama gratis`,pw_sure:(n,b)=>n+' '+({DAY:'hari',WEEK:'minggu',MONTH:'bulan',YEAR:'tahun'}[b]||''),pw_avantaj:(p)=>`Hemat ${p}%`, pw_devam:'Lanjutkan', pw_restore:'Pulihkan pembelian',
+    pw_yillik:'Tahunan', pw_aylik:'Bulanan', pw_deneme:(s,f)=>`${s} pertama gratis. Setelah masa coba berakhir, langganan dimulai ${f}/tahun dan diperpanjang otomatis tiap tahun kecuali dibatalkan. Batalkan lewat App Store sebelum masa coba berakhir dan Anda tidak akan ditagih.`,pw_sure:(n,b)=>n+' '+({DAY:'hari',WEEK:'minggu',MONTH:'bulan',YEAR:'tahun'}[b]||''),pw_avantaj:(p)=>`Hemat ${p}%`, pw_devam:'Lanjutkan', pw_restore:'Pulihkan pembelian',
     pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
     pw_urun_yok:'Kami tidak dapat menghubungi toko saat ini. Periksa koneksi lalu coba lagi.', pw_tekrar:'Coba lagi', pw_yukleniyor:'Menghubungkan…',
     uyaniyor:'Server sedang dibangunkan, mungkin butuh beberapa detik…', gunun_bayat:'Menampilkan konten tersimpan, memperbarui…',
@@ -920,7 +920,7 @@ const L = {
     nav_bugun:'اليوم', ayar_baslik:'الإعدادات', ayar_dil:'اللغة', ayar_gizlilik:'سياسة الخصوصية', ayar_kullanim:'شروط الاستخدام',
     ayar_hakkinda:'يُحضِر مِحَنك نصّ الحديث وحُكم العلماء وترجمة القرآن من مصادر موثّقة — لا يُنشئها. اسأل عالمًا في المسائل الخلافية.',
     selam:'السلام عليكم', gun_ayet:'آية اليوم', gun_hadis:'حديث اليوم',
-    pw_yillik:'سنوي', pw_aylik:'شهري', pw_deneme:(s)=>`${s} مجانًا`,pw_sure:(n,b)=>n+' '+({DAY:n>2?'أيام':'أيام',WEEK:'أسابيع',MONTH:'أشهر',YEAR:'سنوات'}[b]||''),pw_avantaj:(p)=>`توفير ${p}%`, pw_devam:'متابعة', pw_restore:'استعادة المشتريات',
+    pw_yillik:'سنوي', pw_aylik:'شهري', pw_deneme:(s,f)=>`${s} مجانًا. عند انتهاء الفترة التجريبية يبدأ الاشتراك بسعر ${f} سنويًا ويتجدد كل سنة ما لم يتم إلغاؤه. ألغِ عبر App Store قبل انتهاء التجربة ولن يُخصم منك أي مبلغ.`,pw_sure:(n,b)=>n+' '+({DAY:n>2?'أيام':'أيام',WEEK:'أسابيع',MONTH:'أشهر',YEAR:'سنوات'}[b]||''),pw_avantaj:(p)=>`توفير ${p}%`, pw_devam:'متابعة', pw_restore:'استعادة المشتريات',
     pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
     pw_urun_yok:'تعذّر الاتصال بالمتجر الآن. تحقّق من اتصالك ثم حاول مجددًا.', pw_tekrar:'حاول مجددًا', pw_yukleniyor:'جارٍ الاتصال…',
     uyaniyor:'يجري تشغيل الخادم، قد يستغرق بضع ثوانٍ…', gunun_bayat:'يُعرض محتوى محفوظ، ويجري التحديث…',
@@ -964,7 +964,7 @@ const L = {
     nav_bugun:'آج', ayar_baslik:'ترتیبات', ayar_dil:'زبان', ayar_gizlilik:'رازداری پالیسی', ayar_kullanim:'شرائطِ استعمال',
     ayar_hakkinda:'مِحنک حدیث کا متن، علما کا درجہ اور قرآن کا ترجمہ مستند مآخذ سے پیش کرتا ہے — خود نہیں گھڑتا۔ اختلافی مسائل میں عالم سے رجوع کریں۔',
     selam:'السلام علیکم', gun_ayet:'آج کی آیت', gun_hadis:'آج کی حدیث',
-    pw_yillik:'سالانہ', pw_aylik:'ماہانہ', pw_deneme:(s)=>`پہلے ${s} مفت`,pw_sure:(n,b)=>n+' '+({DAY:'دن',WEEK:'ہفتے',MONTH:'ماہ',YEAR:'سال'}[b]||''),pw_avantaj:(p)=>`${p}% بچت`, pw_devam:'جاری رکھیں', pw_restore:'خریداری بحال کریں',
+    pw_yillik:'سالانہ', pw_aylik:'ماہانہ', pw_deneme:(s,f)=>`پہلے ${s} مفت۔ آزمائش ختم ہونے پر سبسکرپشن ${f} سالانہ شروع ہو جائے گی اور منسوخ نہ کرنے پر ہر سال تجدید ہوگی۔ آزمائش ختم ہونے سے پہلے App Store سے منسوخ کر دیں تو کوئی رقم نہیں لی جائے گی۔`,pw_sure:(n,b)=>n+' '+({DAY:'دن',WEEK:'ہفتے',MONTH:'ماہ',YEAR:'سال'}[b]||''),pw_avantaj:(p)=>`${p}% بچت`, pw_devam:'جاری رکھیں', pw_restore:'خریداری بحال کریں',
     pw_hata:'مکمل نہ ہوسکا۔ دوبارہ کوشش کریں۔', pw_restore_yok:'بحال کرنے کو کوئی سبسکرپشن نہیں۔',
     pw_urun_yok:'اس وقت اسٹور سے رابطہ نہ ہوسکا۔ اپنا انٹرنیٹ دیکھ کر دوبارہ کوشش کریں۔', pw_tekrar:'دوبارہ کوشش کریں', pw_yukleniyor:'رابطہ ہو رہا ہے…',
     uyaniyor:'سرور بیدار ہو رہا ہے، چند سیکنڈ لگ سکتے ہیں…', gunun_bayat:'محفوظ مواد دکھایا جا رہا ہے، اپ ڈیٹ ہو رہا ہے…',
@@ -1859,9 +1859,20 @@ function denemeCiz(){
   // dönem de introPrice olarak gelir ve onu "ücretsiz" demek yanlış olur.
   const bedava = ip && (Number(ip.price)===0 || ip.priceString==='' || /free/i.test(ip.paymentMode||''));
   if(!ip || !bedava || !ip.periodNumberOfUnits){ el.style.display='none'; return; }
+  // Deneme YALNIZ yıllık planda var; aylık seçiliyken göstermek "3 gün bedava"yı
+  // aylığa aitmiş gibi okutuyordu. (Play reddi: teklif şartları belirsiz.)
+  if(seciliUrun!==URUNLER.yillik){ el.style.display='none'; return; }
   const n=ip.periodNumberOfUnits, birim=String(ip.periodUnit||'').toUpperCase();
   const sure=(T.pw_sure&&T.pw_sure(n,birim)) || (n+' '+birim.toLowerCase());
-  el.textContent=(typeof T.pw_deneme==='function')?T.pw_deneme(sure):sure;
+  // Play politikası teklifin ŞARTLARINI ekranda ister: ne kadar sürüyor, bitince
+  // ne kadar olacak, nasıl iptal edilir. Yalnız "İlk 3 gün ücretsiz" yazmak
+  // (vc17) Abonelikler politikasından reddedildi. Fiyat koda gömülmez, mağazadan
+  // gelen priceString kullanılır; gelmiyorsa satır hiç gösterilmez.
+  const fiyat = y && y.priceString;
+  if(!fiyat){ el.style.display='none'; return; }
+  const magaza = (window.Capacitor&&Capacitor.getPlatform&&Capacitor.getPlatform()==='android') ? 'Google Play' : 'App Store';
+  const metin=(typeof T.pw_deneme==='function')?T.pw_deneme(sure,fiyat):sure;
+  el.textContent=String(metin).replace('App Store', magaza);
   el.style.display='';
 }
 
@@ -1910,6 +1921,7 @@ function planSec(urun){
   seciliUrun=urun;
   document.getElementById('planYillik').classList.toggle('secili', urun===URUNLER.yillik);
   document.getElementById('planAylik').classList.toggle('secili', urun===URUNLER.aylik);
+  denemeCiz();         // deneme satırı yalnız yıllıkta görünür
   paywallDugmeCiz();   // yalnız bir plan yüklendiyse öbürüne geçişte düğme pasifleşir
 }
 // --- Ürünler yüklenemedi çıkmazı ------------------------------------------
