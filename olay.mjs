@@ -218,7 +218,7 @@ export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
   const paywallKaynak = {}, satinalma = {}, satinalmaSebep = {}, plan = {};
   const kalanDagilim = {};      // sorgu sonucundaki kalan hak → kaç kez
   let paywallUrunHazir = 0, paywallUrunYok = 0;
-  const paylas = {}, kariIndir = {}, oynat = {}, hata = {}, hataDetay = {}, ezanIzin = {};
+  const paylas = {}, kariIndir = {}, oynat = {}, hata = {}, hataDetay = {}, ezanIzin = {}, hataSon = {};
   let bildirimAc = 0, bildirimKapa = 0, geriYukle = 0;
 
   for (const e of ev) {
@@ -273,6 +273,9 @@ export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
         const k = `${e.kaynak || 'bilinmiyor'} · ${e.yer || '?'} · ${e.kod || '?'}`;
         say(hata, k);
         if (e.detay) say(hataDetay, `${k} — ${e.detay}`);
+        // Sayı "kaç kez" der, saat "ne zaman" der. Bugün hata görünüp saatini
+        // bilmemek, hangi sürümden/hangi denemeden geldiğini bilmemek demekti.
+        if (!hataSon[k] || e.t > hataSon[k]) hataSon[k] = e.t;
         G.hata++;
         break;
       }
@@ -329,7 +332,7 @@ export function ozet(gun = 30, { testDahil = false, cihazDahil = false } = {}) {
       [k, { kez: v.kez, ortSn: Math.round(v.sn / v.kez * 10) / 10, toplamDk: Math.round(v.sn / 60) }])),
     dil, tz, surum, sorguTur, sonucTur, paywallKaynak, satinalma, satinalmaSebep, plan,
     kalanDagilim, paywallUrun: { hazir: paywallUrunHazir, yok: paywallUrunYok },
-    paylas, kariIndir, oynat, hata, hataDetay, ezanIzin, geriYukle,
+    paylas, kariIndir, oynat, hata, hataDetay, ezanIzin, hataSon, geriYukle,
     bildirim: { acan: bildirimAc, kapatan: bildirimKapa },
     disk: diskDurumu(),
   };
