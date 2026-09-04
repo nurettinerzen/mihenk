@@ -70,10 +70,14 @@ test('Ezan sekmesi konumu önce, bildirimi yalnız başarılı konumdan sonra te
 });
 
 test('sürüm numaraları mağaza hedefleri ve istemcide tutarlıdır', () => {
-  assert.match(html, /surum:'1\.5'/); assert.match(html, /Mihenk 1\.5/);
-  assert.match(gradle, /versionCode 13/); assert.match(gradle, /versionName "1\.5"/);
-  assert.equal((pbx.match(/CURRENT_PROJECT_VERSION = 39;/g) || []).length, 2);
-  assert.equal((pbx.match(/MARKETING_VERSION = 1\.5;/g) || []).length, 2);
+  // Bu test 1.5'te kalmıştı ve iki sürümdür KIRIK koşuyordu; kırık olduğu için
+  // istemcideki "Mihenk 1.6" etiketinin 1.7 derlemesiyle birlikte gitmesini
+  // yakalayamadı. SURUM_ETIKET doğrudan telemetriye yazıldığı için hatalar yanlış
+  // sürüme kaydediliyordu. Sürüm artırırken bu dört satır birlikte güncellenmeli.
+  assert.match(html, /surum:'1\.7'/); assert.match(html, /Mihenk 1\.7/);
+  assert.match(gradle, /versionCode 17/); assert.match(gradle, /versionName "1\.7"/);
+  assert.equal((pbx.match(/CURRENT_PROJECT_VERSION = 42;/g) || []).length, 2);
+  assert.equal((pbx.match(/MARKETING_VERSION = 1\.7;/g) || []).length, 2);
 });
 
 test('Mobil ödeme kitaplıkları güncel, ilan edilen foreground service gerçekten yoksa izin de yoktur', () => {

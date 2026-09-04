@@ -2,13 +2,20 @@
 <html lang="tr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<!-- maximum-scale=1 + user-scalable=no KALDIRILDI: gözü iyi görmeyen kullanıcı
+     Arapça metni yakınlaştıramıyordu (erişilebilirlik ihlali; dinî metinde ağır). -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Tek temalı (koyu) uygulama: sistem denetimleri (seçici, kaydırma çubuğu,
+     metin imleci, klavye) da koyu gelsin diye açıkça beyan ediyoruz. -->
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0d1512">
 <title>Mihenk — Hadis Doğrulama</title>
 <link rel="stylesheet" href="fonts.css?v=3"><!-- yerel woff2 (offline, CDN yok); woff2 adları içerik-hash'li, v= eski cache'i kırar -->
 <script src="adhan.min.js"></script><!-- namaz vakti CİHAZDA hesaplanır: bildirimler uygulama kapalıyken planlanır, sunucuya sorulamaz -->
 <script src="tz.js"></script><!-- konumun saat dilimi (offline); cihazın dilimiyle karıştırma -->
 <style>
   :root{
+    color-scheme:dark;
     --bg:#0d1512; --bg2:#0a100e; --yuzey:#15201c; --yuzey2:#1b2823;
     --cizgi:#26362f; --metin:#e9e7df; --soluk:#9db0a6; --daha-soluk:#6d827792;
     --zumrut:#57c4a3; --zumrut-koyu:#2f7c66; --pirinc:#d8b877;
@@ -55,6 +62,10 @@
     border-radius:22px;padding:26px 22px;max-width:400px;width:100%;position:relative;box-shadow:0 20px 60px #000a}
   .paywall-kapat{position:absolute;top:6px;right:8px;background:none;border:none;color:var(--daha-soluk);
     font-size:26px;line-height:1;cursor:pointer;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;line-height:1}
+  /* Arapça/Urduca sağdan sola: kapatma çarpısı ve ayar düğmesi de karşı köşeye
+     geçmeli, yoksa RTL kullanıcı için metnin başladığı köşeye biniyorlar. */
+  html[dir="rtl"] .paywall-kapat{right:auto;left:8px}
+  html[dir="rtl"] .ayar-btn{right:auto;left:16px}
   .paywall-amblem{font-size:26px;color:var(--pirinc);text-align:center}
   .paywall-baslik{font-family:'Sora',sans-serif;font-weight:700;font-size:23px;text-align:center;color:var(--metin);margin:8px 0 4px}
   .paywall-alt{text-align:center;color:var(--soluk);font-size:14px;line-height:1.5;margin-bottom:18px}
@@ -381,7 +392,7 @@
   function geriBildirim(){ if(!C.mail) return; location.href='mailto:'+C.mail+'?subject='+encodeURIComponent(C.ad+' feedback ('+surum()+')'); }
   window.RatingKapisi={kur:kur,belkiSor:belkiSor,magazaAc:magazaAc};
   // Türkçe ek uyumu ({ad} şablonu Türkçe'de ek almaz): "Mihenk'i beğendin mi?"
-  kur({onek:'mihenk',ad:'Mihenk',surum:'1.6',iosId:'6793343627',paket:'com.nurettinerzen.mihenk',mail:'nurettinerzen@gmail.com',minOturum:3,
+  kur({onek:'mihenk',ad:'Mihenk',surum:'1.7',iosId:'6793343627',paket:'com.nurettinerzen.mihenk',mail:'nurettinerzen@gmail.com',minOturum:3,
        metinler:{tr:{soru:"Mihenk'i beğendin mi?"}},
        kart:'#123028',yazi:'#eaf5f0',renk:'#57c4a3',kenar:'#24463c'});
 })();
@@ -456,7 +467,7 @@
   <div id="mod-konu">
     <div class="kart">
       <label class="ust" data-i18n="lbl_konu">Bir konu yaz — sahih hadisleri getir</label>
-      <input class="metin" id="konu" data-i18n-ph="ph_konu" placeholder="yalancılık, evlilik, ticaret, komşuluk…">
+      <input class="metin" id="konu" enterkeyhint="search" autocomplete="off" autocorrect="off" data-i18n-ph="ph_konu" placeholder="yalancılık, evlilik, ticaret, komşuluk…">
       <div class="cipler" id="konuCipler"></div>
       <div class="hak-satir" data-hak></div>
       <button class="btn" id="btnKonu" data-i18n="btn_konu">Getir</button>
@@ -475,7 +486,7 @@
     <div id="kmod-ara">
       <div class="kart">
         <label class="ust" data-i18n="lbl_kuran">Bir konu yaz — Kur'an ne diyor?</label>
-        <input class="metin" id="kkonu" data-i18n-ph="ph_kuran" placeholder="sabır, anne-baba, faiz, tevekkül, adalet…">
+        <input class="metin" id="kkonu" enterkeyhint="search" autocomplete="off" autocorrect="off" data-i18n-ph="ph_kuran" placeholder="sabır, anne-baba, faiz, tevekkül, adalet…">
         <div class="cipler" id="kkonuCipler"></div>
         <div class="hak-satir" data-hak></div>
         <button class="btn" id="btnKuran" data-i18n="btn_kuran">Ayetleri getir</button>
@@ -491,7 +502,7 @@
           <button class="indir-eylem" id="indirEylem"></button>
         </div>
         <div id="kaldigimYer"></div>
-        <input class="metin" id="sureAra" data-i18n-ph="ph_sure" placeholder="Sûre ara…" style="margin-bottom:12px">
+        <input class="metin" id="sureAra" enterkeyhint="search" autocomplete="off" autocorrect="off" inputmode="search" data-i18n-ph="ph_sure" placeholder="Sûre ara…" style="margin-bottom:12px">
         <div id="sureListe" class="sure-liste"></div>
       </div>
       <button class="geri-yuzen" id="sureGeriYuzen" aria-label="Geri" data-i18n-aria="back">‹</button>
@@ -612,7 +623,7 @@
         <span class="sol" data-i18n="ayar_kullanim">Kullanım Koşulları</span><span class="ok">›</span>
       </a>
       <div class="ayar-not" data-i18n="ayar_hakkinda">Mihenk; hadis metnini, âlim derecesini ve Kur'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.</div>
-      <div class="ayar-surum" id="surumEtiket">Mihenk 1.6</div><!-- MARKETING_VERSION ile aynı olmalı -->
+      <div class="ayar-surum" id="surumEtiket">Mihenk 1.7</div><!-- MARKETING_VERSION ile aynı olmalı -->
 
     </div>
   </div>
@@ -643,7 +654,27 @@ const APP_KEY = "mihenk_dd4e1cc82891921d3fa559e8";
 // Ölçümde sürüm ayrımı: hangi hatanın/davranışın hangi sürümden geldiğini görmek
 // için. Ayarlardaki etiketten okunur, tek yerde güncellensin.
 const SURUM_ETIKET = (document.getElementById('surumEtiket')?.textContent || 'Mihenk ?').replace('Mihenk ','').trim();
-let dil = localStorage.getItem('dil') || 'tr';
+// DİL SEÇİMİ — ilk açılışta CİHAZIN dili.
+// Eskiden burada sabit 'tr' vardı: uygulama altı dilli ve mağazada fr/ar/ur/id
+// ekran görüntüleriyle duruyor olmasına rağmen, Türkçe bilmeyen her yeni kullanıcı
+// uygulamayı TÜRKÇE açıyordu. Ayarlardaki dil düğmelerini bulana kadar ekranda
+// anlamadığı bir dil var — "indiriyor, açmıyor" tablosunun en olası sebeplerinden.
+// Kullanıcının kendi seçimi (localStorage) her zaman önceliklidir.
+const DESTEKLI_DILLER = ['tr','en','fr','id','ar','ur'];
+function cihazDili(){
+  try{
+    const adaylar = (navigator.languages && navigator.languages.length)
+      ? navigator.languages : [navigator.language || ''];
+    for(const a of adaylar){
+      const k = String(a||'').slice(0,2).toLowerCase();
+      // Endonezce eski ISO kodu 'in' olarak da gelebiliyor (Android/Java mirası).
+      if(k==='in') return 'id';
+      if(DESTEKLI_DILLER.includes(k)) return k;
+    }
+  }catch(e){}
+  return 'en';   // desteklenmeyen bir dil → Türkçe değil, İngilizce daha anlaşılır
+}
+let dil = localStorage.getItem('dil') || cihazDili();
 // --- Cihaz kimliği ---
 // Kimlik SADECE localStorage'daki UUID'ydi. WKWebView, iOS depolama baskısında
 // (ya da "Website Data" temizliğinde) localStorage'ı silebiliyor; silinince ödeyen
@@ -717,6 +748,7 @@ const L = {
     pw_hata:'İşlem tamamlanamadı. Tekrar dene.', pw_restore_yok:'Geri yüklenecek abonelik bulunamadı.',
     pw_urun_yok:'Mağazaya şu an bağlanamadık. İnternetini kontrol edip tekrar dene.', pw_tekrar:'Tekrar dene', pw_yukleniyor:'Bağlanılıyor…',
     uyaniyor:'Sunucu uyanıyor, birkaç saniye sürebilir…', gunun_bayat:'Kayıtlı içerik gösteriliyor, güncelleniyor…',
+    cevrimdisi_baslik:"İnternet bağlantısı yok", cevrimdisi:"Cihazın çevrimdışı görünüyor. Bağlantını açıp tekrar dene.",
   },
   en: {
     indir_plus:'Offline listening comes with Mihenk Plus. Online listening with Alafasy stays free.',indir_teklif:'Download this reciter to listen offline (~800 MB).',indir_et:'Download',indir_iptal:'Cancel',indir_kaldir:'Remove',indir_hazir:'{k} is available offline.',indir_basliyor:'Preparing…',indir_bitti:'Recitation downloaded. You can now listen offline.',indir_iptal_oldu:'Download stopped. You can resume where you left off.',indir_kaldir_onay:'Delete the downloaded recitation from your device?',
@@ -760,6 +792,7 @@ const L = {
     pw_hata:'Could not complete. Please try again.', pw_restore_yok:'No subscription to restore.',
     pw_urun_yok:'We couldn\'t reach the store right now. Check your connection and try again.', pw_tekrar:'Try again', pw_yukleniyor:'Connecting…',
     uyaniyor:'Waking the server, this may take a few seconds…', gunun_bayat:'Showing saved content, refreshing…',
+    cevrimdisi_baslik:"No internet connection", cevrimdisi:"Your device appears to be offline. Turn your connection on and try again.",
   },
   fr: {
     indir_plus:'L’écoute hors ligne est incluse dans Mihenk Plus. L’écoute en ligne avec Alafasy reste gratuite.',indir_teklif:'Télécharge ce récitateur pour écouter hors ligne (~800 Mo).',indir_et:'Télécharger',indir_iptal:'Annuler',indir_kaldir:'Supprimer',indir_hazir:'{k} est disponible hors ligne.',indir_basliyor:'Préparation…',indir_bitti:'Récitation téléchargée. Tu peux écouter hors ligne.',indir_iptal_oldu:'Téléchargement arrêté. Tu peux reprendre plus tard.',indir_kaldir_onay:'Supprimer la récitation téléchargée de l\'appareil ?',
@@ -803,6 +836,7 @@ const L = {
     pw_hata:'Échec de l\'opération. Réessayez.', pw_restore_yok:'Aucun abonnement à restaurer.',
     pw_urun_yok:'Impossible de joindre la boutique. Vérifiez votre connexion et réessayez.', pw_tekrar:'Réessayer', pw_yukleniyor:'Connexion…',
     uyaniyor:'Le serveur se réveille, cela peut prendre quelques secondes…', gunun_bayat:'Contenu enregistré affiché, actualisation…',
+    cevrimdisi_baslik:"Pas de connexion Internet", cevrimdisi:"Ton appareil semble hors ligne. Active ta connexion et réessaie.",
   },
   id: {
     indir_plus:'Mendengarkan offline tersedia di Mihenk Plus. Mendengarkan online dengan Alafasy tetap gratis.',indir_teklif:'Unduh qari ini untuk mendengarkan tanpa internet (~800 MB).',indir_et:'Unduh',indir_iptal:'Batal',indir_kaldir:'Hapus',indir_hazir:'{k} tersedia offline.',indir_basliyor:'Menyiapkan…',indir_bitti:'Tilawah terunduh. Kini bisa didengarkan tanpa internet.',indir_iptal_oldu:'Unduhan dihentikan. Bisa dilanjutkan nanti.',indir_kaldir_onay:'Hapus tilawah yang diunduh dari perangkat?',
@@ -846,6 +880,7 @@ const L = {
     pw_hata:'Gagal. Coba lagi.', pw_restore_yok:'Tidak ada langganan untuk dipulihkan.',
     pw_urun_yok:'Kami tidak dapat menghubungi toko saat ini. Periksa koneksi lalu coba lagi.', pw_tekrar:'Coba lagi', pw_yukleniyor:'Menghubungkan…',
     uyaniyor:'Server sedang dibangunkan, mungkin butuh beberapa detik…', gunun_bayat:'Menampilkan konten tersimpan, memperbarui…',
+    cevrimdisi_baslik:"Tidak ada koneksi internet", cevrimdisi:"Perangkatmu tampaknya offline. Aktifkan koneksi lalu coba lagi.",
   },
   ar: {
     indir_plus:'الاستماع دون اتصال متاح مع مِحَك بلس. يبقى الاستماع إلى العفاسي عبر الإنترنت مجانيًا.',indir_teklif:'نزّل هذا القارئ للاستماع دون إنترنت (≈800 ميغابايت).',indir_et:'تنزيل',indir_iptal:'إلغاء',indir_kaldir:'إزالة',indir_hazir:'{k} متاح دون إنترنت.',indir_basliyor:'جارٍ التحضير…',indir_bitti:'تم تنزيل التلاوة. يمكنك الاستماع دون إنترنت.',indir_iptal_oldu:'تم إيقاف التنزيل. يمكنك المتابعة لاحقًا.',indir_kaldir_onay:'هل تريد حذف التلاوة المنزَّلة من جهازك؟',
@@ -889,6 +924,7 @@ const L = {
     pw_hata:'تعذّر إتمام العملية. حاول مجددًا.', pw_restore_yok:'لا اشتراك للاستعادة.',
     pw_urun_yok:'تعذّر الاتصال بالمتجر الآن. تحقّق من اتصالك ثم حاول مجددًا.', pw_tekrar:'حاول مجددًا', pw_yukleniyor:'جارٍ الاتصال…',
     uyaniyor:'يجري تشغيل الخادم، قد يستغرق بضع ثوانٍ…', gunun_bayat:'يُعرض محتوى محفوظ، ويجري التحديث…',
+    cevrimdisi_baslik:"لا يوجد اتصال بالإنترنت", cevrimdisi:"يبدو أن جهازك غير متصل بالإنترنت. فعّل الاتصال ثم حاول مجددًا.",
   },
   ur: {
     indir_plus:'آف لائن سماعت مِحک پلس میں دستیاب ہے۔ عفاسی کے ساتھ آن لائن سماعت مفت رہے گی۔',indir_teklif:'انٹرنیٹ کے بغیر سننے کے لیے یہ قاری ڈاؤن لوڈ کریں (≈800 MB)۔',indir_et:'ڈاؤن لوڈ',indir_iptal:'منسوخ',indir_kaldir:'ہٹائیں',indir_hazir:'{k} آف لائن دستیاب ہے۔',indir_basliyor:'تیاری جاری…',indir_bitti:'تلاوت ڈاؤن لوڈ ہو گئی۔ اب آف لائن سن سکتے ہیں۔',indir_iptal_oldu:'ڈاؤن لوڈ رک گیا۔ بعد میں جاری رکھ سکتے ہیں۔',indir_kaldir_onay:'کیا ڈاؤن لوڈ شدہ تلاوت آلے سے حذف کریں؟',
@@ -932,6 +968,7 @@ const L = {
     pw_hata:'مکمل نہ ہوسکا۔ دوبارہ کوشش کریں۔', pw_restore_yok:'بحال کرنے کو کوئی سبسکرپشن نہیں۔',
     pw_urun_yok:'اس وقت اسٹور سے رابطہ نہ ہوسکا۔ اپنا انٹرنیٹ دیکھ کر دوبارہ کوشش کریں۔', pw_tekrar:'دوبارہ کوشش کریں', pw_yukleniyor:'رابطہ ہو رہا ہے…',
     uyaniyor:'سرور بیدار ہو رہا ہے، چند سیکنڈ لگ سکتے ہیں…', gunun_bayat:'محفوظ مواد دکھایا جا رہا ہے، اپ ڈیٹ ہو رہا ہے…',
+    cevrimdisi_baslik:"انٹرنیٹ کنکشن نہیں ہے", cevrimdisi:"آپ کا آلہ آف لائن لگتا ہے۔ کنکشن آن کر کے دوبارہ کوشش کریں۔",
   },
 };
 /* Yakalanmamış hatalar: WebView'da console kimseye ulaşmıyor. Panele yazılmazsa
@@ -1025,6 +1062,19 @@ const _sonIstekBuda = () => {
   const now = Date.now();
   for (const [k, v] of _sonIstek) if (now - v.t >= 6000) _sonIstek.delete(k);
 };
+/* fetch'in KENDİ zaman aşımı yoktur. Uçak modunda ya da kaptif Wi-Fi arkasında
+   söz hiç çözülmeyebiliyor; spinner sonsuza kadar dönüyor ve kullanıcı ne
+   olduğunu anlamıyordu. Her ağ çağrısı artık üst sınırla gider. */
+const AG_ZAMAN_ASIMI = 25000;
+function cevrimdisiHata(){ const e=new Error('cevrimdisi'); e.cevrimdisi=true; return e; }
+async function fetchZamanli(url, opt, ms){
+  // Ağ olmadığı KESİN biliniyorsa 25 sn beklemenin anlamı yok; hemen söyle.
+  if(navigator.onLine === false) throw cevrimdisiHata();
+  const kontrol = new AbortController();
+  const zaman = setTimeout(()=>kontrol.abort(), ms || AG_ZAMAN_ASIMI);
+  try{ return await fetch(url, {...(opt||{}), signal: kontrol.signal}); }
+  finally{ clearTimeout(zaman); }
+}
 async function istek(yol, govde){
   const imza = yol + '|' + dil + '|' + JSON.stringify(govde);
   const onceki = _sonIstek.get(imza);
@@ -1034,7 +1084,7 @@ async function istek(yol, govde){
   // sebebini söyle (aşağıdaki finally şeridi kapatır).
   uyanmaBaslat();
   let r;
-  try{ r = await fetch(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil, cihaz})}); }
+  try{ r = await fetchZamanli(API+yol,{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({...govde, dil, cihaz})}); }
   finally{ uyanmaBitir(); }
   if(r.status===429){ const e=new Error('limit'); e.yogun=true; throw e; }   // 'bağlanamadım' demek yanıltıcıydı
   if(r.status===402){ const j=await r.json(); if(j.checkout) checkoutUrl=j.checkout; paywallGoster('kota-bitti'); throw {paywall:true}; }
@@ -1063,7 +1113,7 @@ async function olayGonder(){
   const yigin = _olayKuyruk; _olayKuyruk = [];
   try{
     const c = await cihazAl();
-    await fetch(API+'/api/olay',{method:'POST',keepalive:true,
+    await fetchZamanli(API+'/api/olay',{method:'POST',keepalive:true,
       headers:{'content-type':'application/json','x-app-key':APP_KEY},
       body:JSON.stringify({cihaz:c, olaylar:yigin})});
   }catch(e){
@@ -1085,8 +1135,16 @@ function ekranBitir(){
   _ekranAd = null;
 }
 document.addEventListener('visibilitychange', ()=>{
-  if(document.hidden){ ekranBitir(); olayGonder(); }
+  if(document.hidden){
+    ekranBitir(); olayGonder();
+    // Ezan geri sayımı saniyede bir DOM yazıyordu ve uygulama arka plandayken de
+    // dönmeye devam ediyordu (boşuna pil). Ekran gizlenince durdur.
+    try{ clearInterval(ezanTimer); ezanTimer=null; }catch(e){}
+  }
   else {
+    // Geri gelince yeniden çiz: hem sayaç yeniden kurulur hem arka planda geçen
+    // sürede vakit girdiyse ekran doğru vakti gösterir.
+    try{ if(ezanVeri) ezanCiz(); }catch(e){}
     if(_ekranAd === null && typeof aktifEkranAdi === 'function') ekranBaslat(aktifEkranAdi());
     if(bildirimAcik){
       let k=null; try{k=JSON.parse(localStorage.getItem('konum')||'null');}catch(e){}
@@ -1107,6 +1165,7 @@ function yukleniyor(el){el.className='sonuc gorunur';el.innerHTML=`<div class="y
 function hataKodu(e){
   if(!e) return {kod:'bilinmiyor', kaynak:'bilinmiyor'};
   if(e.yogun) return {kod:'429', kaynak:'sunucu'};
+  if(e.cevrimdisi) return {kod:'cevrimdisi', kaynak:'ag'};
   const m = String(e.message||e||'');
   const s = m.match(/^sunucu (\d{3})/);
   if(s) return {kod:'http_'+s[1], kaynak: s[1][0]==='5' ? 'sunucu' : 'istemci'};
@@ -1116,9 +1175,22 @@ function hataKodu(e){
   return {kod:'bilinmiyor', kaynak:'istemci'};
 }
 /* Tek hata yüzeyi: kullanıcıya mesajı gösterirken sebebi de kaydeder. */
-function hata(el,e,yer){const yogun=e&&e.yogun;
+// Hangi bölümün hangi işlevle tekrar deneneceği. Hata kartındaki düğme buradan
+// bulunur: eskiden kullanıcının elinde hiçbir eylem yoktu, sekme değiştirip geri
+// gelmesi gerekiyordu.
+const TEKRAR_ISLEV = {};
+function hata(el,e,yer){
+  const yogun = e&&e.yogun, cevrimdisi = !!(e&&e.cevrimdisi) || navigator.onLine===false;
   try{ const k=hataKodu(e); olay('hata',{yer:yer||'sorgu', kod:k.kod, kaynak:k.kaynak, detay:String(e&&e.message||e||'').slice(0,120)}); }catch(_){}
-  el.className='sonuc gorunur';el.innerHTML=`<div class="kart uyari-kart"><div class="uyari-baslik">${yogun?(T.yogun_baslik||T.err_title):T.err_title}</div><div class="anlam">${yogun?T.yogun:T.err_body}</div></div>`;}
+  const baslik = cevrimdisi ? (T.cevrimdisi_baslik||T.err_title)
+               : yogun ? (T.yogun_baslik||T.err_title) : T.err_title;
+  const govde  = cevrimdisi ? (T.cevrimdisi||T.err_body) : (yogun ? T.yogun : T.err_body);
+  el.className='sonuc gorunur';
+  el.innerHTML=`<div class="kart uyari-kart"><div class="uyari-baslik">${baslik}</div><div class="anlam">${govde}</div>`+
+    (TEKRAR_ISLEV[yer]?`<button class="indir-eylem" data-tekrar="${yer}" style="margin-top:12px">${T.pw_tekrar||'Tekrar dene'}</button>`:'')+
+    `</div>`;
+  el.querySelector('[data-tekrar]')?.addEventListener('click', ()=>{ const f=TEKRAR_ISLEV[yer]; if(f) f(); });
+}
 
 // --- Doğrula ---
 async function calistirDogrula(){
@@ -1176,6 +1248,10 @@ async function calistirKonu(){
   }catch(e){ if(e&&e.paywall){ el.className='sonuc'; el.innerHTML=''; } else hata(el,e,'konu'); }
   document.getElementById('btnKonu').disabled=false;
 }
+
+TEKRAR_ISLEV.dogrula = ()=>calistirDogrula();
+TEKRAR_ISLEV.konu    = ()=>calistirKonu();
+TEKRAR_ISLEV.kuran   = ()=>calistirKuran();
 
 // Boş sonuçta "hakkın gitmedi" notu. Sunucu artık boş sorguda hak düşmüyor;
 // kullanıcının bunu GÖRMESİ gerek, yoksa sayacın yerinde durduğunu fark etmeden
@@ -1825,7 +1901,7 @@ async function premiumYap(){
   iapDogrulandi=true; premium=true; localStorage.removeItem('premium'); hakGoster();
   try{
     const c = await cihazAl();
-    const r=await fetch(API+'/api/iap-onay',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz:c})});
+    const r=await fetchZamanli(API+'/api/iap-onay',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz:c})});
     const j=await r.json().catch(()=>({}));
     return !!(r.ok&&j.premium===true);
   }catch(e){ return false; }
@@ -1995,7 +2071,7 @@ async function durumYukle(){
   uyanmaBaslat();
   try{
     const c = await cihazAl();
-    const r=await fetch(API+'/api/durum',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz:c})});
+    const r=await fetchZamanli(API+'/api/durum',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({cihaz:c})});
     const j=await r.json();
     // Sunucu premium'u artık RevenueCat'ten doğruluyor (restart'ta kaybolmuyor),
     // ama durumYukle() ile iapBaslat() hâlâ paralel koşabiliyor ve RC'nin sunucuya
@@ -2029,16 +2105,19 @@ function gununOnbellektenCiz(){
 async function gununIste(){
   const bekle = (ms)=>new Promise(r=>setTimeout(r,ms));
   const gecikme = [0, 900, 2500];
-  let son = null;
+  let son = null, cevrimdisi = false;
   for(let i=0;i<gecikme.length;i++){
+    // Ağ kapalıyken üç kez 25 saniye beklemek anlamsız: hemen bırak, kullanıcıya
+    // "internet yok" de.
+    if(navigator.onLine === false){ cevrimdisi = true; break; }
     if(gecikme[i]) await bekle(gecikme[i]);
     try{
-      const r = await fetch(API+'/api/gunun',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({dil})});
+      const r = await fetchZamanli(API+'/api/gunun',{method:'POST',headers:{'content-type':'application/json','x-app-key':APP_KEY},body:JSON.stringify({dil})});
       if(r.ok || r.status===429 || (r.status>=400 && r.status<500)) return r;
       son = r;                                  // 5xx → tekrar dene
-    }catch(e){ son = null; }                    // ağ hatası → tekrar dene
+    }catch(e){ son = null; if(e&&e.cevrimdisi){ cevrimdisi = true; break; } }  // ağ hatası → tekrar dene
   }
-  return son || { ok:false, status:0 };
+  return son || { ok:false, status:0, cevrimdisi };
 }
 
 async function gununYukle(){
@@ -2051,13 +2130,19 @@ async function gununYukle(){
     // deneme, o ekranı kurtarmaya değer.
     // 429'da DENEMEYİZ: hız sınırına takılmışken tekrar vurmak durumu kötüleştirir.
     const r = await gununIste();
-    if(!r.ok){ const e=new Error('gunun'); e.yogun = r.status===429; throw e; }
+    if(!r.ok){ const e=new Error('gunun'); e.yogun = r.status===429; e.cevrimdisi = !!r.cevrimdisi; throw e; }
     gununVeri=await r.json(); gununCiz();
     OB.yaz('gunun',{dil, gun:bugunAnahtar(), veri:gununVeri});
   }catch(e){
     // Önbellekten bir şey çizdiysek hata kartıyla ÜSTÜNE YAZMA: eldeki içerik
     // (bayat olsa bile, notuyla birlikte) boş ekrandan iyidir.
-    if(!onbellekVar) document.getElementById('gununIcerik').innerHTML=`<div class="kart uyari-kart"><div class="anlam">${e&&e.yogun?T.yogun:T.err_body}</div></div>`;
+    if(!onbellekVar){
+      const cevrimdisi = !!(e&&e.cevrimdisi) || navigator.onLine===false;
+      const g = cevrimdisi ? (T.cevrimdisi||T.err_body) : (e&&e.yogun ? T.yogun : T.err_body);
+      const el = document.getElementById('gununIcerik');
+      el.innerHTML=`<div class="kart uyari-kart">${cevrimdisi?`<div class="uyari-baslik">${T.cevrimdisi_baslik||T.err_title}</div>`:''}<div class="anlam">${g}</div><button class="indir-eylem" id="bugunTekrar" style="margin-top:12px">${T.pw_tekrar||'Tekrar dene'}</button></div>`;
+      document.getElementById('bugunTekrar')?.addEventListener('click', ()=>gununYukle());
+    }
   }
   finally{ uyanmaBitir(); }
 }
@@ -2589,7 +2674,12 @@ document.getElementById('denemeBtn').onclick=async()=>{
     // banner olarak göstermez ve sesi çalmaz.
     alert(T.deneme_not||'Uygulamadan çıkıp bekle — bildirim 10 saniye içinde ezan sesiyle gelmeli. Telefonun sessizde olmadığından emin ol.');
     setTimeout(()=>{ b.textContent = T.ayar_deneme_btn||'Dene'; }, 12000);
-  }catch(e){ alert('Deneme kurulamadı: '+(e.message||e)); }
+  }catch(e){
+    // Ham hata mesajı (İngilizce, çoğu zaman "Error: ...") kullanıcıya
+    // gösteriliyordu. Sebep panele gider, kullanıcıya çevrilmiş metin gösterilir.
+    try{ olay('hata',{yer:'ezan_deneme', kod:'deneme_kurulamadi', kaynak:'istemci', detay:String(e&&e.message||e||'').slice(0,120)}); }catch(_){}
+    alert(T.pw_hata||'İşlem tamamlanamadı. Tekrar dene.');
+  }
 };
 document.getElementById('indirEylem').onclick=async()=>{
   if(indirmeSuruyor){ indirmeIptal=true; return; }
@@ -2665,6 +2755,26 @@ document.getElementById('ornekler').onclick=e=>{
 document.getElementById('btnDogrula').onclick=calistirDogrula;
 document.getElementById('btnKonu').onclick=calistirKonu;
 document.getElementById('btnKuran').onclick=calistirKuran;
+// Klavyedeki "Ara/Git" tuşu HİÇBİR ŞEY YAPMIYORDU: kullanıcı konuyu yazıp Enter'a
+// basıyor, klavye kapanmıyor, sonuç gelmiyordu. Enter artık aramayı çalıştırır ve
+// klavyeyi kapatır (blur) — yoksa klavye sonucun üstünde kalıyor.
+[['konu',calistirKonu],['kkonu',calistirKuran]].forEach(([id,islev])=>{
+  document.getElementById(id).addEventListener('keydown', e=>{
+    if(e.key!=='Enter') return;
+    e.preventDefault(); e.target.blur(); islev();
+  });
+});
+document.getElementById('sureAra').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ e.preventDefault(); e.target.blur(); }
+});
+// Kartın boşluğuna dokununca klavye kapansın (iOS'ta klavye giriş kutusunun
+// üstünde asılı kalıyordu).
+document.addEventListener('touchend', e=>{
+  const a=document.activeElement;
+  if(!a || !/^(INPUT|TEXTAREA)$/.test(a.tagName)) return;
+  if(e.target===a || e.target.closest('button,select,a,input,textarea')) return;
+  a.blur();
+}, {passive:true});
 
 // Konu çiplerini dile göre kur
 function cipleriKur(){
@@ -2745,6 +2855,61 @@ localStorage.removeItem('premium');
     if(n===-1) console.warn('Kesin alarm izni kapalı; ezan bildirimleri yeniden planlanmadı.');
   }
 })();
+
+/* --- Android donanım geri tuşu -------------------------------------------
+   Sorun: paywall ya da Ayarlar AÇIKKEN geri tuşuna basmak modalı kapatmıyor,
+   doğrudan UYGULAMAYI KAPATIYORDU. Aynı şekilde bir sûrenin içindeyken geri
+   tuşu listeye değil dışarı çıkarıyordu.
+   Çözüm plugin'siz: @capacitor/app kurulu değil, ama Capacitor'ın varsayılan
+   geri davranışı "WebView geri gidebiliyorsa git" olduğu için History API ile
+   çözülüyor — modal/ekran açılırken bir geçmiş katmanı itiyoruz, geri tuşu
+   popstate olarak geliyor ve katmanı kapatıyoruz. Web tarayıcısında da doğru
+   çalışır (tarayıcının geri düğmesi modalı kapatır).
+   NOT: yığın boşken geri tuşu uygulamayı kapatır (kök ekranda çift-bas-çık
+   yok) — bunun için @capacitor/app gerekir, bkz. DENETIM-20.md ÖNERİ. */
+const MihenkGeri = (function(){
+  const yigin = []; let icGeri = false;
+  function ac(tur, kapat){
+    if(yigin.some(x=>x.tur===tur)) return;      // aynı katman iki kez itilmesin
+    yigin.push({tur, kapat});
+    try{ history.pushState({mihenk:tur}, ''); }catch(e){}
+  }
+  function kapandi(tur){                        // kullanıcı × / arka plan ile kapattı
+    const i = yigin.map(x=>x.tur).lastIndexOf(tur);
+    if(i < 0) return;
+    yigin.splice(i, 1);
+    icGeri = true;
+    try{ history.back(); }catch(e){ icGeri = false; }
+  }
+  window.addEventListener('popstate', ()=>{
+    if(icGeri){ icGeri = false; return; }       // kendi history.back()'imiz
+    const k = yigin.pop();
+    if(k) try{ k.kapat(); }catch(e){}
+  });
+  return { ac, kapandi };
+})();
+{
+  const pwKutu = document.getElementById('paywall');
+  const _pwGosterAsil = paywallGoster, _pwGizleAsil = paywallGizle;
+  paywallGoster = function(kaynak){ _pwGosterAsil(kaynak); MihenkGeri.ac('paywall', ()=>pwKutu.classList.remove('acik')); };
+  paywallGizle  = function(){ _pwGizleAsil(); MihenkGeri.kapandi('paywall'); };
+
+  const ayarKutu = document.getElementById('ayarlar'), ayarBtn = document.getElementById('ayarBtn'),
+        ayarKapat = document.getElementById('ayarKapat');
+  const _ayarAcAsil = ayarBtn.onclick, _ayarKapatAsil = ayarKapat.onclick, _ayarArkaAsil = ayarKutu.onclick;
+  ayarBtn.onclick = async function(e){ await _ayarAcAsil.call(this, e); MihenkGeri.ac('ayarlar', ()=>ayarKutu.classList.remove('acik')); };
+  ayarKapat.onclick = function(e){ _ayarKapatAsil.call(this, e); MihenkGeri.kapandi('ayarlar'); };
+  ayarKutu.onclick = function(e){
+    const acikti = ayarKutu.classList.contains('acik');
+    _ayarArkaAsil.call(this, e);
+    if(acikti && !ayarKutu.classList.contains('acik')) MihenkGeri.kapandi('ayarlar');
+  };
+
+  const sureGeriBtn = document.getElementById('sureGeri');
+  const _sureAcAsil = sureAc, _sureGeriAsil = sureGeriBtn.onclick;
+  sureAc = function(no, gitAyet){ _sureAcAsil(no, gitAyet); MihenkGeri.ac('sure', ()=>sureGeriBtn.click()); };
+  sureGeriBtn.onclick = function(){ _sureGeriAsil.call(this); MihenkGeri.kapandi('sure'); };
+}
 
 dilUygula(dil); // başlangıç
 // ÖNCE önbellekten çiz (0 ms), SONRA sunucuya git; deploy/ağ gecikmesinde ekran boş kalmaz.

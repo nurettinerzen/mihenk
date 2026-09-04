@@ -62,9 +62,5 @@
 	<false/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Namaz vakitleri ve kıble yönünü hesaplamak için konumun kullanılır.</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Namaz vakitleri ve kıble yönünü hesaplamak için konumun kullanılır.</string>
-	<key>NSLocationAlwaysUsageDescription</key>
-	<string>Namaz vakitleri ve kıble yönünü hesaplamak için konumun kullanılır.</string>
 </dict>
 </plist>
