@@ -1629,6 +1629,13 @@ function paywallGizle(){ document.getElementById('paywall').classList.remove('ac
 const RC_KEYS = { ios:'appl_VJAIwVAqpNCfirEgFSXFZSAIvKt', android:'goog_KicdumMPBoJZOqQDEsMQsTKiwWu' };
 const RC_KEY = RC_KEYS[window.Capacitor?.getPlatform?.()] || '';
 const URUNLER = { yillik:'mihenk_plus_yillik', aylik:'mihenk_plus_aylik' };
+// Google Play'de bir aboneliğin ürün kimliği "abonelikId:temelPlanId" biçiminde
+// gelir (mihenk_plus_aylik:aylik). Apple'da düz kimlik gelir. Kod her yerde DÜZ
+// kimliğe göre eşleştiği için Android'de getProducts dönen ürünler hiçbir zaman
+// tutmuyordu: rcUrunler boş kalıyor, paywall ürünsüz açılıyor, satın alma
+// düğmesi ölüyordu ve ölçüme `urun-yok / baslangic-bos` diye yazılıyordu.
+// Bu, Android kullanıcılarının satın ALAMAMASI demekti.
+const duzId = (id) => String(id || '').split(':')[0];
 let seciliUrun = URUNLER.yillik, rcUrunler = null;
 const CapEklenti = () => (window.Capacitor && window.Capacitor.Plugins) || {};
 
@@ -1702,7 +1709,7 @@ async function _iapCalistir(){
     // dinleyebilsin; fiyatların yüklenememesi premium kontrolünü engellemesin.
     await iapPremiumKontrol();
     const { products } = await Purchases.getProducts({ productIdentifiers: Object.values(URUNLER) });
-    const liste = {}; (products||[]).forEach(p=>{ liste[p.identifier]=p; });
+    const liste = {}; (products||[]).forEach(p=>{ liste[duzId(p.identifier)]=p; });   // Android: temel plan sonekini at
     // Boş yanıt eldeki ürünleri EZMESİN: geçici bir ağ tökezlemesi, daha önce
     // yüklenmiş fiyatları ekrandan söküp çalışan paywall'ı bozmasın.
     if(liste[URUNLER.yillik] || liste[URUNLER.aylik]) rcUrunler = liste;
@@ -1794,8 +1801,9 @@ function avantajCiz(){
 }
 const PLUS_URUNLER = new Set([URUNLER.aylik, URUNLER.yillik]);
 const iapAktifMi = (ci) => !!ci && (
-  (ci.activeSubscriptions||[]).some(id=>PLUS_URUNLER.has(id)) ||
-  Object.values((ci.entitlements&&ci.entitlements.active)||{}).some(e=>PLUS_URUNLER.has(e&&e.productIdentifier))
+  // Android'de bu alanlar da temel plan sonekiyle gelebilir; düz kimliğe indir.
+  (ci.activeSubscriptions||[]).some(id=>PLUS_URUNLER.has(duzId(id))) ||
+  Object.values((ci.entitlements&&ci.entitlements.active)||{}).some(e=>PLUS_URUNLER.has(duzId(e&&e.productIdentifier)))
 );
 // customerInfo elde varsa (satın alma yanıtı) tekrar ağa çıkma.
 async function iapPremiumKontrol(hazirCi){
