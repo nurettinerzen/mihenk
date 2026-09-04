@@ -1,1 +1,2 @@
 "NSLocationWhenInUseUsageDescription" = "Your location is used to calculate prayer times and the qibla direction.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Your location is only read while you are using the app; you are never tracked in the background. It is used to calculate prayer times and the qibla direction.";

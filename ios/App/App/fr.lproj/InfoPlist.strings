@@ -1,1 +1,2 @@
 "NSLocationWhenInUseUsageDescription" = "Votre position sert à calculer les heures de prière et la direction de la qibla.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Votre position n'est lue que lorsque vous utilisez l'application ; vous n'êtes jamais suivi en arrière-plan. Elle sert à calculer les heures de prière et la direction de la qibla.";

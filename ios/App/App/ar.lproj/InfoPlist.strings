@@ -1,1 +1,2 @@
 "NSLocationWhenInUseUsageDescription" = "يُستخدم موقعك لحساب مواقيت الصلاة واتجاه القبلة.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "لا يُقرأ موقعك إلا أثناء استخدامك للتطبيق، ولا يتم تتبعك في الخلفية إطلاقًا. ويُستخدم لحساب مواقيت الصلاة واتجاه القبلة.";

@@ -1,1 +1,2 @@
 "NSLocationWhenInUseUsageDescription" = "Lokasi Anda digunakan untuk menghitung waktu salat dan arah kiblat.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Lokasi Anda hanya dibaca saat Anda menggunakan aplikasi; Anda tidak pernah dilacak di latar belakang. Digunakan untuk menghitung waktu salat dan arah kiblat.";

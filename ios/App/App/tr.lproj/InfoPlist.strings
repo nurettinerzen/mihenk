@@ -1,1 +1,2 @@
 "NSLocationWhenInUseUsageDescription" = "Namaz vakitleri ve kıble yönünü hesaplamak için konumun kullanılır.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Konumun yalnızca uygulamayı kullanırken alınır; arka planda takip edilmez. Namaz vakitleri ve kıble yönünü hesaplamak için kullanılır.";
