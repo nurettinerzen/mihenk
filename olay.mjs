@@ -151,7 +151,9 @@ const SURUM_YAYIN = { '1.6': '2026-09-03' };
 // (TestFlight). Kimlik özetlenmiş olduğundan cihaz adı yerine davranıştan ayrılır.
 function gelistiriciCihazlar(ev) {
   const prof = {};
+  const diller = {};
   for (const e of ev) {
+    if (e.dil) (diller[e.c] ||= new Set()).add(e.dil);
     if (e.a !== 'acilis' || !e.surum) continue;
     const p = prof[e.c] || (prof[e.c] = {});
     const g = (e.t || '').slice(0, 10);
@@ -163,6 +165,11 @@ function gelistiriciCihazlar(ev) {
     if (adlar.length >= 3) { set.add(c); continue; }
     if (adlar.some((s) => SURUM_YAYIN[s] && surumler[s] < SURUM_YAYIN[s])) set.add(c);
   }
+  // (c) Aynı cihazda ≥3 dil: yerelleştirme/QA turu (sürüm öncesi ajan denetimi,
+  // ekran görüntüsü botu). 3 Eyl 2026 ölçümü: LA/Johannesburg/Sydney/Singapore
+  // saat dilimli, tek günlük, 6 dilli onlarca "cihaz" — hepsi test turuydu ve
+  // paywall/satın alma sayılarını (urun-yok 187) tamamen bunlar şişiriyordu.
+  for (const [c, d] of Object.entries(diller)) if (d.size >= 3) set.add(c);
   return set;
 }
 
