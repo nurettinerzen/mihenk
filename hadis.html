@@ -9,7 +9,12 @@
      metin imleci, klavye) da koyu gelsin diye açıkça beyan ediyoruz. -->
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#0d1512">
-<title>Mihenk — Hadis Doğrulama</title>
+<title>Mihenk — Quran, Prayer Times &amp; Hadith Sources</title>
+<meta name="description" content="Read the Quran, check prayer times and qibla, and look up hadith sources with Mihenk. Try the web app or download for iPhone and Android.">
+<meta property="og:title" content="Mihenk — Quran, Prayer Times &amp; Hadith Sources">
+<meta property="og:description" content="Quran reading, prayer times, qibla and sourced hadith lookup. Available on iPhone and Android.">
+<link rel="canonical" href="https://mihenk-api.onrender.com/">
+<meta name="apple-itunes-app" content="app-id=6793343627">
 <link rel="stylesheet" href="fonts.css?v=3"><!-- yerel woff2 (offline, CDN yok); woff2 adları içerik-hash'li, v= eski cache'i kırar -->
 <script src="adhan.min.js"></script><!-- namaz vakti CİHAZDA hesaplanır: bildirimler uygulama kapalıyken planlanır, sunucuya sorulamaz -->
 <script src="tz.js"></script><!-- konumun saat dilimi (offline); cihazın dilimiyle karıştırma -->
@@ -408,6 +413,13 @@
     <div class="alt" data-i18n="alt">Kaynağıyla din rehberi</div>
     <div class="divider">✦</div>
   </header>
+  <aside id="webIndir" hidden style="padding:14px;margin:0 0 16px;border:1px solid var(--cizgi);border-radius:12px">
+    <p id="webIndirMetin" style="margin-bottom:10px"></p>
+    <nav aria-label="Download Mihenk" style="display:flex;gap:18px;flex-wrap:wrap">
+      <a style="color:var(--zumrut);padding:8px 0" href="https://apps.apple.com/app/id6793343627?ct=web_home&amp;mt=8">App Store</a>
+      <a style="color:var(--zumrut);padding:8px 0" href="https://play.google.com/store/apps/details?id=com.nurettinerzen.mihenk&amp;referrer=utm_source%3Dmihenk_website%26utm_medium%3Dorganic%26utm_campaign%3Dweb_home">Google Play</a>
+    </nav>
+  </aside>
 
     <button class="ayar-btn" id="ayarBtn" aria-label="Ayarlar" data-i18n-aria="settings">
     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
@@ -2818,7 +2830,22 @@ function cipleriKur(){
 }
 
 // Dil uygula: statik metinler + çipler + T
+function webIndirmeGoster(lang){
+  const box=document.getElementById('webIndir');
+  if(!box || YERLI) return;
+  const copy={
+    tr:'Mihenk’i telefonuna indir. Kur’an okuma, namaz vakitleri ve kıble ücretsiz.',
+    en:'Take Mihenk with you. Quran reading, prayer times and qibla are free.',
+    fr:'Emportez Mihenk avec vous. Lecture du Coran, horaires de prière et qibla gratuits.',
+    id:'Bawa Mihenk ke mana saja. Membaca Al-Quran, waktu salat dan kiblat gratis.',
+    ar:'حمّل ميهنك على هاتفك. قراءة القرآن ومواقيت الصلاة والقبلة مجانًا.',
+    ur:'میہنک اپنے فون پر حاصل کریں۔ قرآن کی تلاوت، نماز کے اوقات اور قبلہ مفت ہیں۔'
+  };
+  document.getElementById('webIndirMetin').textContent=copy[lang]||copy.en;
+  box.hidden=false;
+}
 function dilUygula(yeni){
+  webIndirmeGoster(yeni);
   if(dil && yeni!==dil) olay('dil_degis',{dil:yeni});
   dil=yeni; T=L[dil]; localStorage.setItem('dil',dil);
   document.documentElement.lang=dil;
