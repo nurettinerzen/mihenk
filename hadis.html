@@ -392,7 +392,7 @@
   function geriBildirim(){ if(!C.mail) return; location.href='mailto:'+C.mail+'?subject='+encodeURIComponent(C.ad+' feedback ('+surum()+')'); }
   window.RatingKapisi={kur:kur,belkiSor:belkiSor,magazaAc:magazaAc};
   // Türkçe ek uyumu ({ad} şablonu Türkçe'de ek almaz): "Mihenk'i beğendin mi?"
-  kur({onek:'mihenk',ad:'Mihenk',surum:'1.7',iosId:'6793343627',paket:'com.nurettinerzen.mihenk',mail:'nurettinerzen@gmail.com',minOturum:3,
+  kur({onek:'mihenk',ad:'Mihenk',surum:'1.7.3',iosId:'6793343627',paket:'com.nurettinerzen.mihenk',mail:'nurettinerzen@gmail.com',minOturum:3,
        metinler:{tr:{soru:"Mihenk'i beğendin mi?"}},
        kart:'#123028',yazi:'#eaf5f0',renk:'#57c4a3',kenar:'#24463c'});
 })();
@@ -623,7 +623,7 @@
         <span class="sol" data-i18n="ayar_kullanim">Kullanım Koşulları</span><span class="ok">›</span>
       </a>
       <div class="ayar-not" data-i18n="ayar_hakkinda">Mihenk; hadis metnini, âlim derecesini ve Kur'an meâlini doğrulanmış kaynaklardan getirir — üretmez. İhtilaflı konularda bir âlime danışınız.</div>
-      <div class="ayar-surum" id="surumEtiket">Mihenk 1.7</div><!-- MARKETING_VERSION ile aynı olmalı -->
+      <div class="ayar-surum" id="surumEtiket">Mihenk 1.7.3</div><!-- MARKETING_VERSION ile aynı olmalı -->
 
     </div>
   </div>
@@ -1771,7 +1771,14 @@ async function cihazCoz(){
 // çekilmeyle kendiliğinden tekrar, (2) ağ dönünce / uygulama öne gelince hemen
 // tekrar, (3) paywall açılırken senkron son bir deneme. Ölçüm olayları AYNEN
 // akıyor: baslangic-hata/baslangic-bos yalnız İLK denemede yazılır (sayı şişmez).
-const urunlerHazirMi = () => !!(rcUrunler && (rcUrunler[URUNLER.yillik] || rcUrunler[URUNLER.aylik]));
+const urunlerHazirMi = () => Object.values(URUNLER).every(id => !!rcUrunler?.[id]);
+const seciliUrunHazirMi = () => !!rcUrunler?.[seciliUrun];
+function iapZamanli(islem, ms = 15000){
+  let zaman;
+  return Promise.race([islem, new Promise((_, red) => {
+    zaman = setTimeout(() => red(Object.assign(new Error('Mağaza zaman aşımı'), {code:'TIMEOUT'})), ms);
+  })]).finally(() => clearTimeout(zaman));
+}
 let _iapSoz = null;          // uçuştaki yükleme; eşzamanlı istekler paylaşır
 let _iapIlkYapildi = false;  // baslangic-* olayları yalnız ilk denemede
 async function _iapCalistir(){
@@ -1780,27 +1787,27 @@ async function _iapCalistir(){
     const { Purchases } = CapEklenti();
     await cihazAl();                                   // kalıcı kimlik
     if(!(await rcKur())) throw new Error('RevenueCat kurulamadı');
-    // Entitlement kontrolünü ürün/fiyat ağ isteğinden ÖNCE yap. Ücretli kullanıcı
-    // çevrimdışıyken RevenueCat'in önbelleğindeki hakkıyla indirdiği tilaveti
-    // dinleyebilsin; fiyatların yüklenememesi premium kontrolünü engellemesin.
-    await iapPremiumKontrol();
-    const { products } = await Purchases.getProducts({ productIdentifiers: Object.values(URUNLER) });
+    // Hak sorgusu ve fiyatlar bağımsızdır: yavaş bir hak/arka uç isteği
+    // mağaza ürünlerinin yüklenmesini engellemesin. Hata mevcut hakkı silmez.
+    void iapPremiumKontrol().catch(e => console.warn('Hak kontrolü ertelendi', e));
+    const { products } = await iapZamanli(Purchases.getProducts({ productIdentifiers: Object.values(URUNLER) }));
     const liste = {}; (products||[]).forEach(p=>{ liste[duzId(p.identifier)]=p; });   // Android: temel plan sonekini at
     // Boş yanıt eldeki ürünleri EZMESİN: geçici bir ağ tökezlemesi, daha önce
     // yüklenmiş fiyatları ekrandan söküp çalışan paywall'ı bozmasın.
-    if(liste[URUNLER.yillik] || liste[URUNLER.aylik]) rcUrunler = liste;
+    rcUrunler = { ...(rcUrunler || {}), ...liste };
     fiyatCiz(); avantajCiz(); denemeCiz(); paywallDugmeCiz();
     // ÖLÇÜM: ürünler hiç gelmediyse kullanıcı satın ALAMAZ. Bu şimdiye kadar
     // sessiz bir kayıptı; artık panelde `satinalma/urun-yok` olarak görünür.
     if(!urunlerHazirMi()){
-      if(ilk) olay('satinalma',{durum:'urun-yok', sebep:'baslangic-bos'});
+      if(ilk) olay('satinalma',{durum:'urun-yok', sebep:'baslangic-bos', eksik:Object.values(URUNLER).filter(id => !rcUrunler[id]).join(',')});
+      if(seciliUrunHazirMi()) urunYokGizle();
       return false;
     }
     urunYokGizle();
     return true;
   }catch(e){
     console.warn('IAP başlatılamadı', e);
-    if(ilk) olay('satinalma',{durum:'urun-yok', sebep:'baslangic-hata'});
+    if(ilk) olay('satinalma',{durum:'urun-yok', sebep:'baslangic-hata', kod:String(e?.code || 'bilinmiyor')});
     fiyatCiz(); paywallDugmeCiz();
     return false;
   }
@@ -1931,7 +1938,8 @@ function planSec(urun){
   document.getElementById('planYillik').classList.toggle('secili', urun===URUNLER.yillik);
   document.getElementById('planAylik').classList.toggle('secili', urun===URUNLER.aylik);
   denemeCiz();         // deneme satırı yalnız yıllıkta görünür
-  paywallDugmeCiz();   // yalnız bir plan yüklendiyse öbürüne geçişte düğme pasifleşir
+  paywallDugmeCiz();
+  if(YERLI && !seciliUrunHazirMi()) paywallAcilisYukle(); else urunYokGizle();
 }
 // --- Ürünler yüklenemedi çıkmazı ------------------------------------------
 // Eskiden bu durumda tek yapılan "Satın alma yakında (App Store)" yazmaktı:
@@ -1968,7 +1976,7 @@ async function paywallAcilisYukle(){
   if(m){ m.textContent=T.pw_yukleniyor; m.className='paywall-mesaj'; }
   const sonuc = await Promise.race([ iapBaslat(), new Promise(r=>setTimeout(()=>r('zamanasimi'), 8000)) ]);
   if(no !== _pwYuklemeNo) return;                 // daha yeni bir açılış devraldı
-  if(sonuc === true){
+  if(seciliUrunHazirMi()){
     if(m && m.className.indexOf('hata')<0) m.textContent='';   // spinner yazısını sil
     urunYokGizle(); olay('satinalma',{durum:'urun-geldi', sebep:'paywall-acilis'});
   }
@@ -1978,7 +1986,7 @@ async function urunleriTekrarDene(){
   const m=document.getElementById('lisansMesaj'), b=document.getElementById('pwTekrarBtn');
   if(b){ b.disabled=true; b.textContent=T.pw_yukleniyor; }
   if(m){ m.textContent=''; m.className='paywall-mesaj'; }
-  await iapBaslat();
+  try { await iapZamanli(iapBaslat(), 8000); } catch(e) { /* Tekrar düğmesi yeniden açılır. */ }
   if(rcUrunler && rcUrunler[seciliUrun]){ urunYokGizle(); olay('satinalma',{durum:'urun-geldi', plan:seciliUrun}); }
   else { olay('satinalma',{durum:'urun-yok', plan:seciliUrun, sebep:'tekrar-basarisiz'}); urunYokGoster('tekrar'); }
 }

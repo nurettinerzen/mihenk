@@ -70,14 +70,15 @@ test('Ezan sekmesi konumu önce, bildirimi yalnız başarılı konumdan sonra te
 });
 
 test('sürüm numaraları mağaza hedefleri ve istemcide tutarlıdır', () => {
-  // Bu test 1.5'te kalmıştı ve iki sürümdür KIRIK koşuyordu; kırık olduğu için
-  // istemcideki "Mihenk 1.6" etiketinin 1.7 derlemesiyle birlikte gitmesini
-  // yakalayamadı. SURUM_ETIKET doğrudan telemetriye yazıldığı için hatalar yanlış
-  // sürüme kaydediliyordu. Sürüm artırırken bu dört satır birlikte güncellenmeli.
-  assert.match(html, /surum:'1\.7'/); assert.match(html, /Mihenk 1\.7/);
-  assert.match(gradle, /versionCode 17/); assert.match(gradle, /versionName "1\.7"/);
-  assert.equal((pbx.match(/CURRENT_PROJECT_VERSION = 42;/g) || []).length, 2);
-  assert.equal((pbx.match(/MARKETING_VERSION = 1\.7;/g) || []).length, 2);
+  const version = gradle.match(/versionName "([^"]+)"/)[1];
+  assert(html.includes("surum:'" + version + "'"));
+  assert(html.includes('Mihenk ' + version + '</div>'));
+  const iosVersions = [...pbx.matchAll(/MARKETING_VERSION = ([^;]+);/g)].map(x => x[1]);
+  assert.deepEqual(iosVersions, [version, version]);
+  assert(Number(gradle.match(/versionCode (\d+)/)[1]) > 0);
+  const builds = [...pbx.matchAll(/CURRENT_PROJECT_VERSION = (\d+);/g)].map(x => x[1]);
+  assert.equal(builds.length, 2); assert.equal(builds[0], builds[1]);
+
 });
 
 test('Mobil ödeme kitaplıkları güncel, ilan edilen foreground service gerçekten yoksa izin de yoktur', () => {
